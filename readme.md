@@ -1,5 +1,91 @@
 # biblatex-map.py
 
+a python script to deal, modify and generalize the bib file.
+
+the processing logic is comply to the rule of the dynamic data map of bilatex, specification is almost the same, the only differenc is that all tex commands such as `\maps`,`\map`,`\step` are changed to a json format coefficient.
+
+it is an python equivalent of the data map feature of biber.
+
+-------------------------------
+
+Maintainer: huzhenzhen <hzzmail@163.com>
+
+Homepage: <https://github.com/hushidong/biblatex-map>
+
+License：MIT license
+
+--------------------------------------
+usage: 
+
+run the following command in python console:
+
+`./biblatex-map.py`
+
+input bib file is set in `biblatex-map.py`:
+
+```
+if __name__=="__main__":
+    
+    #set the input bib file
+	inputbibfile='biblatex-map-test.bib'
+	
+	#set the aux file
+	#this is not necessary
+	#auxfile='tex-source-code.tex'
+```
+
+output bib file is generated automatically, 
+if  an aux file is set ,the entries in output file was restricted to the references in aux file.
+
+modifications wanted to do are set in `biblatex-map.py` too, please set the json formatted argument `sourcemaps`:
+
+```
+#the SOURCE maps is consist of all the modification maps
+#all the maps are executed on every entry in the bib file
+sourcemaps=[
+	[#map1:change the entrytype ELECTRONIC to online
+		[{"typesource":"ELECTRONIC","typetarget":"online"}]#step1
+	],
+	[#map2:change the field name source to url
+		[{"fieldsource":"source","fieldtarget":"url"}]#step1
+	],
+	[#map3:change the urldate with format “yyyy-m-d” to the format “yyyy-mm-dd”, note: the regex is given directly
+		[{"fieldsource":"urldate","match":r'(\d\d\d\d)\-(\d)\-(\d)',"replace":r'\1-0\2-0\3',"overwrite":True}]#step1
+	],
+	[#map4:change the urldate with format “yyyy-m-d” to the format “yyyy-mm-dd”, note: the regex is given directly
+		[{"fieldsource":"date","match":r'(\d\d\d\d)\-(\d)\-(\d)',"replace":r'\1-0\2-0\3',"overwrite":True}]#step1
+	],
+	[#map5:change the field name refdate to urldate
+		[{"fieldsource":"refdate","fieldtarget":"urldate"}]#step1
+	],
+	[#map6:set field note of entry of type newspaper with field value news
+		[{"pertype":"newspaper"}],#step1
+		[{"fieldset":"note","fieldvalue":"news","overwrite":True}]#step2
+	],
+	[#map7:if field version is exist,set field edition with the value of the version
+		[{"fieldsource":"version","final":True}],#step1
+		[{"fieldset":"edition","origfieldval":True}]#step2
+	],
+	[#map8:set field keywords with entrykey
+		[{"fieldsource":"entrykey"}],#step1
+		[{"fieldset":"keywords","origfieldval":True}]#step2
+	],
+	[#map9:if an entry has note field, append the value of note to the keywords
+		[{"fieldsource":"note","final":True}],#step1
+		[{"fieldset":"keywords","origfieldval":True,"overwrite":True,"append":True}]#step2
+	],
+	 [#map10:determing the language of the title according to the unicode range of the character in title
+		 [{"fieldsource":"title","match":r'[\u2FF0-\u9FA5]',"final":True}],#step1
+		 [{"fieldset":"userd","fieldvalue":"chinese"}]#step2
+	 ],
+]
+```
+
+
+
+--------------------------------------
+## 介绍
+
 是一个用于处理、修改和规范化bib文件的python脚本。
 
 处理的逻辑遵循biblatex的动态数据修改的规范，修改参数设置基本相同，只是把biblatex用tex命令表示的`\maps`、`\map`和`\step`转换为用json格式表示。
@@ -11,15 +97,6 @@
 本来想将这一内容放到Pezmc开发的biblatex_check脚本中，但想想还是纯粹点好了。
 
 -------------------------------
-
-Maintainer: huzhenzhen <hzzmail@163.com>
-
-Homepage: <https://github.com/hushidong/biblatex-map>
-
-License：MIT license
-
-
---------------------------------------
 
 ## 用法：
 
@@ -34,7 +111,13 @@ if __name__=="__main__":
     
     #设置输入的bib文件
 	inputbibfile='biblatex-map-test.bib'
+	
+	#set the aux file
+	#this is not necessary
+	#auxfile='tex-source-code.tex'
 ```
+
+输出的bib文件自动生成，当设置了aux文件后，那么输出的bib文件中条目将限制为aux中引用的文献条目。
 
 修改bib文件内容的配置用json格式表示，直接在`biblatex-map.py`修改sourcemaps参数：
 

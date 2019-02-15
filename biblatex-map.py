@@ -124,6 +124,19 @@ def readfilecontents(bibFile):
 		global bibfilecontents
 		bibfilecontents=fIn.readlines()
 		fIn.close()
+		
+		global usedIds
+		usedIds = set()
+		if auxfile:
+			fInAux = open(auxfile, 'r', encoding="utf8")
+			for line in fInAux:
+				if line.startswith("\\citation"):
+					ids = line.split("{")[1].rstrip("} \n").split(", ")
+					for id in ids:
+						if (id != ""):
+							usedIds.add(id)
+			fInAux.close()
+		
 	except IOError:
 		print("ERROR: Input bib file '" + bibFile +
 				"' doesn't exist or is not readable")
@@ -147,14 +160,25 @@ def writefilenewbib(bibFile):
 		print(datetime.datetime.now().isoformat(timespec='seconds'))
 		fout.write("%% "+datetime.datetime.now().isoformat(timespec='seconds')+"\n")
 		fout.write("%% \n\n\n")
-		for bibentry in bibentries:
-			fout.write('@'+bibentry["entrytype"]+'{'+bibentry["entrykey"]+',\n')
-			for k,v in bibentry.items():
-				if k=="entrytype" or k=="entrykey" or v=='""' or v==None:
-					pass
-				else:
-					fout.write('\t'+k+' = {'+v+'},\n')
-			fout.write('}\n\n')
+		if auxfile:
+			for bibentry in bibentries:
+				if bibentry["entrykey"] in usedIds:
+					fout.write('@'+bibentry["entrytype"]+'{'+bibentry["entrykey"]+',\n')
+					for k,v in bibentry.items():
+						if k=="entrytype" or k=="entrykey" or v=='""' or v==None:
+							pass
+						else:
+							fout.write('\t'+k+' = {'+v+'},\n')
+					fout.write('}\n\n')
+		else:
+			for bibentry in bibentries:
+				fout.write('@'+bibentry["entrytype"]+'{'+bibentry["entrykey"]+',\n')
+				for k,v in bibentry.items():
+					if k=="entrytype" or k=="entrykey" or v=='""' or v==None:
+						pass
+					else:
+						fout.write('\t'+k+' = {'+v+'},\n')
+				fout.write('}\n\n')
 		
 		fout.close()
 	except IOError:
@@ -578,6 +602,9 @@ if __name__=="__main__":
     #设置需要修改的bib文件
 	inputbibfile='biblatex-map-test.bib'
     
+	#set the aux file
+	#this is not necessary
+	#auxfile='tex-source-code.tex'
     
 	readfilecontents(inputbibfile)
 	
