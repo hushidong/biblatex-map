@@ -81,6 +81,16 @@ sourcemaps=[
 ]
 ```
 
+--------------------------------------
+## Related Links
+
+* [Biblatex 宏包](https://github.com/plk/biblatex)
+* [Beamer 文档类](https://github.com/josephwright/beamer)
+* [biblatex 宏包中文手册 ](https://github.com/hushidong/biblatex-zh-cn)
+* [biblatex 简明使用手册](https://github.com/hushidong/biblatex-solution-to-latex-bibliography)
+* [biblatex-tutorial 摘译](https://github.com/hushidong/biblatex-tutorial-cn)
+* [biblatex-map bib文件修改工具](https://github.com/hushidong/biblatex-map/)
+* [biblatex-check bib文件检查工具](https://github.com/Pezmc/BibLatex-Check)
 
 
 --------------------------------------
