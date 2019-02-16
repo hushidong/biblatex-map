@@ -112,7 +112,46 @@ sourcemaps=[#maps
 	 ],
 ]
 
+#重设新的任务处理
+sourcemaps=[
+	[#map1:设置entrykey域设置给keywords
+		[{"fieldsource":"entrykey"}],#step1
+		[{"fieldset":"keywords","origfieldval":True,"overwrite":True}]#step2
+	],
+]
 
+
+#重设不处理
+sourcemaps=[
+	[#map1:取消note域
+		[{"fieldsource":"note","final":True}],#step1
+		[{"fieldset":"note","null":True,"overwrite":True}]#step2
+	],
+	[#map2:取消abstract域
+		[{"fieldsource":"abstract","final":True}],#step1
+		[{"fieldset":"abstract","null":True,"overwrite":True}]#step2
+	],
+	[#map3:取消keywords域
+		[{"fieldsource":"keywords","final":True}],#step1
+		[{"fieldset":"keywords","null":True,"overwrite":True}]#step2
+	],
+	[#map4:取消keywords-plus域
+		[{"fieldsource":"keywords-plus","final":True}],#step1
+		[{"fieldset":"keywords-plus","null":True,"overwrite":True}]#step2
+	],
+	[#map5:取消affiliation域
+		[{"fieldsource":"affiliation","final":True}],#step1
+		[{"fieldset":"affiliation","null":True,"overwrite":True}]#step2
+	],
+	[#map6:取消funding-acknowledgement域
+		[{"fieldsource":"funding-acknowledgement","final":True}],#step1
+		[{"fieldset":"funding-acknowledgement","null":True,"overwrite":True}]#step2
+	],
+	[#map7:取消funding-text域
+		[{"fieldsource":"funding-text","final":True}],#step1
+		[{"fieldset":"funding-text","null":True,"overwrite":True}]#step2
+	],
+	]
 
 #
 #
@@ -136,6 +175,7 @@ def readfilecontents(bibFile):
 						if (id != ""):
 							usedIds.add(id)
 			fInAux.close()
+			print('references:',usedIds)
 		
 	except IOError:
 		print("ERROR: Input bib file '" + bibFile +
@@ -191,57 +231,170 @@ def writefilenewbib(bibFile):
 #每个条目是一个dict字典
 def bibentryparsing():
 	global bibentries
-	bibentries=[]
-	bibentry={}
-	entrysn=0
-	for line in bibfilecontents:
+	bibentries=[]#用于记录所有条目
+	bibentry={}#用于记录当前条目
+	entrysn=0 #用于标记条目序号
+	entrystated=False #用于标记条目开始
+	fieldvalended=True #用于标记域的值当前行是否已经结束
+	fieldvalue="" #用于记录当前域的值
+	counterbracket=0 #用于追踪{}符号
+	counterquotes=0  #用于追踪“”符号
+	enclosebracket=True #用于记录是用{}还是用“”做为域的值的包围符号
+	enclosenone=False #用于记录域的值无包围符号的情况
+	
+	for line in bibfilecontents:#遍历所有行
 		#print(line)
-		if line.startswith("@"):#条目开始行
+		
+		if line.startswith("@") and not line.startswith("@comment"):#判断条目开始行
 			entrysn=entrysn+1
+			entrystated=True #新条目开始
+			print('entrysn=',entrysn)
 			entrynow=line.lstrip('@').split(sep='{', maxsplit=1)
 			#print(entrynow)
 			entrytype=entrynow[0]
 			bibentry['entrytype']=entrytype.lower()#条目类型小写，方便比较
 			entrykey=entrynow[1].split(sep=',', maxsplit=1)[0]
 			bibentry['entrykey']=entrykey
-		else:
-			if '=' in line:#条目域信息行
-				entryline=line.lstrip()
-				entrynow=entryline.split(sep='=', maxsplit=1)
-				#print(entrynow)
-				entryfield=entrynow[0].strip().lstrip().lower()#域名小写，方便比较
-				#print(entrynow[1])
-				entryfieldline=entrynow[1].split(sep=',', maxsplit=1)
-				entryfieldvalue=entryfieldline[0].lstrip()
-				if entryfieldvalue=='':
-					pass
-				else:
-					entryfieldvaluenew=entryfieldvalue.strip()
-					if entryfieldvaluenew.startswith("{"):
-						entryfieldvalue=entryfieldvaluenew.lstrip('{').strip('}')
-					else:
-						entryfieldvalue=entryfieldvaluenew.lstrip('"').strip('"')
-					bibentry[entryfield]=entryfieldvalue
-				
+		elif entrystated: #只有新条目开始了才有意义
+
+			if fieldvalended: #当前行不是前面的未结束域的值
+				if '=' in line:#根据=号判断条目域信息行，不可能出现=号无法判断信息行的问题，
+								#因为是域值中存在=的特殊情况已经在未结束逻辑处理
+					entryline=line.lstrip()
+					entrynow=entryline.split(sep='=', maxsplit=1)
+					#print(entrynow)
+					entryfield=entrynow[0].strip().lstrip().lower()#域名小写，方便比较
+					entryfieldline=entrynow[1].lstrip()
 					
-			elif '}' in line:#条目结束行
-				print('entrysn=',entrysn)
-				global bibentryglobal
-				bibentryglobal=copy.deepcopy(bibentry) 
-				bibentries.append(bibentryglobal)
-				bibentry={}
-			else:
-				pass
+					if entryfieldline.startswith("{"):
+						enclosebracket=True
+					elif entryfieldline.startswith('"'):
+						enclosebracket=False
+					else:#当没有符号包围是设置enclosenone以便特殊处理
+						enclosenone=True
+					
+					fieldvalcontinued=True #临时标记，用于记录域值是否还未结束，先假设未结束
+					for chari in entryfieldline.strip():#遍历域值中的每个字符
+						fieldvalue=fieldvalue+chari
+						if chari =='{':#对{符号进行追踪
+							counterbracket=counterbracket+1
+						elif chari =='}':#对}符号进行追踪
+							counterbracket=counterbracket-1
+							if enclosebracket:
+								if counterbracket==0:#当}与域开始的{配对，那么说明域值已经结束
+									bibentry[entryfield]=fieldvalue[1:-1]#利用strip可能会消多次，因此用list的方式处理
+									fieldvalue=""
+									counterbracket=0
+									counterquotes=0
+									fieldvalended=True
+									fieldvalcontinued=False
+									break #直接跳出循环
+						elif chari =='"':
+							counterquotes=counterquotes+1
+							if not enclosebracket:
+								if mod(counterquotes,2)==0:
+									bibentry[entryfield]=fieldvalue[1:-1]
+									fieldvalue=""
+									counterbracket=0
+									counterquotes=0
+									fieldvalended=True
+									fieldvalcontinued=False
+									break
+						elif chari ==',':#若域值没有包围符号那么遇到,号即为域值结束
+							if enclosenone:
+								bibentry[entryfield]=fieldvalue[:-1]
+								fieldvalue=""
+								counterbracket=0
+								counterquotes=0
+								fieldvalended=True
+								fieldvalcontinued=False
+								enclosenone=False
+						
+						#测试：输出看是否正确
+						#if entryfield=='abstract':
+						#	print('val=',fieldvalue)
+						#	print('counterbracket=',counterbracket)
+						
+					if fieldvalcontinued:
+						fieldvalended=False
+				
+				elif '}' in line:#条目结束行
+
+					global bibentryglobal
+					bibentryglobal=copy.deepcopy(bibentry) 
+					print('entry:',bibentryglobal)
+					bibentries.append(bibentryglobal)
+					bibentry={}
+					entrystated=False
+					
+			else: #当前行是前面的未结束域的值，因此直接往前面的域值添加即可
+				fieldvalcontinued=True
+				entryfieldline=" "+line
+				for chari in entryfieldline.strip():
+					fieldvalue=fieldvalue+chari
+					if chari =='{':
+						counterbracket=counterbracket+1
+					elif chari =='}':
+						counterbracket=counterbracket-1
+						if enclosebracket:
+							if counterbracket==0:
+								bibentry[entryfield]=fieldvalue[1:-1]
+								fieldvalue=""
+								counterbracket=0
+								counterquotes=0
+								fieldvalended=True
+								fieldvalcontinued=False
+								break
+					elif chari =='"':
+						counterquotes=counterquotes+1
+						if not enclosebracket:
+							if mod(counterquotes,2)==0:
+								bibentry[entryfield]=fieldvalue[1:-1]
+								fieldvalue=""
+								counterbracket=0
+								counterquotes=0
+								fieldvalended=True
+								fieldvalcontinued=False
+								break
+					elif chari ==',':
+							if enclosenone:
+								bibentry[entryfield]=fieldvalue[:-1]
+								fieldvalue=""
+								counterbracket=0
+								counterquotes=0
+								fieldvalended=True
+								fieldvalcontinued=False
+								enclosenone=False
+				if fieldvalcontinued:
+					fieldvalended=False
+
+	print('entrysn=',entrysn)
 	bibentrycounter=len(bibentries)
+	if not bibentrycounter==entrysn:
+		try:
+			raise BibParsingError('bib file parsing went wrong!')
+		except BibParsingError as e:
+			raise BibParsingError(e.message)
 	print('entrytotal=',bibentrycounter)
-	for bibentryi in bibentries:
-		print(bibentryi)
-			
+	
+	#输出解析后的bib文件信息
+	#for bibentryi in bibentries:
+		#print(bibentryi)
+
+
+#
+#打印bibentries列表中的所有条目
 def printbibentries():
 	for bibentryi in bibentries:
 		print(bibentryi)	
 			
 
+#
+#自定义异常类
+class BibParsingError(Exception):
+    def __init__(self,message):
+        Exception.__init__(self)
+        self.message=message 
 		
 #
 # 执行数据映射操作
@@ -258,7 +411,7 @@ def execsourcemap():
 			constraintinfo['pertype']=[]
 			constraintinfo['pernottype']=[]
 			
-			print("map info=",map)
+			#print("map info=",map)
 			for step in map:#every step in map
 				if mapcontinue>0:#对前面已经final完成的情况做限制
 					for keyvals in step:#key-vals in step
@@ -600,23 +753,24 @@ def mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo):
 if __name__=="__main__":
     
     #设置需要修改的bib文件
-	inputbibfile='biblatex-map-test.bib'
+	inputbibfile='sample.bib'
     
+	auxfile=""
 	#set the aux file
 	#this is not necessary
-	auxfile='test.aux'
+	auxfile='main.aux'
     
 	readfilecontents(inputbibfile)
 	
-	printfilecontents()
+	#printfilecontents()
 
 	bibentryparsing()
 	
-	printbibentries()
+	#printbibentries()
 	
 	execsourcemap()
 	
-	printbibentries()
+	#printbibentries()
 	
 	writefilenewbib(inputbibfile)
     
