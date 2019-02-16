@@ -130,7 +130,7 @@ def readfilecontents(bibFile):
 		if auxfile:
 			fInAux = open(auxfile, 'r', encoding="utf8")
 			for line in fInAux:
-				if line.startswith("\\citation"):
+				if line.startswith("\\citation") or line.startswith("\\abx@aux@cite"):
 					ids = line.split("{")[1].rstrip("} \n").split(", ")
 					for id in ids:
 						if (id != ""):
@@ -604,7 +604,7 @@ if __name__=="__main__":
     
 	#set the aux file
 	#this is not necessary
-	#auxfile='tex-source-code.tex'
+	auxfile='test.aux'
     
 	readfilecontents(inputbibfile)
 	

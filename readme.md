@@ -31,7 +31,7 @@ if __name__=="__main__":
 	
 	#set the aux file
 	#this is not necessary
-	#auxfile='tex-source-code.tex'
+	#auxfile='tex-source-code.aux'
 ```
 
 output bib file is generated automatically, 
@@ -114,7 +114,7 @@ if __name__=="__main__":
 	
 	#set the aux file
 	#this is not necessary
-	#auxfile='tex-source-code.tex'
+	#auxfile='tex-source-code.aux'
 ```
 
 输出的bib文件自动生成，当设置了aux文件后，那么输出的bib文件中条目将限制为aux中引用的文献条目。
