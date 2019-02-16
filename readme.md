@@ -2,9 +2,9 @@
 
 a python script to deal, modify and generalize the bib file.
 
-the processing logic is comply to the rule of the dynamic data map of bilatex, specification is almost the same, the only differenc is that all tex commands such as `\maps`,`\map`,`\step` are changed to a json format coefficient.
+the processing logic is comply with the rule of `Dynamic Modification of Data` of bilatex, specification is almost the same, the only difference is : all the tex commands such as `\maps`,`\map`,`\step` in tex source file are changed to a json formated coefficient.
 
-it is an python equivalent of the data map feature of biber.
+to some extent it is a python equivalent of the data map feature of biber.
 
 -------------------------------
 
@@ -35,9 +35,9 @@ if __name__=="__main__":
 ```
 
 output bib file is generated automatically, 
-if  an aux file is set ,the entries in output file was restricted to the references in aux file.
+if an aux file is given ,the entries in output file are restricted to the references in aux file.
 
-modifications wanted to do are set in `biblatex-map.py` too, please set the json formatted argument `sourcemaps`:
+modifications wanted to be done are set in `biblatex-map.py` too, please set the json formatted argument `sourcemaps`:
 
 ```
 #the SOURCE maps is consist of all the modification maps
