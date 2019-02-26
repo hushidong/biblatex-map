@@ -34,7 +34,7 @@ if __name__=="__main__":
 	#auxfile='tex-source-code.aux'
 ```
 
-output bib file is generated automatically, 
+output bib/json file is generated automatically, 
 if an aux file is given ,the entries in output file are restricted to the references in aux file.
 
 modifications wanted to be done are set in `biblatex-map.py` too, please set the json formatted argument `sourcemaps`:
