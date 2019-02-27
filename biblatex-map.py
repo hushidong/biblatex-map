@@ -11,6 +11,10 @@ bib文件数据修改，比如对日期进行规范化等
 bib文件解析，输出新的bib文件，或json格式的文件
 3. display the bib info with specific standard like GB/T 7714-2015
 将bib文件信息格式化显示，比如以GB/T 7714-2015格式显示
+4. 当某些项缺失时，后面跟着的项前标点可能会变化的问题，要处理。
+5. newspaper,与aritcle的关系
+6. standard,与book和inbook的关系
+7. 同样是date，newspaper需要写全，而article不需要。
 
 history：
 v1.0 2019/02/09
@@ -115,9 +119,9 @@ sourcemaps=[#maps
 		[{"fieldset":"keywords","origfieldval":True,"overwrite":True,"append":True}]#step2
 	],
 	 [#map10:根据标题的字符编码范围确定标题的语言类型
-		 [{"fieldsource":"title","match":r'[\u2FF0-\u9FA5]',"final":True}],#step1
-		 [{"fieldset":"userd","fieldvalue":"chinese"}]#step2
-	 ],
+		[{"fieldsource":"title","match":r'[\u2FF0-\u9FA5]',"final":True}],#step1
+		[{"fieldset":"userd","fieldvalue":"chinese"}]#step2
+	],
 ]
 
 #重设新的任务处理
@@ -184,14 +188,47 @@ formatoptions={
 bibstrings={
 'andothers':{'english':'et al.','chinese':'等'},
 'and':{'english':' and ','chinese':'和'},
-'edition':{'english':'ed.','chinese':'版'}
+'edition':{'english':'th ed.','chinese':'版'},
+'in':{'english':'in: ','chinese':'见: '}
+}
+
+#类型和载体字符串
+typestrings={
+'book':'[M]',
+'inbook':'[M]',
+'standard':'[S]',
+'periodical':'[J]',
+'article':'[J]',
+'newspaper':'[N]',
+'patent':'[P]',
+'online':'[EB]',
+'www':'[EB]',
+'electronic':'[EB]',
+'proceedings':'[C]',
+'inproceedings':'[C]',
+'conference':'[C]',
+'collection':'[G]',
+'incollection':'[G]',
+'thesis':'[D]',
+'mastersthsis':'[D]',
+'phdthsis':'[D]',
+'report':'[R]',
+'techreport':'[R]',
+'manual':'[A]',
+'archive/manual':'[A]',
+'database':'[DB]',
+'dataset':'[DS]',
+'software':'[CP]',
+'map':'[CM]',
+'unpublished':'[Z]',
+'misc':'[Z]',
 }
 
 #数据类型
 datatypeinfo={
 'namelist':['author','editor','translator','bookauthor'],
 'literallist':['location','address','publisher','institution','organization','school','language','keywords'],
-'literalfield':['title','journalsubtitle','booktitle','subtitle','titleaddon','edition','version','url','volume','number','type','note'],
+'literalfield':['title','journaltitle','journal','booktitle','subtitle','titleaddon','edition','version','url','volume','number','type','note','labelnumber'],
 'datefield':['date','year','urldate','origdate','eventdate'],
 'rangefield':['pages']
 }
@@ -201,23 +238,37 @@ bibliographystyle={
 "book":[
 {"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
 {"fieldsource":['author','editor','translator'],'nameformat':'uppercase'},
-{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':".",'posstring':"[M]"},
-{"fieldsource":['translator'],'nameformat':'uppercase','prepunct':"."},
-{"fieldsource":['edition'],'numerformat':'arabic','prepunct':".","posstring":r'\bibstring{edition}'},#["版","ed."]
-{"fieldsource":['location','address'],'prepunct':".",'replstring':"[出版社不详]"},#,'replstring':["出版社不详",'[S.l.]']
-{"fieldsource":['publisher'],'prepunct':":",'replstring':"[出版者不详]"},#,'replstring':["出版者不详",'[S.n.]']
-{"fieldsource":['date','year'],'prepunct':","},
-{"fieldsource":['pages'],'prepunct':":"},
+{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'nolastfieldprepunct':'','posstring':r"\typestring"},
+{"fieldsource":['translator'],'nameformat':'uppercase','prepunct':". "},
+{"fieldsource":['edition'],'numerformat':'arabic','prepunct':". ","posstring":r'\bibstring{edition}'},#["版","ed."]
+{"fieldsource":['location','address'],'prepunct':". ",'replstring':""},#,'replstring':["出版社不详",'[S.l.]']
+{"fieldsource":['publisher'],'prepunct':": ",'replstring':"[出版者不详]",'nolastfieldprepunct':'. '},#,'replstring':["出版者不详",'[S.n.]']
+{"fieldsource":['date','year'],'prepunct':", "},
+{"fieldsource":['pages'],'prepunct':": "},
 {"fieldsource":['urldate'],'prestring':"[","posstring":"]"},
-{"fieldsource":['url'],'prepunct':"."},
-{"fieldsource":['doi'],'prepunct':"."},
+{"fieldsource":['url'],'prepunct':". "},
+{"fieldsource":['doi'],'prepunct':". "},
 {"fieldsource":['endpunct'],'replstring':"."}
-]#,
-#"article":[]
+],
+"article":[
+{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
+{"fieldsource":['author','editor','translator'],'nameformat':'uppercase'},
+{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'nolastfieldprepunct':'','posstring':r"\typestring"},
+{"fieldsource":['journaltitle','journal'],'prepunct':". "},
+{"fieldsource":['date','year'],'prepunct':", "},
+{"fieldsource":['volume'],'prepunct':", "},
+{"fieldsource":['number'],'prestring':"(",'posstring':")"},
+{"fieldsource":['pages'],'prepunct':": "},
+{"fieldsource":['urldate'],'prestring':"[","posstring":"]"},
+{"fieldsource":['url'],'prepunct':". "},
+{"fieldsource":['doi'],'prepunct':". "},
+{"fieldsource":['endpunct'],'replstring':"."}
+],
+"newspaper":"article"
+#article:author.title[usera].journaltitle或journal,year,volume(number):pages[urldate].url.doi
 #standard:author.title[usera](//bookauthor.booktitle).edition.location:publisher,date或year:pages[urldate].url.doi
 #inbook:author.title[usera]//bookauthor.booktitle.edition.location:publisher,date或year:pages[urldate].url.doi
 #periodical:author/editor.title[usera].year或date,volume(number)-endyear, endvolume(endnumber).location:institution,date或year[urldate].url.doi
-#article:author.title[usera].journaltitle或journal,year,volume(number):pages[urldate].url.doi
 #newspaper:author.title[usera].journaltitle或journal,date(number)[urldate].url.doi
 #patent:author.title:number[usera].date或year[urldate].url.doi
 #online:author.title[usera].organization/instiution,date或year:pages(date/enddate/eventdate)[urldate].url.doi
@@ -229,26 +280,50 @@ bibliographystyle={
 #
 #
 #格式化一个文献条目文本
-def formatbibentry(bibentry,bibentrytext):
-	print()
-	print('bibentry:',bibentry)
-	bibentrytext='entry:'
-	if bibentry['entrytype']=='book':
-		for fieldinfo in bibliographystyle['book']:
+def formatallbibliography():
+	labelnumber=0
+	bibliographytext=''
+	for bibentry in bibentries:
+		labelnumber=labelnumber+1
+		bibentry['labelnumber']=labelnumber
+		bibentrytext=''
+		bibentrytext=formatbibentry(bibentry)
+		bibliographytext=bibliographytext+bibentrytext+'\n'
+		
+	print('\nreferecences')
+	print(bibliographytext)
+
+#
+#
+#格式化一个文献条目文本
+def formatbibentry(bibentry):
+	
+	print('--------------new entry---------')
+	print('\nbibentry:',bibentry)
+	#bibentrytext='entry:'
+	
+	bibentrytext=''
+	
+	if bibentry['entrytype'] in bibliographystyle:
+		print('INFO: format style of entrytype',bibentry['entrytype'],'is defined.')
+		if isinstance(bibliographystyle[bibentry['entrytype']],str):
+			formattype=bibliographystyle[bibentry['entrytype']]
+		else:
+			formattype=bibentry['entrytype']
+		
+		lastfield=True #前一域存在
+		
+		for fieldinfo in bibliographystyle[formattype]:
 			
-			fieldtext=formatfield(bibentry,fieldinfo)
+			rtnfield=formatfield(bibentry,fieldinfo,lastfield)
+			fieldtext=rtnfield[0]
+			lastfield=rtnfield[1]
 			
 			bibentrytext=bibentrytext+fieldtext
-			
-		pass
-	elif bibentry['entrytype']=='article':
-		pass
-	elif bibentry['entrytype']=='inbook':
-		pass
-	else:
-		pass
+	
 		
 	print(bibentrytext)
+	return bibentrytext
 
 #
 #
@@ -257,7 +332,7 @@ def formatbibentry(bibentry,bibentrytext):
 #分5类：姓名列表，文本列表，文本域，日期域，范围域
 #其中姓名列表，文本列表，日期域，日期域，范围域，都需要进行特殊的解析
 #而volume，number如果需要特殊解析则在文件域的格式处理时增加新的处理逻辑。
-def formatfield(bibentry,fieldinfo):
+def formatfield(bibentry,fieldinfo,lastfield):
 
 	print('fieldinfo:',fieldinfo)
 	#首先把域的内容先解析处理
@@ -314,19 +389,25 @@ def formatfield(bibentry,fieldinfo):
 			fieldcontents=rangefieldparser(bibentry,fieldsource)
 	
 	if not fieldsource:
-		if 'replstring' in fieldinfo:
+		if 'replstring' in fieldinfo and fieldinfo['replstring']:
 			print('replstring')
 			fieldsource=True
 			fieldcontents=fieldinfo['replstring']
 			
-	#接着做进一步的格式化
 	
+	#接着做进一步的格式化，包括标点，格式，字体等
 	fieldtext=''
 	
 	print(fieldsource)
 	if fieldsource:
-		if 'prepunct' in fieldinfo:
-			fieldtext=fieldtext+fieldinfo['prepunct']
+		if lastfield:#当前一个著录项存在，则正常输出
+			if 'prepunct' in fieldinfo:
+				fieldtext=fieldtext+fieldinfo['prepunct']
+		else:#当前一个著录项不存在，则首先输出'nolastfieldprepunct'
+			if 'nolastfieldprepunct' in fieldinfo:
+				fieldtext=fieldtext+fieldinfo['nolastfieldprepunct']
+			elif 'prepunct' in fieldinfo:
+				fieldtext=fieldtext+fieldinfo['prepunct']
 		
 		if 'prestring' in fieldinfo:
 			fieldtext=fieldtext+fieldinfo['prestring']
@@ -334,14 +415,21 @@ def formatfield(bibentry,fieldinfo):
 		if 'fieldformat' in fieldinfo:
 			fieldtext=fieldtext+'{'+fieldinfo['fieldformat']+'{'+fieldcontents+'}}'
 		else:
-			fieldtext=fieldtext+fieldcontents
+			fieldtext=fieldtext+str(fieldcontents)
 		
 		if 'posstring' in fieldinfo:
 			fieldtext=fieldtext+fieldinfo['posstring']
 		
 		if 'pospunct' in fieldinfo:
 			fieldtext=fieldtext+fieldinfo['pospunct']
+			
+		#更新lastfiled
+		lastfield=True
+	else:
+		lastfield=False
 	
+	
+	#本地化字符串的处理
 	print('fieldtext:',fieldtext)
 	while r'\bibstring' in fieldtext:
 		
@@ -351,8 +439,19 @@ def formatfield(bibentry,fieldinfo):
 		print('fieldtext:',fieldtext)
 		#下面这句不行因为，在字典取值是，不支持\1这样的正则表达式
 		#fieldtext=re.sub(r'\\bibstring{(.*)}',bibstrings[r'\1'][language],fieldtext,count=1)
+	
+	#标题的类型和载体标识符的处理
+	if r'\typestring' in fieldtext:
+		print(r'\typestring in',fieldtext)
+		if 'url' in bibentry:
+			typestring=typestrings[bibentry['entrytype']]
+			typestring=typestring.replace(']','/OL]')
+		else:
+			typestring=typestrings[bibentry['entrytype']]
+		print(typestring)
+		fieldtext=fieldtext.replace(r'\typestring',typestring)
 		
-	return fieldtext
+	return [fieldtext,lastfield]
 
 
 
@@ -481,34 +580,44 @@ def printfilecontents():
 #
 #输出修改后的bib文件
 def writefilenewbib(bibFile):
+
+	print(datetime.datetime.now().isoformat(timespec='seconds'))
+	
 	#json文件输出
 	jsonoutfile="new"+bibFile.replace('.bib','.json')
+	print("INFO: writing all references to '" + jsonoutfile + "'")
 	fout = open(jsonoutfile, 'w', encoding="utf8")
 	json.dump(bibentries, fout)
 	fout.close()
 
 	#bib文件输出
 	biboutfile="new"+bibFile
-	print("INFO: writing references from '" + biboutfile + "'")
+	
 	try:
 		fout = open(biboutfile, 'w', encoding="utf8")
 		fout.write("%% \n")
 		fout.write("%% bib file modified by biblatex-map.py\n")
-		print(datetime.datetime.now().isoformat(timespec='seconds'))
+		
 		fout.write("%% "+datetime.datetime.now().isoformat(timespec='seconds')+"\n")
 		fout.write("%% \n\n\n")
+		writebibentrycounter=0
 		if auxfile:
+			print("INFO: writing cited references in aux to '" + biboutfile + "'")
+			
 			for bibentry in bibentries:
 				if bibentry["entrykey"] in usedIds:
+					writebibentrycounter=writebibentrycounter+1
 					fout.write('@'+bibentry["entrytype"]+'{'+bibentry["entrykey"]+',\n')
 					for k,v in bibentry.items():
-						if k=="entrytype" or k=="entrykey" or v=='""' or v==None:
+						if k=="entrytype" or k=="entrykey" or v=='""' or v==None or k=='entrysn':
 							pass
 						else:
-							fout.write('\t'+k+' = {'+v+'},\n')
+							fout.write('\t'+str(k)+' = {'+str(v)+'},\n')
 					fout.write('}\n\n')
 		else:
+			print("INFO: writing all references to '" + biboutfile + "'")
 			for bibentry in bibentries:
+				writebibentrycounter=writebibentrycounter+1
 				fout.write('@'+bibentry["entrytype"]+'{'+bibentry["entrykey"]+',\n')
 				for k,v in bibentry.items():
 					if k=="entrytype" or k=="entrykey" or v=='""' or k=='entrysn' or v==None:
@@ -518,6 +627,7 @@ def writefilenewbib(bibFile):
 				fout.write('}\n\n')
 		
 		fout.close()
+		print("INFO: " + str(writebibentrycounter) + " references writed")
 	except IOError:
 		print("ERROR: Input bib file '" + bibFile +
 				"' doesn't exist or is not readable")
@@ -542,7 +652,7 @@ def bibentryparsing():
 	for line in bibfilecontents:#遍历所有行
 		#print(line)
 		
-		if line.startswith("@") and not line.startswith("@comment"):#判断条目开始行
+		if line.startswith("@") and not "@comment" in line.lower():#判断条目开始行
 			entrysn=entrysn+1
 			entrystated=True #新条目开始
 			print('entrysn=',entrysn)
@@ -1053,12 +1163,14 @@ def mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo):
 if __name__=="__main__":
 	
 	#设置需要修改的bib文件
+	#inputbibfile='example.bib'
 	inputbibfile='biblatex-map-test.bib'
 	
-	auxfile=""
+	#auxfile="opt-gbpub-true.aux"
 	#set the aux file
 	#this is not necessary
-	#auxfile='main.aux'
+	auxfile=''
+	#auxfile="opt-gbpub-true.aux"
 	
 	readfilecontents(inputbibfile)
 	
@@ -1075,6 +1187,8 @@ if __name__=="__main__":
 	writefilenewbib(inputbibfile)
 	
 	print(bibentries[0])
-	tempstr=''
-	formatbibentry(bibentries[0],tempstr)
+
+	print(formatbibentry(bibentries[0]))
+	
+	formatallbibliography()
 		
