@@ -1,0 +1,15 @@
+[
+{'entrytype': 'newspaper', 'entrykey': 'CITATION_NEWSPAPER', 'entrysn': 1, 'author': '吴刚', 'title': '立陶宛进入欧元时代', 'journaltitle': '人民日报', 'date': '2015-1-2', 'language': 'chs', 'note': ''},
+{'entrytype': 'book', 'entrykey': 'SANGUOYANYI', 'entrysn': 2, 'author': '罗贯中', 'title': '三国演义', 'edition': '1', 'address': '山西太原', 'year': '元末明初', 'language': 'chs'},
+{'entrytype': 'electronic', 'entrykey': 'BUPT_Thesis_Format_2004', 'entrysn': 3, 'title': '关于研究生学位论文格式的统一要求', 'author': '北京邮电大学研究生院培养与学位办公室', 'etype': 'EB', 'ehowpublished': 'OL', 'date': '2004', 'url': 'http://www.bupt.edu.cn/', 'language': 'chs'},
+{'entrytype': 'electronic', 'entrykey': 'latex-bupt', 'entrysn': 4, 'author': '王旭', 'title': 'latex-bupt: \\LaTeX style for {BUPT} thesis', 'year': '2007', 'etype': 'EB', 'ehowpublished': 'OL', 'refdate': '2009-01-14', 'url': 'http://code.google.com/p/latex-bupt/', 'language': 'chs'},
+{'entrytype': 'electronic', 'entrykey': 'buptthesis', 'entrysn': 5, 'author': '张煜', 'title': '北京邮电大学研究生学位论文 \\LaTeX{} 文档类', 'year': '2009', 'dhowpublished': 'online', 'urldate': '2013-7-6', 'source': 'http://code.google.com/p/buptthesis/', 'language': 'chs'},
+{'entrytype': 'book', 'entrykey': 'Miroslav2003--', 'entrysn': 6, 'author': 'Miroslav, D. L. and Dejan, V. T.', 'translator': '朱义胜 and 董辉', 'language': 'chinese', 'location': '北京', 'publisher': '电子工业出版社', 'date': '2003-01', 'title': '信号处理滤波器设计方法'},
+{'entrytype': 'article', 'entrykey': '于潇2011-15-23', 'entrysn': 7, 'author': '于潇 and 刘义 and 柴跃廷 and others', 'date': '2011', 'journaltitle': '清华大学学报', 'number': '11', 'pages': '15--23', 'title': '互联网药品可信交易环境中主体资质审核备案模式', 'volume': '52'},
+{'entrytype': 'inbook', 'entrykey': '姚中秋2008--', 'entrysn': 8, 'author': '姚, 中秋', 'bookauthor': '罗, 卫东 and 姚, 中秋', 'location': '杭州', 'publisher': '浙江大学出版社', 'booktitle': '中国转型的理论分析', 'date': '2008', 'pages': '44', 'title': '一种制度变迁模式'},
+{'entrytype': 'newspaper', 'entrykey': '张田勤2000--', 'entrysn': 9, 'title': '犯罪DNA库与生命伦理学计划', 'author': '张田勤', 'year': '{2000-11-12}', 'journaltitle': '大众科技报', 'note': 'news', 'number': '7'},
+{'entrytype': 'www', 'entrykey': '萧钰2001--', 'entrysn': 10, 'title': '出版业信息化迈入快车道', 'author': '萧钰', 'url': 'http://www.creader.com/news/20011219/200112190019.html', 'urldate': '2002-04-15', 'date': '2001-12-19'},
+{'entrytype': 'patent', 'entrykey': '刘加林1993--', 'entrysn': 11, 'title': '多功能一次性压舌板', 'author': '刘加林', 'year': '{1993-04-14}', 'number': '92214985.2', 'location': '中国发明专利'},
+{'entrytype': 'phdthesis', 'entrykey': '张若凌2004--', 'entrysn': 12, 'title': '高超声速非平衡流动的计算和实验研究', 'author': '张若凌', 'school': '中国空气动力研究与发展中心', 'year': '2004', 'location': '绵阳'},
+{'entrytype': 'article', 'entrykey': 'art1', 'entrysn': 13, 'title': 'article title', 'journaltitle': 'NYULSQ', 'number': '36', 'pages': '8--9', 'date': '1971'},
+]

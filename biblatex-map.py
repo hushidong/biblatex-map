@@ -11,17 +11,28 @@ bib文件数据修改，比如对日期进行规范化等
 bib文件解析，输出新的bib文件，或json格式的文件
 3. display the bib info with specific standard like GB/T 7714-2015
 将bib文件信息格式化显示，比如以GB/T 7714-2015格式显示
+
 4. 当某些项缺失时，后面跟着的项前标点可能会变化的问题，要处理。
 5. newspaper,与aritcle的关系
 6. standard,与book和inbook的关系
 7. 同样是date，newspaper需要写全，而article不需要。
 
+8. 使用了@string字符串的输出要处理，可以采用全局选项控制的方式实施。
+
+9. match 大小写区分的match需要实现
+10. 一些biblatex的map选项需要实现，包括entryclone=?clonekey?
+		entrynew=?entrynewkey?
+		entrynewtype=?string?
+		entrytarget=?string?
+		entrynocite=true, false default: false
+		entrynull=true, false default: false
+		
 history：
 v1.0 2019/02/09
 
 biblatex source map opts：
 
-已实现的选项：
+biblatex中数据处理已实现的选项：
 typesource=?entrytype?
 typetarget=?entrytype?
 fieldsource=?entryfield?
@@ -45,19 +56,6 @@ null=true, false default: false
 origfield=true, false default: false
 origentrytype=true, false default: false
 origfieldval=true, false default: false
-
-
-
-未实现的选项
-
-entryclone=?clonekey?
-entrynew=?entrynewkey?
-entrynewtype=?string?
-entrytarget=?string?
-entrynocite=true, false default: false
-entrynull=true, false default: false
-
-1. match 大小写区分的match
 
 """
 
@@ -185,7 +183,7 @@ formatoptions={
 }
 
 #本地化字符串
-bibstrings={
+localstrings={
 'andothers':{'english':'et al.','chinese':'等'},
 'and':{'english':' and ','chinese':'和'},
 'edition':{'english':'th ed.','chinese':'版'},
@@ -435,10 +433,10 @@ def formatfield(bibentry,fieldinfo,lastfield):
 		
 		language=languagejudgement(bibentry,fieldinfo,fieldsource)
 		m = re.search(r'\\bibstring{(.*)}',fieldtext)#注意\字符的匹配，即便是在r''中也需要用\\表示
-		fieldtext=re.sub(r'\\bibstring{.*}',bibstrings[m.group(1)][language],fieldtext,count=1)
+		fieldtext=re.sub(r'\\bibstring{.*}',localstrings[m.group(1)][language],fieldtext,count=1)
 		print('fieldtext:',fieldtext)
 		#下面这句不行因为，在字典取值是，不支持\1这样的正则表达式
-		#fieldtext=re.sub(r'\\bibstring{(.*)}',bibstrings[r'\1'][language],fieldtext,count=1)
+		#fieldtext=re.sub(r'\\bibstring{(.*)}',localstrings[r'\1'][language],fieldtext,count=1)
 	
 	#标题的类型和载体标识符的处理
 	if r'\typestring' in fieldtext:
@@ -576,18 +574,31 @@ def readfilecontents(bibFile):
 def printfilecontents():
 	for line in bibfilecontents:
 		print(line)
-		
+
+
+
 #
 #输出修改后的bib文件
 def writefilenewbib(bibFile):
 
 	print(datetime.datetime.now().isoformat(timespec='seconds'))
 	
-	#json文件输出
+	#json文件输出,用dump方法
 	jsonoutfile="new"+bibFile.replace('.bib','.json')
 	print("INFO: writing all references to '" + jsonoutfile + "'")
 	fout = open(jsonoutfile, 'w', encoding="utf8")
 	json.dump(bibentries, fout)
+	fout.close()
+	
+	#json文件输出,直接用write写
+	jsonoutfile="new"+bibFile.replace('.bib','cited.json')
+	fout = open(jsonoutfile, 'w', encoding="utf8")
+	print("INFO: writing cited references to '" + jsonoutfile + "'")
+	fout.write('[\n')
+	for bibentry in bibentries:
+		if bibentry["entrykey"] in usedIds or not usedIds:
+			fout.write(repr(bibentry)+',\n')
+	fout.write(']\n')
 	fout.close()
 
 	#bib文件输出
@@ -600,6 +611,23 @@ def writefilenewbib(bibFile):
 		
 		fout.write("%% "+datetime.datetime.now().isoformat(timespec='seconds')+"\n")
 		fout.write("%% \n\n\n")
+		
+		for bibcomment in bibcomments:
+			for k,v in bibcomment.items():
+				if k=="entrytype":
+					fout.write('@'+bibcomment["entrytype"]+'{')
+				else:
+					fout.write(str(v))
+			fout.write('}\n\n')
+			
+		for bibstring in bibstrings:
+			for k,v in bibstring.items():
+				if k=="entrytype":
+					fout.write('@'+bibstring["entrytype"]+'{')
+				else:
+					fout.write(str(v))
+			fout.write('}\n\n')
+		
 		writebibentrycounter=0
 		if auxfile:
 			print("INFO: writing cited references in aux to '" + biboutfile + "'")
@@ -633,14 +661,32 @@ def writefilenewbib(bibFile):
 				"' doesn't exist or is not readable")
 		sys.exit(-1)
 		
+
+
+
 #
 #将条目解析放到bibentries列表中
 #每个条目是一个dict字典
 def bibentryparsing():
 	global bibentries
+	global bibcomments
+	global bibstrings
 	bibentries=[]#用于记录所有条目
 	bibentry={}#用于记录当前条目
+	
+	bibcomments=[]#用于记录所有@comment条目
+	bibcomment={}#用于记录当前@comment条目
+	
+	bibstrings=[]#用于记录所有@stirng条目
+	bibstring={}#用于记录当前@stirng条目
+	
 	entrysn=0 #用于标记条目序号
+	bibentrycounter=0##用于标记条目总数
+	commentsn=0 #用于标记@comment条目序号
+	bibcommentcounter=0#用于标记@comment条目总数
+	stringsn=0 #用于标记@stirng条目序号
+	bibstringcounter=0#用于标记@stirng条目总数
+	
 	entrystated=False #用于标记条目开始
 	fieldvalended=True #用于标记域的值当前行是否已经结束
 	fieldvalue="" #用于记录当前域的值
@@ -652,7 +698,7 @@ def bibentryparsing():
 	for line in bibfilecontents:#遍历所有行
 		#print(line)
 		
-		if line.startswith("@") and not "@comment" in line.lower():#判断条目开始行
+		if line.startswith("@") and not "@comment" in line.lower() and not "@string" in line.lower():#判断条目开始行
 			entrysn=entrysn+1
 			entrystated=True #新条目开始
 			print('entrysn=',entrysn)
@@ -729,58 +775,105 @@ def bibentryparsing():
 				
 				elif '}' in line:#条目结束行
 
-					global bibentryglobal
-					bibentryglobal=copy.deepcopy(bibentry) 
-					print('entry:',bibentryglobal)
-					bibentries.append(bibentryglobal)
+					#global bibentryglobal
+					#bibentryglobal=copy.deepcopy(bibentry) 
+					#print('entry:',bibentryglobal)
+					#bibentries.append(bibentryglobal)
+					print('entry:',bibentry)
+					bibentries.append(bibentry)
 					bibentry={}
 					entrystated=False
 					
 			else: #当前行是前面的未结束域的值，因此直接往前面的域值添加即可
 				fieldvalcontinued=True
-				entryfieldline=" "+line
-				for chari in entryfieldline.strip():
-					fieldvalue=fieldvalue+chari
-					if chari =='{':
-						counterbracket=counterbracket+1
-					elif chari =='}':
-						counterbracket=counterbracket-1
-						if enclosebracket:
-							if counterbracket==0:
-								bibentry[entryfield]=fieldvalue[1:-1]
-								fieldvalue=""
-								counterbracket=0
-								counterquotes=0
-								fieldvalended=True
-								fieldvalcontinued=False
-								break
-					elif chari =='"':
-						counterquotes=counterquotes+1
-						if not enclosebracket:
-							if mod(counterquotes,2)==0:
-								bibentry[entryfield]=fieldvalue[1:-1]
-								fieldvalue=""
-								counterbracket=0
-								counterquotes=0
-								fieldvalended=True
-								fieldvalcontinued=False
-								break
-					elif chari ==',':
-							if enclosenone:
-								bibentry[entryfield]=fieldvalue[:-1]
-								fieldvalue=""
-								counterbracket=0
-								counterquotes=0
-								fieldvalended=True
-								fieldvalcontinued=False
-								enclosenone=False
+
+				entryfieldline=line
+				
+				if enclosenone:#当域没有包围符号时，接续的行可能是用逗号结束的域，也可能没有逗号，而用}直接结束条目信息
+					for chari in entryfieldline.strip():
+						fieldvalue=fieldvalue+chari
+						if chari ==',':
+							bibentry[entryfield]=fieldvalue[:-1]
+							fieldvalue=""
+							counterbracket=0
+							counterquotes=0
+							fieldvalended=True
+							fieldvalcontinued=False
+							enclosenone=False
+						elif chari =='}':
+							bibentry[entryfield]=fieldvalue[:-1]
+							fieldvalue=""
+							counterbracket=0
+							counterquotes=0
+							fieldvalended=True
+							fieldvalcontinued=False
+							enclosenone=False
+							print('entry:',bibentry)
+							bibentries.append(bibentry)
+							bibentry={}
+							entrystated=False
+				
+				else:
+					for chari in entryfieldline.strip():
+						fieldvalue=fieldvalue+chari
+						if chari =='{':
+							counterbracket=counterbracket+1
+						elif chari =='}':
+							counterbracket=counterbracket-1
+							if enclosebracket:
+								if counterbracket==0:
+									bibentry[entryfield]=fieldvalue[1:-1]
+									fieldvalue=""
+									counterbracket=0
+									counterquotes=0
+									fieldvalended=True
+									fieldvalcontinued=False
+									break
+						elif chari =='"':
+							counterquotes=counterquotes+1
+							if not enclosebracket:
+								if mod(counterquotes,2)==0:
+									bibentry[entryfield]=fieldvalue[1:-1]
+									fieldvalue=""
+									counterbracket=0
+									counterquotes=0
+									fieldvalended=True
+									fieldvalcontinued=False
+									break
+
+								
 				if fieldvalcontinued:
 					fieldvalended=False
+		elif line.startswith("@") and "@comment" in line.lower():#@comment的起始
+			commentsn=commentsn+1
+			entrynow=line.lstrip('@').split(sep='{', maxsplit=1)
+			entrytype=entrynow[0]
+			bibcomment['entrytype']=entrytype.lower()#条目类型小写，方便比较
+			entrycontents=entrynow[1].strip()[:-1]
+			bibcomment['entrycontents']=entrycontents
+			print(bibcomment)
+			bibcomments.append(bibcomment)
+			bibcomment={}
+			
+		elif line.startswith("@") and "@string" in line.lower():#@string的起始
+			stringsn=stringsn+1
+			entrynow=line.lstrip('@').split(sep='{', maxsplit=1)
+			entrytype=entrynow[0]
+			bibstring['entrytype']=entrytype.lower()#条目类型小写，方便比较
+			entrycontents=entrynow[1].strip()[:-1]
+			bibstring['entrycontents']=entrycontents
+			print(bibstring)
+			bibstrings.append(bibstring)
+			bibstring={}
 
-	print('entrysn=',entrysn)
+	
 	bibentrycounter=len(bibentries)
-	print('entrycounter=',bibentrycounter)
-	if not bibentrycounter==entrysn:
+	bibcommentcounter=len(bibcomments)
+	bibstringcounter=len(bibstrings)
+	print('entrysn=',entrysn,' commentsn=',commentsn,' stringsn=',stringsn)
+	print('entryct=',bibentrycounter,' commentct=',bibcommentcounter,' stringct=',bibstringcounter)
+	
+	if not bibentrycounter==entrysn or not bibcommentcounter==commentsn or not bibstringcounter==stringsn:
 		try:
 			raise BibParsingError('bib file parsing went wrong!')
 		except BibParsingError as e:
