@@ -7,19 +7,63 @@ to display references with specific bibliography standard
 features：
 1. souce map of biblatex like: generalize date
 bib文件数据修改，比如对日期进行规范化等
+
 2. bib file parsing, bib file out, json formatted file out
 bib文件解析，输出新的bib文件，或json格式的文件
+
 3. display the bib info with specific standard like GB/T 7714-2015
 将bib文件信息格式化显示，比如以GB/T 7714-2015格式显示
 
 4. 当某些项缺失时，后面跟着的项前标点可能会变化的问题，要处理。
-5. newspaper,与aritcle的关系
-6. standard,与book和inbook的关系
-7. 同样是date，newspaper需要写全，而article不需要。
+利用prepunctifnolastfield选项处理
 
-8. 使用了@string字符串的输出要处理，可以采用全局选项控制的方式实施。
+5. newspaper,与aritcle的关系
+不像biblatex中需要用note来标记，而直接用newpaper类型，使用article类型的格式，但是年份需要修改。
+同样是date，newspaper需要写全，而article不需要，这利用dateformat选项处理
+
+6. standard,与book和inbook的关系
+直接用inbook代替，但利用omitifnofield选项，处理好//
+
+7. [S.l.]: [s.n.]合并
+利用replacestrings单独做替换
+
+8. 当存在载体域时加上载体
+在title域中对\typestring做处理
+
+9. 使用了@string字符串的输出要处理，可以采用全局选项控制的方式实施。
+这将在开始格式化之前对域值进行替换
+这时还进行
+date范围解析，年月日的解析放到域格式处理中
+volume和number的范围解析
+pages中的间隔符替换
+
+10. 当出版项不存在，而url存在是，日期格式从普通的year变为iso格式带()
+利用omitifnofield，omitiffield做两次date处理
+
+11. 本地化字符串处理
+在域格式处理时，利用\bibstring做不同语言的替换
+
+未解决：
+
+
+7. name类型的格式选项
+
+8. date类型的格式选项，date范围的解析
+
+9. literal类型的格式选项：sentencecase
+
+10. list类型的格式选项
+
+11. range类型的格式选项
+
+12. 文本中{}的忽略，而输出到tex的文本中的{}不忽略
+到正常文本中的利用符号追踪方法成对的消除{}，或者也不消除，
+而是在html文件中做类似于tex中的编组操作，保护大小写的作用要体现。
+保护大小写的{}在域处理中必须要处理完成，而用于格式的编组{}必须要保留。
+
 
 9. match 大小写区分的match需要实现
+
 10. 一些biblatex的map选项需要实现，包括entryclone=?clonekey?
 		entrynew=?entrynewkey?
 		entrynewtype=?string?
@@ -171,11 +215,11 @@ sourcemaps=[]
 ## 参考文献表的制定格式设置，比如GB/T 7714-2015
 ## 
 
-#选项
+#全局选项
 formatoptions={
 "nameformat":'uppercase',#姓名处理选项：uppercase,lowercase,given-family,family-given,pinyin
-"dateformat":'year',#'日期处理选项'：year，iso，等
-"urldateformat":'year',#'日期处理选项'：year，iso，等
+"date":'year',#'日期处理选项'：year，iso，等
+"urldate":'iso',#'日期处理选项'：year，iso，等
 "maxbibnames":3,#
 "minbibnames":3,#
 "maxbibitems":1,#
@@ -187,7 +231,15 @@ localstrings={
 'andothers':{'english':'et al.','chinese':'等'},
 'and':{'english':' and ','chinese':'和'},
 'edition':{'english':'th ed.','chinese':'版'},
-'in':{'english':'in: ','chinese':'见: '}
+'in':{'english':'in: ','chinese':'见: '},
+'nolocation':{'english':'[S.l.]','chinese':'[出版地不详]'},
+'nopublisher':{'english':'[s.n.]','chinese':'[出版者不详]'},
+}
+
+#替换字符串
+replacestrings={
+'[出版地不详]: [出版者不详]':'[出版地不详 : 出版者不详]',
+'[S.l.]: [s.n.]':'[S.l. : s.n.]',
 }
 
 #类型和载体字符串
@@ -209,7 +261,7 @@ typestrings={
 'incollection':'[G]',
 'thesis':'[D]',
 'mastersthsis':'[D]',
-'phdthsis':'[D]',
+'phdthesis':'[D]',
 'report':'[R]',
 'techreport':'[R]',
 'manual':'[A]',
@@ -226,8 +278,9 @@ typestrings={
 datatypeinfo={
 'namelist':['author','editor','translator','bookauthor'],
 'literallist':['location','address','publisher','institution','organization','school','language','keywords'],
-'literalfield':['title','journaltitle','journal','booktitle','subtitle','titleaddon','edition','version','url','volume','number','type','note','labelnumber'],
-'datefield':['date','year','urldate','origdate','eventdate'],
+'literalfield':['title','journaltitle','journal','booktitle','subtitle','titleaddon','edition','version','url',
+                'volume','number','endvolume','endnumber','type','note','labelnumber'],
+'datefield':['date','year','urldate','enddate','origdate','eventdate'],
 'rangefield':['pages']
 }
 
@@ -236,11 +289,11 @@ bibliographystyle={
 "book":[
 {"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
 {"fieldsource":['author','editor','translator'],'nameformat':'uppercase'},
-{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'nolastfieldprepunct':'','posstring':r"\typestring"},
+{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'prepunctifnolastfield':'','posstring':r"\typestring"},
 {"fieldsource":['translator'],'nameformat':'uppercase','prepunct':". "},
-{"fieldsource":['edition'],'numerformat':'arabic','prepunct':". ","posstring":r'\bibstring{edition}'},#["版","ed."]
-{"fieldsource":['location','address'],'prepunct':". ",'replstring':""},#,'replstring':["出版社不详",'[S.l.]']
-{"fieldsource":['publisher'],'prepunct':": ",'replstring':"[出版者不详]",'nolastfieldprepunct':'. '},#,'replstring':["出版者不详",'[S.n.]']
+{"fieldsource":['edition'],'numerformat':'arabic','prepunct':". ","posstring":r'\bibstring{edition}'},
+{"fieldsource":['location','address'],'prepunct':". ",'replstring':r"\bibstring{nolocation}"},
+{"fieldsource":['publisher'],'prepunct':": ",'replstring':r"\bibstring{nopublisher}",'prepunctifnolastfield':'. '},
 {"fieldsource":['date','year'],'prepunct':", "},
 {"fieldsource":['pages'],'prepunct':": "},
 {"fieldsource":['urldate'],'prestring':"[","posstring":"]"},
@@ -251,9 +304,9 @@ bibliographystyle={
 "article":[
 {"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
 {"fieldsource":['author','editor','translator'],'nameformat':'uppercase'},
-{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'nolastfieldprepunct':'','posstring':r"\typestring"},
+{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'prepunctifnolastfield':'','posstring':r"\typestring"},
 {"fieldsource":['journaltitle','journal'],'prepunct':". "},
-{"fieldsource":['date','year'],'prepunct':", "},
+{"fieldsource":['year','date'],'prepunct':", "},
 {"fieldsource":['volume'],'prepunct':", "},
 {"fieldsource":['number'],'prestring':"(",'posstring':")"},
 {"fieldsource":['pages'],'prepunct':": "},
@@ -262,16 +315,145 @@ bibliographystyle={
 {"fieldsource":['doi'],'prepunct':". "},
 {"fieldsource":['endpunct'],'replstring':"."}
 ],
-"newspaper":"article"
-#article:author.title[usera].journaltitle或journal,year,volume(number):pages[urldate].url.doi
-#standard:author.title[usera](//bookauthor.booktitle).edition.location:publisher,date或year:pages[urldate].url.doi
-#inbook:author.title[usera]//bookauthor.booktitle.edition.location:publisher,date或year:pages[urldate].url.doi
-#periodical:author/editor.title[usera].year或date,volume(number)-endyear, endvolume(endnumber).location:institution,date或year[urldate].url.doi
-#newspaper:author.title[usera].journaltitle或journal,date(number)[urldate].url.doi
-#patent:author.title:number[usera].date或year[urldate].url.doi
-#online:author.title[usera].organization/instiution,date或year:pages(date/enddate/eventdate)[urldate].url.doi
-#report:author.title[usera].translator.type number.version.location:institution,date 或year:pages[urldate].url.doi
-#thesis:author.title[usera].translator.location:institution,date或year:pages[urldate].url.doi
+"newspaper":[
+{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
+{"fieldsource":['author','editor','translator'],'nameformat':'uppercase'},
+{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'prepunctifnolastfield':'','posstring':r"\typestring"},
+{"fieldsource":['journaltitle','journal'],'prepunct':". "},
+{"fieldsource":['date','year'],'prepunct':", ",'dateformat':'iso'},
+{"fieldsource":['number'],'prestring':"(",'posstring':")"},
+{"fieldsource":['pages'],'prepunct':": "},
+{"fieldsource":['urldate'],'prestring':"[","posstring":"]"},
+{"fieldsource":['url'],'prepunct':". "},
+{"fieldsource":['doi'],'prepunct':". "},
+{"fieldsource":['endpunct'],'replstring':"."}
+],
+"inbook":[
+{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
+{"fieldsource":['author','editor','translator'],'nameformat':'uppercase'},
+{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'prepunctifnolastfield':'','posstring':r"\typestring"},
+{"fieldsource":['in'],'replstring':"//",'omitifnofield':['bookauthor','editor','booktitle']},
+{"fieldsource":['bookauthor','editor'],'nameformat':'uppercase'},
+{"fieldsource":['booktitle'],'caseformat':'sentencecase','prepunct':". ",'prepunctifnolastfield':''},
+{"fieldsource":['edition'],'numerformat':'arabic','prepunct':". ","posstring":r'\bibstring{edition}'},
+{"fieldsource":['location','address'],'prepunct':". ",'replstring':r"\bibstring{nolocation}"},
+{"fieldsource":['publisher'],'prepunct':": ",'replstring':r"\bibstring{nopublisher}",'prepunctifnolastfield':'. '},
+{"fieldsource":['date','year'],'prepunct':", "},
+{"fieldsource":['pages'],'prepunct':": "},
+{"fieldsource":['urldate'],'prestring':"[","posstring":"]"},
+{"fieldsource":['url'],'prepunct':". "},
+{"fieldsource":['doi'],'prepunct':". "},
+{"fieldsource":['endpunct'],'replstring':"."}
+],
+"inproceedings":"inbook",
+"incollection":"inbook",
+"standard":"inbook",
+"proceedings":"book",
+"collection":"book",
+"patent":[
+{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
+{"fieldsource":['author'],'nameformat':'uppercase'},
+{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'prepunctifnolastfield':'','posstring':r"\typestring"},
+{"fieldsource":['number'],'prepunct':": "},
+{"fieldsource":['date','year'],'prepunct':", "},
+{"fieldsource":['urldate'],'prestring':"[","posstring":"]"},
+{"fieldsource":['url'],'prepunct':". "},
+{"fieldsource":['doi'],'prepunct':". "},
+{"fieldsource":['endpunct'],'replstring':"."}
+],
+"online":[
+{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
+{"fieldsource":['author','editor','translator'],'nameformat':'uppercase'},
+{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'prepunctifnolastfield':'','posstring':r"\typestring"},
+{"fieldsource":['organization','instiution'],'prepunct':". "},
+{"fieldsource":['date','year'],'prepunct':", ",'prepunctifnolastfield':'. ','omitifnofield':['enddate','eventdate']},
+{"fieldsource":['pages'],'prepunct':": "},
+{"fieldsource":['date','enddate','eventdate'],'prepunct':". ","dateformat":"iso",'prestring':"(","posstring":")"},
+{"fieldsource":['urldate'],'prestring':"[","posstring":"]",'prepunctifnolastfield':'. '},
+{"fieldsource":['url'],'prepunct':". ",'prepunctifnolastfield':''},
+{"fieldsource":['doi'],'prepunct':". "},
+{"fieldsource":['endpunct'],'replstring':"."}
+],
+"www":"online",
+"electronic":"online",
+"report":[
+{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
+{"fieldsource":['author','editor','translator'],'nameformat':'uppercase'},
+{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'prepunctifnolastfield':'','posstring':r"\typestring"},
+{"fieldsource":['translator'],'nameformat':'uppercase','prepunct':". "},
+{"fieldsource":['type'],'prepunct':". "},
+{"fieldsource":['number'],'prepunct':"",'prepunctifnolastfield':'. '},
+{"fieldsource":['version'],'prepunct':". "},
+{"fieldsource":['location','address'],'prepunct':". ",'replstring':r"\bibstring{nolocation}"},
+{"fieldsource":['institution','publisher'],'prepunct':": ",'replstring':r"\bibstring{nopublisher}",'prepunctifnolastfield':'. '},
+{"fieldsource":['date','year'],'prepunct':", ",'omitifnofield':['location','address','institution','publisher'],'omitiffield':['url']},
+{"fieldsource":['date','year'],'prepunct':". ",'prestring':'(','posstring':')','omitiffield':['location','address','institution','publisher']},
+{"fieldsource":['pages'],'prepunct':": "},
+{"fieldsource":['urldate'],'prestring':"[","posstring":"]"},
+{"fieldsource":['url'],'prepunct':". "},
+{"fieldsource":['doi'],'prepunct':". "},
+{"fieldsource":['endpunct'],'replstring':"."}
+],
+"techreport":"report",
+"periodical":[
+{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
+{"fieldsource":['editor','author'],'nameformat':'uppercase'},
+{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'prepunctifnolastfield':'','posstring':r"\typestring"},
+{"fieldsource":['year','date'],'prepunct':", "},
+{"fieldsource":['volume'],'prepunct':", "},
+{"fieldsource":['number'],'prestring':"(",'posstring':")-"},
+{"fieldsource":['endyear','enddate'],'prepunct':", "},
+{"fieldsource":['endvolume'],'prepunct':", "},
+{"fieldsource":['endnumber'],'prestring':"(",'posstring':")"},
+{"fieldsource":['location','address'],'prepunct':". ",'replstring':r"\bibstring{nolocation}"},
+{"fieldsource":['institution','publisher'],'prepunct':": ",'replstring':r"\bibstring{nopublisher}",'prepunctifnolastfield':'. '},
+{"fieldsource":['year','date'],'prepunct':", ",'posstring':'-'},
+{"fieldsource":['pages'],'prepunct':": "},
+{"fieldsource":['urldate'],'prestring':"[","posstring":"]"},
+{"fieldsource":['url'],'prepunct':". "},
+{"fieldsource":['doi'],'prepunct':". "},
+{"fieldsource":['endpunct'],'replstring':"."}
+],
+#omitifnofield:必须所有的域都不存在才为true
+#omitiffield:只要存在一个域就为true
+"thesis":[
+{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
+{"fieldsource":['author','editor','translator'],'nameformat':'uppercase'},
+{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'prepunctifnolastfield':'','posstring':r"\typestring"},
+{"fieldsource":['translator'],'nameformat':'uppercase','prepunct':". "},
+{"fieldsource":['location','address'],'prepunct':". "},
+{"fieldsource":['institution','publisher','school'],'prepunct':": ",'prepunctifnolastfield':'. '},
+{"fieldsource":['date','year'],'prepunct':", ",'omitifnofield':['location','address','institution','publisher'],'omitiffield':['url']},
+{"fieldsource":['date','year'],'prepunct':". ",'prestring':'(','posstring':')','omitiffield':['location','address','institution','publisher']},
+{"fieldsource":['pages'],'prepunct':": "},
+{"fieldsource":['urldate'],'prestring':"[","posstring":"]"},
+{"fieldsource":['url'],'prepunct':". "},
+{"fieldsource":['doi'],'prepunct':". "},
+{"fieldsource":['endpunct'],'replstring':"."}
+],
+"manual":"thesis",
+"unpublished":"thesis",
+"database":"thesis",
+"dataset":"thesis",
+"software":"thesis",
+"map":"thesis",
+"archive":"thesis",
+"misc":[
+{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
+{"fieldsource":['author','editor','translator'],'nameformat':'uppercase'},
+{"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'prepunctifnolastfield':'','posstring':r"\typestring"},
+{"fieldsource":['howpublished'],'prepunct':". "},
+{"fieldsource":['location','address'],'prepunct':". "},
+{"fieldsource":['institution','publisher'],'prepunct':": ",'prepunctifnolastfield':'. '},
+{"fieldsource":['date','year'],'prepunct':", "},
+{"fieldsource":['pages'],'prepunct':": "},
+{"fieldsource":['urldate'],'prestring':"[","posstring":"]"},
+{"fieldsource":['url'],'prepunct':". "},
+{"fieldsource":['doi'],'prepunct':". "},
+{"fieldsource":['endpunct'],'replstring':"."}
+],
+"phdthesis":"thesis",
+"mastersthesis":"thesis",
 }
 
 
@@ -319,7 +501,15 @@ def formatbibentry(bibentry):
 			
 			bibentrytext=bibentrytext+fieldtext
 	
-		
+	#对替换字符串做处理
+	for k,v in replacestrings.items():
+		print(k,v)
+		#m=re.search(k,bibentrytext)
+		#print(m)
+		#bibentrytext=re.sub(k,v,bibentrytext)
+		#利用正则反而不行，直接用字符串替换
+		bibentrytext=bibentrytext.replace(k,v)
+	
 	print(bibentrytext)
 	return bibentrytext
 
@@ -337,54 +527,96 @@ def formatfield(bibentry,fieldinfo,lastfield):
 	fieldcontents=''
 	
 	fieldsource=None
-	if fieldinfo['fieldsource'][0] in  datatypeinfo['namelist']:
+
+	#首先判断域是否忽略
+	fieldomit=False
+	
+	if 'omitifnofield' in fieldinfo and 'omitiffield' in fieldinfo:
+
+		fieldomita=True#假设忽略的条件满足
+		for field in fieldinfo['omitifnofield']:#只要需要不存在的域有一个存在，那么条件就不满足
+			if field in bibentry:
+				fieldomita=False
+				break
+
+		fieldomitb=False#假设忽略的条件不满足
+		for field in fieldinfo['omitiffield']:#只要需要存在的域中有一个存在，那么条件就满足
+			if field not in bibentry:
+				fieldomitb=True
+				break
+
+		fieldomit=fieldomita and fieldomitb
 		
-		for field in fieldinfo['fieldsource']:#
-			if field in bibentry:#当域存在域条目中时，确定要处理的域
-				fieldsource=field
-				exit
-		if fieldsource:
-			fieldcontents=namelistparser(bibentry,fieldsource)
+	elif 'omitifnofield' in fieldinfo:
 		
+		fieldomit=True#假设忽略的条件满足
+		for field in fieldinfo['omitifnofield']:#只要需要不存在的域有一个存在，那么条件就不满足
+			if field in bibentry:
+				fieldomit=False
+				break
+		
+	elif 'omitiffield' in fieldinfo:
+		
+		fieldomit=False#假设忽略的条件不满足
+		for field in fieldinfo['omitiffield']:#只要需要存在的域中有一个存在，那么条件就满足
+			if field not in bibentry:
+				fieldomit=True
+				break
+	
+	print(fieldomit)
+	
+	if not fieldomit:
+		if fieldinfo['fieldsource'][0] in  datatypeinfo['namelist']:
+			#print('0',fieldinfo['fieldsource'][0])
+			#print('author' in bibentry)
+			for field in fieldinfo['fieldsource']:#
+				#print(fieldinfo['fieldsource'])
+				#print('namelist:',field)
+				if field in bibentry:#当域存在域条目中时，确定要处理的域
+					fieldsource=field
+					break
+			if fieldsource:
+				fieldcontents=namelistparser(bibentry,fieldsource)
+			
 
-	elif fieldinfo['fieldsource'][0] in  datatypeinfo['literallist']:
+		elif fieldinfo['fieldsource'][0] in  datatypeinfo['literallist']:
 
-		for field in fieldinfo['fieldsource']:#
-			if field in bibentry:#当域存在域条目中时，确定要处理的域
-				fieldsource=field
-				exit
-		if fieldsource:
-			fieldcontents=literallistparser(bibentry,fieldsource)
-			
-			
-	elif fieldinfo['fieldsource'][0] in  datatypeinfo['literalfield']:
+			for field in fieldinfo['fieldsource']:#
+				if field in bibentry:#当域存在域条目中时，确定要处理的域
+					fieldsource=field
+					break
+			if fieldsource:
+				fieldcontents=literallistparser(bibentry,fieldsource)
+				
+				
+		elif fieldinfo['fieldsource'][0] in  datatypeinfo['literalfield']:
 
-		for field in fieldinfo['fieldsource']:#
-			if field in bibentry:#当域存在域条目中时，确定要处理的域
-				fieldsource=field
-				exit
-		if fieldsource:
-			fieldcontents=literalfieldparser(bibentry,fieldsource)
-			
-			
-	elif fieldinfo['fieldsource'][0] in  datatypeinfo['datefield']:
+			for field in fieldinfo['fieldsource']:#
+				if field in bibentry:#当域存在域条目中时，确定要处理的域
+					fieldsource=field
+					break
+			if fieldsource:
+				fieldcontents=literalfieldparser(bibentry,fieldsource)
+				
+				
+		elif fieldinfo['fieldsource'][0] in  datatypeinfo['datefield']:
 
-		for field in fieldinfo['fieldsource']:#
-			if field in bibentry:#当域存在域条目中时，确定要处理的域
-				fieldsource=field
-				exit
-		if fieldsource:
-			fieldcontents=datefieldparser(bibentry,fieldsource)
-			
-			
-	elif fieldinfo['fieldsource'][0] in  datatypeinfo['rangefield']:
+			for field in fieldinfo['fieldsource']:#
+				if field in bibentry:#当域存在域条目中时，确定要处理的域
+					fieldsource=field
+					break
+			if fieldsource:
+				fieldcontents=datefieldparser(bibentry,fieldsource)
+				
+				
+		elif fieldinfo['fieldsource'][0] in  datatypeinfo['rangefield']:
 
-		for field in fieldinfo['fieldsource']:#
-			if field in bibentry:#当域存在域条目中时，确定要处理的域
-				fieldsource=field
-				exit
-		if fieldsource:
-			fieldcontents=rangefieldparser(bibentry,fieldsource)
+			for field in fieldinfo['fieldsource']:#
+				if field in bibentry:#当域存在域条目中时，确定要处理的域
+					fieldsource=field
+					break
+			if fieldsource:
+				fieldcontents=rangefieldparser(bibentry,fieldsource)
 	
 	if not fieldsource:
 		if 'replstring' in fieldinfo and fieldinfo['replstring']:
@@ -401,9 +633,9 @@ def formatfield(bibentry,fieldinfo,lastfield):
 		if lastfield:#当前一个著录项存在，则正常输出
 			if 'prepunct' in fieldinfo:
 				fieldtext=fieldtext+fieldinfo['prepunct']
-		else:#当前一个著录项不存在，则首先输出'nolastfieldprepunct'
-			if 'nolastfieldprepunct' in fieldinfo:
-				fieldtext=fieldtext+fieldinfo['nolastfieldprepunct']
+		else:#当前一个著录项不存在，则首先输出'prepunctifnolastfield'
+			if 'prepunctifnolastfield' in fieldinfo:
+				fieldtext=fieldtext+fieldinfo['prepunctifnolastfield']
 			elif 'prepunct' in fieldinfo:
 				fieldtext=fieldtext+fieldinfo['prepunct']
 		
@@ -439,13 +671,18 @@ def formatfield(bibentry,fieldinfo,lastfield):
 		#fieldtext=re.sub(r'\\bibstring{(.*)}',localstrings[r'\1'][language],fieldtext,count=1)
 	
 	#标题的类型和载体标识符的处理
-	if r'\typestring' in fieldtext:
-		print(r'\typestring in',fieldtext)
-		if 'url' in bibentry:
+	if r'\typestring' in fieldtext:#当需要处理类型和载体时
+		if bibentry['entrytype'] in typestrings:#当条目对应的类型存在时
+			print(r'\typestring in',fieldtext)
 			typestring=typestrings[bibentry['entrytype']]
-			typestring=typestring.replace(']','/OL]')
-		else:
-			typestring=typestrings[bibentry['entrytype']]
+			if 'url' in bibentry:
+				typestring=typestring.replace(']','/OL]')
+			elif 'medium' in bibentry:
+				rplctypestring=bibentry['medium']+']'
+				typestring=typestring.replace(']',rplctypestring)
+		else:#当条目对应的类型不存在时，当做其它类型处理
+			typestring='[Z]'
+
 		print(typestring)
 		fieldtext=fieldtext.replace(r'\typestring',typestring)
 		
@@ -1279,9 +1516,9 @@ if __name__=="__main__":
 	
 	writefilenewbib(inputbibfile)
 	
-	print(bibentries[0])
+	#print(bibentries[0])
 
-	print(formatbibentry(bibentries[0]))
+	#print(formatbibentry(bibentries[0]))
 	
 	formatallbibliography()
 		
