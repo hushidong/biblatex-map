@@ -43,8 +43,14 @@ pages中的间隔符替换
 11. 本地化字符串处理
 在域格式处理时，利用\bibstring做不同语言的替换
 
+12. 需要整数做的处理
+用的 posstringifnumber 选项
+
 未解决：
 
+6 检查格式是否写正确
+即用选项是否在设定范围内来进行检查
+比如有时会笔误，posstring写出postring
 
 7. name类型的格式选项
 
@@ -230,10 +236,11 @@ formatoptions={
 localstrings={
 'andothers':{'english':'et al.','chinese':'等'},
 'and':{'english':' and ','chinese':'和'},
-'edition':{'english':'th ed.','chinese':'版'},
+'edition':{'english':'th ed','chinese':'版'},#th ed. 中的点不要，为方便标点处理
 'in':{'english':'in: ','chinese':'见: '},
 'nolocation':{'english':'[S.l.]','chinese':'[出版地不详]'},
 'nopublisher':{'english':'[s.n.]','chinese':'[出版者不详]'},
+'bytranslator':{'english':'trans by','chinese':'译'},
 }
 
 #替换字符串
@@ -290,8 +297,8 @@ bibliographystyle={
 {"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
 {"fieldsource":['author','editor','translator'],'nameformat':'uppercase'},
 {"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'prepunctifnolastfield':'','posstring':r"\typestring"},
-{"fieldsource":['translator'],'nameformat':'uppercase','prepunct':". "},
-{"fieldsource":['edition'],'numerformat':'arabic','prepunct':". ","posstring":r'\bibstring{edition}'},
+{"fieldsource":['translator'],'nameformat':'uppercase','prepunct':". ",'posstring':r', \bibstring{bytranslator}'},
+{"fieldsource":['edition'],'numerformat':'arabic','prepunct':". ","posstringifnumber":r'\bibstring{edition}'},
 {"fieldsource":['location','address'],'prepunct':". ",'replstring':r"\bibstring{nolocation}"},
 {"fieldsource":['publisher'],'prepunct':": ",'replstring':r"\bibstring{nopublisher}",'prepunctifnolastfield':'. '},
 {"fieldsource":['date','year'],'prepunct':", "},
@@ -330,7 +337,7 @@ bibliographystyle={
 ],
 "inbook":[
 {"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
-{"fieldsource":['author','editor','translator'],'nameformat':'uppercase'},
+{"fieldsource":['author','translator'],'nameformat':'uppercase'},
 {"fieldsource":['title'],'caseformat':'sentencecase','prepunct':". ",'prepunctifnolastfield':'','posstring':r"\typestring"},
 {"fieldsource":['in'],'replstring':"//",'omitifnofield':['bookauthor','editor','booktitle']},
 {"fieldsource":['bookauthor','editor'],'nameformat':'uppercase'},
@@ -649,6 +656,14 @@ def formatfield(bibentry,fieldinfo,lastfield):
 		
 		if 'posstring' in fieldinfo:
 			fieldtext=fieldtext+fieldinfo['posstring']
+			
+		if 'posstringifnumber' in fieldinfo:
+			try:
+				numtemp=int(fieldcontents)
+				if  isinstance(numtemp,int):
+					fieldtext=fieldtext+fieldinfo['posstringifnumber']
+			except:
+				print('info:waring the field value can not convert to integer')
 		
 		if 'pospunct' in fieldinfo:
 			fieldtext=fieldtext+fieldinfo['pospunct']
