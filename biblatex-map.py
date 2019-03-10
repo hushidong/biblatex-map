@@ -68,6 +68,9 @@ pages中的间隔符替换
 保护大小写的{}在域处理中必须要处理完成，而用于格式的编组{}必须要保留。
 
 
+13。 文献表的排序???
+
+
 9. match 大小写区分的match需要实现
 
 10. 一些biblatex的map选项需要实现，包括entryclone=?clonekey?
@@ -224,12 +227,12 @@ sourcemaps=[]
 #全局选项
 formatoptions={
 "nameformat":'uppercase',#姓名处理选项：uppercase,lowercase,given-family,family-given,pinyin
-"date":'year',#'日期处理选项'：year，iso，等
-"urldate":'iso',#'日期处理选项'：year，iso，等
 "maxbibnames":3,#
 "minbibnames":3,#
 "maxbibitems":1,#
 "minbibitems":1,#
+"date":'year',#'日期处理选项'：year，iso，等
+"urldate":'iso',#'日期处理选项'：year，iso，等
 }
 
 #本地化字符串
@@ -243,10 +246,18 @@ localstrings={
 'bytranslator':{'english':'trans by','chinese':'译'},
 }
 
+#标点
+localpuncts={
+'multinamedelim':', ',
+'finalnamedelim':', ',
+'andothorsdelim':', ',
+}
+
 #替换字符串
 replacestrings={
 '[出版地不详]: [出版者不详]':'[出版地不详 : 出版者不详]',
 '[S.l.]: [s.n.]':'[S.l. : s.n.]',
+'..':'.',
 }
 
 #类型和载体字符串
@@ -489,6 +500,24 @@ def formatbibentry(bibentry):
 	print('\nbibentry:',bibentry)
 	#bibentrytext='entry:'
 	
+	#
+	# 由于volume和number域可能存在范围的特殊情况，首先做特殊处理
+	#
+	if 'volume' in bibentry:
+		if '-' in bibentry['volume']:
+			multivolume=bibentry['volume'].split("-")
+			bibentry['volume']=multivolume[0]
+			bibentry['endvolume']=multivolume[1]
+	if 'number' in bibentry:
+		if '-' in bibentry['number']:
+			multinumber=bibentry['number'].split("-")
+			bibentry['number']=multinumber[0]
+			bibentry['endnumber']=multinumber[1]
+	
+	
+	#
+	#接着处理所有域到一个条目文本
+	#
 	bibentrytext=''
 	
 	if bibentry['entrytype'] in bibliographystyle:
@@ -509,6 +538,7 @@ def formatbibentry(bibentry):
 			bibentrytext=bibentrytext+fieldtext
 	
 	#对替换字符串做处理
+	#包括对重复的标点做处理比如：..变为.
 	for k,v in replacestrings.items():
 		print(k,v)
 		#m=re.search(k,bibentrytext)
@@ -674,13 +704,23 @@ def formatfield(bibentry,fieldinfo,lastfield):
 		lastfield=False
 	
 	
+	#自定义标点的处理
+	print('fieldtext:',fieldtext)
+	while r'\printdelim' in fieldtext:
+		
+		m = re.search(r'\\printdelim{([^\}]*)}',fieldtext)#注意贪婪算法的影响，所以要排除\}字符
+		print('m.group(1):',m.group(1))
+		fieldtext=re.sub(r'\\printdelim{[^\}]*}',localpuncts[m.group(1)],fieldtext,count=1)
+		print('fieldtext:',fieldtext)
+	
+	
 	#本地化字符串的处理
 	print('fieldtext:',fieldtext)
 	while r'\bibstring' in fieldtext:
 		
 		language=languagejudgement(bibentry,fieldinfo,fieldsource)
-		m = re.search(r'\\bibstring{(.*)}',fieldtext)#注意\字符的匹配，即便是在r''中也需要用\\表示
-		fieldtext=re.sub(r'\\bibstring{.*}',localstrings[m.group(1)][language],fieldtext,count=1)
+		m = re.search(r'\\bibstring{([^\}]*)}',fieldtext)#注意\字符的匹配，即便是在r''中也需要用\\表示
+		fieldtext=re.sub(r'\\bibstring{[^\}]*}',localstrings[m.group(1)][language],fieldtext,count=1)
 		print('fieldtext:',fieldtext)
 		#下面这句不行因为，在字典取值是，不支持\1这样的正则表达式
 		#fieldtext=re.sub(r'\\bibstring{(.*)}',localstrings[r'\1'][language],fieldtext,count=1)
@@ -754,9 +794,140 @@ def fieldlanguage(fieldvalueinfo):
 def namelistparser(bibentry,fieldsource):
 	fieldcontents=bibentry[fieldsource]
 	
-	return fieldcontents
-
+	#首先从姓名列表分解
+	if ' and ' in fieldcontents:
+		fieldauthors=fieldcontents.lstrip().strip().split(' and ')
+	else:
+		fieldauthors=[fieldcontents.lstrip().strip()]
 	
+	#接着从各个姓名得到更详细的分解信息
+	fieldnames=[]
+	for name in fieldauthors:
+		if name.lower == 'others':
+			nameinfo={'morename':True}
+		else:
+			nameinfo=singlenameparser(name)
+		fieldnames.append(nameinfo)
+	
+	#最后根据全局和局部选项进行格式化
+	nameformattedstr=''
+	
+	#根据'maxbibnames'和'minbibnames'截短
+	if len(fieldnames)>formatoptions['maxbibnames']:
+		fieldnamestrunc=fieldnames[:formatoptions['minbibnames']]
+		nameinfo={'morename':True}
+		fieldnamestrunc.append(nameinfo)
+	else:
+		fieldnamestrunc=fieldnames
+	
+	nameliststop=len(fieldnamestrunc)
+	nameliststart=1
+	namelistcount=0
+	for nameinfo in fieldnamestrunc:
+		namelistcount=namelistcount+1
+		if 'morename' in nameinfo:
+			nameformattedstr=nameformattedstr+r'\printdelim{andothorsdelim}\bibstring{andothers}'
+		else:
+			if namelistcount==nameliststop:
+				nameformattedstr=nameformattedstr+r'\printdelim{finalnamedelim}'+singlenameformat(nameinfo)
+			elif namelistcount==nameliststart:
+				nameformattedstr=singlenameformat(nameinfo)
+			else:
+				nameformattedstr=nameformattedstr+r'\printdelim{multinamedelim}'+singlenameformat(nameinfo)
+	
+	return nameformattedstr
+
+
+#
+#
+#单个姓名格式化
+def singlenameformat(nameinfo):
+	
+	singlenamefmtstr=''
+	
+	if formatoptions['nameformat']=='uppercase':
+		singlenamefmtstr=nameinfo['family'].upper()
+		if 'given' in nameinfo:
+			singlenamefmtstr=singlenamefmtstr+' '+nameinfo['giveni'].upper()
+		if 'middle' in nameinfo:
+			singlenamefmtstr=singlenamefmtstr+' '+nameinfo['middlei'].upper()
+		
+	elif formatoptions['nameformat']=='lowercase':
+		pass
+	elif formatoptions['nameformat']=='given-family':
+		pass
+	elif formatoptions['nameformat']=='family-given':
+		pass
+	elif formatoptions['nameformat']=='pinyin':
+		pass
+	else:
+		pass
+	
+	return singlenamefmtstr
+
+
+#
+#
+#单个姓名解析
+def singlenameparser(name):
+	singlename=name
+	countercomma=singlename.count(',')
+	
+	print('name:',name)
+	
+	#字典用于存储所有的姓名成分信息
+	namepartsinfo={}
+	if countercomma>1:
+		nameparts=singlename.split(',')
+		if ' ' in nameparts[0].strip():
+			namepartsinfo['prefix']=nameparts[0].split(' ')[0]
+			namepartsinfo['family']=nameparts[0].split(' ')[1]
+		else:
+			namepartsinfo['family']=nameparts[0].strip()
+		namepartsinfo['suffix']=nameparts[1].lstrip()
+		if ' ' in nameparts[2].lstrip():
+			namepartsinfo['given']=nameparts[2].split(' ')[0]
+			namepartsinfo['middle']=nameparts[2].split(' ')[1]
+		else:
+			namepartsinfo['given']=nameparts[2].lstrip()
+	elif countercomma==1:
+		nameparts=singlename.split(',')
+		print('nameparts:',nameparts)
+		if ' ' in nameparts[0].strip():
+			namepartsinfo['prefix']=nameparts[0].split(' ')[0]
+			namepartsinfo['family']=nameparts[0].split(' ')[1]
+		else:
+			namepartsinfo['family']=nameparts[0].strip()
+		if ' ' in nameparts[1].lstrip():
+			namepartsinfo['given']=nameparts[1].split(' ')[0]
+			namepartsinfo['middle']=nameparts[1].split(' ')[1]
+		else:
+			namepartsinfo['given']=nameparts[1].lstrip()
+	else:
+		nameparts=singlename.split(' ')
+		if len(nameparts)==3:
+			namepartsinfo['given']=nameparts[0]
+			namepartsinfo['middle']=nameparts[1]
+			namepartsinfo['family']=nameparts[2]
+		elif len(nameparts)==2:
+			namepartsinfo['given']=nameparts[0]
+			namepartsinfo['family']=nameparts[1]
+		else:
+			namepartsinfo['family']=nameparts[0]
+	
+	print('nameparts:',namepartsinfo)
+	
+	if 'family' in namepartsinfo:
+		namepartsinfo['familyi']=namepartsinfo['family'][0].upper()
+	
+	if 'given' in namepartsinfo:
+		print(namepartsinfo['given'])
+		namepartsinfo['giveni']=namepartsinfo['given'][0].upper()
+		
+	if 'middle' in namepartsinfo:
+		namepartsinfo['middlei']=namepartsinfo['middle'][0].upper()
+		
+	return namepartsinfo
 
 #
 #

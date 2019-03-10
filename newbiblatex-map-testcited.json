@@ -1,4 +1,4 @@
 [
-{'entrytype': 'article', 'entrykey': '李炳穆2008-6-12', 'entrysn': 1, 'author': '李炳穆', 'title': '韩国图书馆法', 'journal': '图书情报工作', 'year': '2008', 'volume': '52', 'number': '6', 'pages': '6--12', 'url': 'http://www.docin.com/p-400265742.html', 'urldate': '2013-10-25'},
-{'entrytype': 'article', 'entrykey': '李幼平2010-225-228', 'entrysn': 2, 'author': '李幼平 and 王莉', 'title': '循证医学研究方法: 附视频', 'journal': '中华移植杂志(电子版)', 'year': '2010', 'volume': '4', 'number': '3', 'pages': '225--228', 'url': 'http://www.cqvip.com/Read/Read.aspx?id=36658332', 'urldate': '2014-06-09'},
+{'entrytype': 'article', 'entrykey': '李幼平2010-225-228', 'entrysn': 1, 'author': '李幼平 and 王莉', 'title': '循证医学研究方法: 附视频', 'journal': '中华移植杂志(电子版)', 'year': '2010', 'volume': '4', 'number': '3', 'pages': '225--228', 'url': 'http://www.cqvip.com/Read/Read.aspx?id=36658332', 'urldate': '2014-06-09'},
+{'entrytype': 'inproceedings', 'entrykey': 'ref-replace-char', 'entrysn': 2, 'title': 'Cognitive Radio and Cooperative Strategies for Power Saving in Multi-Standard Wireless Devices', 'address': 'Florence, Italy', 'author': 'Rodriguez, J. and P. Marques and A. Radwan and K. Moessner and R. Tafazolli and others', 'booktitle': 'Future % Network \\& Mobile # Summit 2010', 'date': 'June 2010'},
 ]
