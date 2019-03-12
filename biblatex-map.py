@@ -227,10 +227,13 @@ sourcemaps=[]
 #全局选项
 formatoptions={
 "nameformat":'uppercase',#姓名处理选项：uppercase,lowercase,given-family,family-given,pinyin
+"giveninits":'space',#使用名的缩写，space表示名见用空格分隔，dotspace用点加空格，dot用点，terse无分隔，false不使用缩写
 "maxbibnames":3,#
 "minbibnames":3,#
+"morenames":True,#
 "maxbibitems":1,#
 "minbibitems":1,#
+"moreitems":False,#
 "date":'year',#'日期处理选项'：year，iso，等
 "urldate":'iso',#'日期处理选项'：year，iso，等
 }
@@ -251,6 +254,8 @@ localpuncts={
 'multinamedelim':', ',
 'finalnamedelim':', ',
 'andothorsdelim':', ',
+'finalitemdelim':', ',
+'multiitemdelim':', ',
 }
 
 #替换字符串
@@ -477,9 +482,46 @@ bibliographystyle={
 
 #
 #
-#格式化一个文献条目文本
+#打印格式化后的全部文献条目文本
+def printbibliography():
+	
+	bibliographyentries=bibliographytext.split('\n')
+	
+	#md文件输出,直接用write写
+	mdoutfile="newformatted"+inputbibfile.replace('.bib','.md')
+	fout = open(mdoutfile, 'w', encoding="utf8")
+	print("INFO: writing cited references to '" + mdoutfile + "'")
+
+	for prtbibentry in bibliographyentries:
+		fout.write(prtbibentry+'\n')
+	fout.close()
+	
+	#html文件输出,直接用write写
+	mdoutfile="newformatted"+inputbibfile.replace('.bib','.html')
+	fout = open(mdoutfile, 'w', encoding="utf8")
+	print("INFO: writing cited references to '" + mdoutfile + "'")
+	fout.write('<html><head><title>references</title></head>')
+	fout.write('<body bgcolor="lightgray"><div align="top"><center>')
+	fout.write('<font color="blue">')
+	fout.write('<table border="0" cellPadding="10" cellSpacing="5" height="400" width="70%">')
+	fout.write('<tr><td height="1" width="566" align="center" colspan="1" bgcolor="teal"></td></tr>')
+	
+	for prtbibentry in bibliographyentries:
+		fout.write('<tr> <td width="480" height="15" colspan="6"><font color="blue">')
+		fout.write('<span style="font-family: 宋体; font-size: 14">')
+		fout.write(prtbibentry)
+		fout.write('</span></font></td> </tr>')
+	
+	fout.write('<tr><td height="1" width="566" align="center" colspan="1" bgcolor="teal"></td></tr>')
+	fout.write('</table></div></body></html>')
+	fout.close()
+
+#
+#
+#格式化全部文献条目文本
 def formatallbibliography():
 	labelnumber=0
+	global bibliographytext
 	bibliographytext=''
 	for bibentry in bibentries:
 		labelnumber=labelnumber+1
@@ -514,6 +556,30 @@ def formatbibentry(bibentry):
 			bibentry['number']=multinumber[0]
 			bibentry['endnumber']=multinumber[1]
 	
+	#四种日期域也做范围解析
+	if 'date' in bibentry:
+		if '/' in bibentry['date']:
+			datestring=bibentry['date'].split('/')
+			bibentry['date']=datestring[0]
+			bibentry['enddate']=datestring[1]
+	
+	if 'urldate' in bibentry:
+		if '/' in bibentry['urldate']:
+			datestring=bibentry['urldate'].split('/')
+			bibentry['urldate']=datestring[0]
+			bibentry['endurldate']=datestring[1]
+	
+	if 'eventdate' in bibentry:
+		if '/' in bibentry['eventdate']:
+			datestring=bibentry['eventdate'].split('/')
+			bibentry['eventdate']=datestring[0]
+			bibentry['endeventdate']=datestring[1]
+	
+	if 'origdate' in bibentry:
+		if '/' in bibentry['origdate']:
+			datestring=bibentry['origdate'].split('/')
+			bibentry['origdate']=datestring[0]
+			bibentry['endorigdate']=datestring[1]
 	
 	#
 	#接着处理所有域到一个条目文本
@@ -602,6 +668,8 @@ def formatfield(bibentry,fieldinfo,lastfield):
 	
 	print(fieldomit)
 	
+	
+	#如果不忽略该域那么：
 	if not fieldomit:
 		if fieldinfo['fieldsource'][0] in  datatypeinfo['namelist']:
 			#print('0',fieldinfo['fieldsource'][0])
@@ -794,6 +862,9 @@ def fieldlanguage(fieldvalueinfo):
 def namelistparser(bibentry,fieldsource):
 	fieldcontents=bibentry[fieldsource]
 	
+	#首先对' AND '做处理
+	fieldcontents=fieldcontents.replace(' AND ',' and ')
+	
 	#首先从姓名列表分解
 	if ' and ' in fieldcontents:
 		fieldauthors=fieldcontents.lstrip().strip().split(' and ')
@@ -806,6 +877,11 @@ def namelistparser(bibentry,fieldsource):
 		if name.lower == 'others':
 			nameinfo={'morename':True}
 		else:
+			if fieldlanguage(name)=='chinese':#当中文姓名中存在逗号先去除
+				if ', ' in name:
+					name=name.replace(', ','')
+			else:
+				pass
 			nameinfo=singlenameparser(name)
 		fieldnames.append(nameinfo)
 	
@@ -826,9 +902,10 @@ def namelistparser(bibentry,fieldsource):
 	for nameinfo in fieldnamestrunc:
 		namelistcount=namelistcount+1
 		if 'morename' in nameinfo:
-			nameformattedstr=nameformattedstr+r'\printdelim{andothorsdelim}\bibstring{andothers}'
+			if formatoptions['morenames']:#只有设置morenames为true是才输出other的相关信息
+				nameformattedstr=nameformattedstr+r'\printdelim{andothorsdelim}\bibstring{andothers}'
 		else:
-			if namelistcount==nameliststop:
+			if namelistcount==nameliststop and namelistcount>1:#当没有others时最后一个姓名前加的标点
 				nameformattedstr=nameformattedstr+r'\printdelim{finalnamedelim}'+singlenameformat(nameinfo)
 			elif namelistcount==nameliststart:
 				nameformattedstr=singlenameformat(nameinfo)
@@ -847,10 +924,34 @@ def singlenameformat(nameinfo):
 	
 	if formatoptions['nameformat']=='uppercase':
 		singlenamefmtstr=nameinfo['family'].upper()
-		if 'given' in nameinfo:
-			singlenamefmtstr=singlenamefmtstr+' '+nameinfo['giveni'].upper()
-		if 'middle' in nameinfo:
-			singlenamefmtstr=singlenamefmtstr+' '+nameinfo['middlei'].upper()
+		
+		#根据选项确定使用名的缩写
+		if formatoptions["giveninits"]=='space':#space表示名见用空格分隔，
+			if 'given' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+' '+nameinfo['giveni'].upper()
+			if 'middle' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+' '+nameinfo['middlei'].upper()
+		elif formatoptions["giveninits"]=='dotspace':#dotspace用点加空格，
+			if 'given' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+' '+nameinfo['giveni'].upper()
+			if 'middle' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+'. '+nameinfo['middlei'].upper()+'.'
+		elif formatoptions["giveninits"]=='dot':#dot用点，
+			if 'given' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+' '+nameinfo['giveni'].upper()
+			if 'middle' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+'.'+nameinfo['middlei'].upper()+'.'
+		elif formatoptions["giveninits"]=='terse':#terse无分隔，
+			if 'given' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+' '+nameinfo['giveni'].upper()
+			if 'middle' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+nameinfo['middlei'].upper()
+		elif formatoptions["giveninits"]=='false':#false不使用缩写
+			if 'given' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+' '+nameinfo['given'].upper()
+			if 'middle' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+' '+nameinfo['middle'].upper()
+
 		
 	elif formatoptions['nameformat']=='lowercase':
 		pass
@@ -879,41 +980,41 @@ def singlenameparser(name):
 	namepartsinfo={}
 	if countercomma>1:
 		nameparts=singlename.split(',')
-		if ' ' in nameparts[0].strip():
-			namepartsinfo['prefix']=nameparts[0].split(' ')[0]
-			namepartsinfo['family']=nameparts[0].split(' ')[1]
+		if ' ' in nameparts[0].lstrip().strip():
+			namepartsinfo['prefix']=nameparts[0].lstrip().strip().split(' ')[0]
+			namepartsinfo['family']=nameparts[0].lstrip().strip().split(' ')[1]
 		else:
-			namepartsinfo['family']=nameparts[0].strip()
-		namepartsinfo['suffix']=nameparts[1].lstrip()
+			namepartsinfo['family']=nameparts[0].lstrip().strip()
+		namepartsinfo['suffix']=nameparts[1].lstrip().strip()
 		if ' ' in nameparts[2].lstrip():
-			namepartsinfo['given']=nameparts[2].split(' ')[0]
-			namepartsinfo['middle']=nameparts[2].split(' ')[1]
+			namepartsinfo['given']=nameparts[2].lstrip().strip().split(' ')[0]
+			namepartsinfo['middle']=nameparts[2].lstrip().strip().split(' ')[1]
 		else:
-			namepartsinfo['given']=nameparts[2].lstrip()
+			namepartsinfo['given']=nameparts[2].lstrip().strip()
 	elif countercomma==1:
 		nameparts=singlename.split(',')
 		print('nameparts:',nameparts)
-		if ' ' in nameparts[0].strip():
-			namepartsinfo['prefix']=nameparts[0].split(' ')[0]
-			namepartsinfo['family']=nameparts[0].split(' ')[1]
+		if ' ' in nameparts[0].lstrip().strip():
+			namepartsinfo['prefix']=nameparts[0].lstrip().strip().split(' ')[0]
+			namepartsinfo['family']=nameparts[0].lstrip().strip().split(' ')[1]
 		else:
-			namepartsinfo['family']=nameparts[0].strip()
-		if ' ' in nameparts[1].lstrip():
-			namepartsinfo['given']=nameparts[1].split(' ')[0]
-			namepartsinfo['middle']=nameparts[1].split(' ')[1]
+			namepartsinfo['family']=nameparts[0].lstrip().strip()
+		if ' ' in nameparts[1].lstrip().strip():
+			namepartsinfo['given']=nameparts[1].lstrip().strip().split(' ')[0]
+			namepartsinfo['middle']=nameparts[1].lstrip().strip().split(' ')[1]
 		else:
 			namepartsinfo['given']=nameparts[1].lstrip()
 	else:
 		nameparts=singlename.split(' ')
 		if len(nameparts)==3:
-			namepartsinfo['given']=nameparts[0]
-			namepartsinfo['middle']=nameparts[1]
-			namepartsinfo['family']=nameparts[2]
+			namepartsinfo['given']=nameparts[0].lstrip().strip()
+			namepartsinfo['middle']=nameparts[1].lstrip().strip()
+			namepartsinfo['family']=nameparts[2].lstrip().strip()
 		elif len(nameparts)==2:
-			namepartsinfo['given']=nameparts[0]
-			namepartsinfo['family']=nameparts[1]
+			namepartsinfo['given']=nameparts[0].lstrip().strip()
+			namepartsinfo['family']=nameparts[1].lstrip().strip()
 		else:
-			namepartsinfo['family']=nameparts[0]
+			namepartsinfo['family']=nameparts[0].lstrip().strip()
 	
 	print('nameparts:',namepartsinfo)
 	
@@ -935,7 +1036,48 @@ def singlenameparser(name):
 def literallistparser(bibentry,fieldsource):
 	fieldcontents=bibentry[fieldsource]
 	
-	return fieldcontents
+	#首先对' AND '做处理
+	fieldcontents=fieldcontents.replace(' AND ',' and ')
+	
+	#首先从文本列表分解
+	if ' and ' in fieldcontents:
+		fielditems=fieldcontents.lstrip().strip().split(' and ')
+	else:
+		fielditems=[fieldcontents.lstrip().strip()]
+	print('fielditems:',fielditems)
+	
+	#根据'maxbibitems'和'minbibitems'截短
+	fielditemstrunc=[]
+	
+	if len(fielditems)>formatoptions['maxbibitems']:
+		fielditemstrunc=fielditems[:formatoptions['minbibitems']]
+		fielditemstrunc.append('others')
+	else:
+		fielditemstrunc=fielditems
+	
+	#重设一下others的大小写，因为可能输入的时大写的
+	if fielditems[-1].lower == 'others':
+		fielditems[-1]='others'
+	
+	#最后根据全局和局部选项进行格式化
+	itemliststop=len(fielditemstrunc)
+	itemliststart=1
+	itemlistcount=0
+	itemformattedstr=''
+	for iteminfo in fielditemstrunc:
+		itemlistcount=itemlistcount+1
+		if iteminfo == 'others':
+			if formatoptions['moreitems']:#只有设置moreitems为true是才输出other的相关信息
+				itemformattedstr=itemformattedstr+r'\printdelim{andothorsdelim}\bibstring{andothers}'
+		else:
+			if itemlistcount==itemliststop and itemlistcount>1:#当没有others时最后一个项前加标点
+				itemformattedstr=itemformattedstr+r'\printdelim{finalitemdelim}'+iteminfo
+			elif itemlistcount==itemliststart:
+				itemformattedstr=iteminfo
+			else:
+				itemformattedstr=itemformattedstr+r'\printdelim{multiitemdelim}'+iteminfo
+	
+	return itemformattedstr
 
 #
 #
@@ -947,16 +1089,96 @@ def literalfieldparser(bibentry,fieldsource):
 
 #
 #
-#文本域解析
+#日期域解析
+#还需增加条目设置的选项
 def datefieldparser(bibentry,fieldsource):
 	fieldcontents=bibentry[fieldsource]
 	
+	#首先从日期域进行解析：
+	if fieldsource=='year':
+		datestring=bibentry[fieldsource]
+		datetype=''
+	else:
+		datetype=fieldsource.replace('date','')
+		dateparts={}
+		datestring=bibentry[fieldsource]
+		
+		
+	#日期的年月日解析
+	datepartinfo=datestring.split('-')
+	if len(datepartinfo)==3:
+		dateparts[datetype+'year']=datepartinfo[0].strip().lstrip()
+		dateparts[datetype+'month']=datepartinfo[1].strip().lstrip()
+		dateparts[datetype+'day']=datepartinfo[2].strip().lstrip()
+	elif len(datepartinfo)==2:
+		dateparts[datetype+'year']=datepartinfo[0].strip().lstrip()
+		dateparts[datetype+'month']=datepartinfo[1].strip().lstrip()
+	else:
+		dateparts[datetype+'year']=datepartinfo[0].strip().lstrip()
+	
+	print(dateparts)
+	
+	#判断解析的年月日是不是整数，若不是则表示日期不可解析
+	datecanbeparse=True
+	for k,v in dateparts.items():
+		try:
+			datepartisint=isinstance(int(v),int)
+		except:
+			print('INFO: WARNING'+fieldsource+'can not be parsed')
+			datecanbeparse=False
+			break
+		
+	
+	#然后根据全局选项进行格式化：
+	#如果解析的年月日不是整数，那么对于date域则忽略，对于year域则直接输出
+	if datecanbeparse:
+		if datetype+'date' in formatoptions:
+			fieldcontents=singledateformat(dateparts,datetype,formatoptions[datetype+'date'])
+		else:
+			fieldcontents=singledateformat(dateparts,datetype,'default')
+	else:
+		if fieldsource=='year':
+			fieldcontents=bibentry[fieldsource]
+		else:
+			fieldcontents=''
+			
 	return fieldcontents
 
 
 #
 #
-#文本域解析
+# 根据日期的设置选项格式化单个日期
+def singledateformat(dateparts,datetype,formatoption):
+	if formatoption=='year':
+		dateformatstr=dateparts[datetype+'year']
+	elif formatoption=='iso':
+		dateformatstr=dateparts[datetype+'year']
+		if len(dateparts[datetype+'month'])<2:
+			dateformatstr=dateformatstr+'-0'+dateparts[datetype+'month']
+		else:
+			dateformatstr=dateformatstr+'-'+dateparts[datetype+'month']
+		if len(dateparts[datetype+'day'])<2:
+			dateformatstr=dateformatstr+'-0'+dateparts[datetype+'day']
+		else:
+			dateformatstr=dateformatstr+'-'+dateparts[datetype+'day']
+	elif formatoption=='ymd':
+		dateformatstr=dateparts[datetype+'year']
+		dateformatstr=dateformatstr+'-'+dateparts[datetype+'month']
+		dateformatstr=dateformatstr+'-'+dateparts[datetype+'day']
+	elif formatoption=='default':
+		dateformatstr=dateparts[datetype+'year']
+	else:
+		pass
+	
+	return dateformatstr
+
+
+
+
+
+#
+#
+#范围域解析
 def rangefieldparser(bibentry,fieldsource):
 	fieldcontents=bibentry[fieldsource]
 	
@@ -1707,4 +1929,5 @@ if __name__=="__main__":
 	#print(formatbibentry(bibentries[0]))
 	
 	formatallbibliography()
+	printbibliography()
 		
