@@ -1,4 +1,3 @@
 [
-{'entrytype': 'electronic', 'entrykey': 'buptthesis', 'entrysn': 1, 'author': '张煜', 'title': '北京邮电大学研究生学位论文 \\LaTeX{} 文档类', 'year': '2009', 'dhowpublished': 'online', 'urldate': '2013-7-6', 'source': 'http://code.google.com/p/buptthesis/', 'language': 'chs'},
-{'entrytype': 'book', 'entrykey': 'egbooka--', 'entrysn': 2, 'author': 'HU, S. D.', 'title': 'english book', 'address': 'Cambridge and Chicago', 'publisher': 'IRRI and ALA and CLA', 'date': '1978'},
+{'entrytype': 'article', 'entrykey': 'Giorgetti2005-2139-2149', 'entrysn': 1, 'title': 'The effect of narrowband interference on wideband wireless communication systems', 'author': 'Giorgetti, A. and Chiani, M. and Win, M. Z.', 'journal': 'IEEE Trans. Commun.', 'number': '12', 'pages': '2139-2149', 'volume': '53', 'year': '2005'},
 ]

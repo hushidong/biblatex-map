@@ -1,3 +1,2 @@
-[1]  张煜. 北京邮电大学研究生学位论文 \LaTeX{} 文档类[EB]. [2013-07-06].
-[2]  HU S D. english book[M]. Cambridge: IRRI, 1978.
+[1]  GIORGETTI A, CHIANI M, WIN M Z. The effect of narrowband interference on wideband wireless communication systems[J]. IEEE Trans. Commun., 2005, 53(12): 2139-2149.
 
