@@ -1,7 +1,7 @@
 
+* 文献的排序及序号？
 
-
-#### 20190320
+* bbl配合natbib文件使用时的处理？？，文献怎么引用，怎么生成的标签？？
 
 * 完善对article的测试
 测试其它类型，比如periodical等
@@ -9,7 +9,50 @@
 * 姓名格式的其它选项实现，比如拼音
 
 * 文本输出的内容中去掉{}
-输出给bbl的保留
+输出给bbl的保留，关键是\url等命令可能需要的替换，文本中的替换，html文件中的替换
+
+* 一些格式的处理时用prestring和posstring呢还是其他？
+
+* 检查一下格式处理后，解析出的信息比如year，month等是否已经存储到bibentry中
+
+* 文献表中空格导致的间距扩大问题如何解决？？
+
+6 检查格式是否写正确
+即用选项是否在设定范围内来进行检查
+比如有时会笔误，posstring写出postring
+
+
+9. literal类型的格式选项：sentencecase
+
+
+11. range类型的格式选项
+
+12. 文本中{}的忽略，而输出到tex的文本中的{}不忽略
+到正常文本中的利用符号追踪方法成对的消除{}，或者也不消除，
+而是在html文件中做类似于tex中的编组操作，保护大小写的作用要体现。
+保护大小写的{}在域处理中必须要处理完成，而用于格式的编组{}必须要保留。
+
+
+13。 文献表的排序???
+
+
+9. match 大小写区分的match需要实现
+
+10. 一些biblatex的map选项需要实现，包括entryclone=?clonekey?
+		entrynew=?entrynewkey?
+		entrynewtype=?string?
+		entrytarget=?string?
+		entrynocite=true, false default: false
+		entrynull=true, false default: false
+		
+
+
+#### 20190321
+
+* 初步完成bbl文件的输出，便于在tex文件中直接应用
+
+* 初步完成bibitem的[]中的信息的处理，需要进一步完善
+
 
 #### 20190315
 
