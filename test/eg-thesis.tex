@@ -7,7 +7,7 @@
 \usepackage[colorlinks]{hyperref}
 \usepackage[paperwidth=21cm,paperheight=29cm,top=1cm,bottom=1cm,left=1cm,right=1cm]{geometry}
 \usepackage{xltxtra,mflogo,texnames}
-\usepackage{natbib}
+\usepackage[super,square]{natbib}%number,authoryear
 \usepackage{url}
 %\usepackage{xurl}
 \def\UrlBreaks{%
@@ -21,6 +21,11 @@
 
 \begin{document}
 
-\input{eg-thesis.bbl}
+\cite{刘乃安2000-17-18}\cite{杨保军2012--}\cite{张若凌2004--}\cite{Deverell2013-21-22a}
+
+%\input{eg-thesis.bbl}
+
+
+\bibliography{eg-thesis.bib}
 
 \end{document}

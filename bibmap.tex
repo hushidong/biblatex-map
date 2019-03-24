@@ -1,0 +1,200 @@
+
+% !Mode:: "TeX:UTF-8"
+% 用于
+\documentclass{article}
+
+\input{bibmap-preamble} %宏包和一些格式设置
+%\usepackage{bibmap}%[citestyle,bibstyle,mapstyle]
+
+\lstnewenvironment{pycode}%
+{\lstset{% general command to set parameter(s)
+%name=#1,
+%label=#2,
+%caption=\lstname,
+linewidth=\linewidth,
+breaklines=true,
+%showspaces=true,
+extendedchars=false,
+columns=fullflexible,%flexible,
+aboveskip=2pt,
+boxpos=t,
+rulesep=0pt,
+frame=tb,
+framesep=0pt,
+rulecolor=\color{gblabelcolor},
+fontadjust=true,
+language=Python,
+backgroundcolor=\color{gbyellow!3},%\color{yellow}, %背景颜色
+numbers=left,
+numberstyle=\tiny\color{gblabelcolor},
+basicstyle=\footnotesize\ttfamily, % print whole listing small
+keywordstyle=\bfseries\color{gbemphcolor},%\underbar,
+% underlined bold black keywords
+identifierstyle=, % nothing happens
+commentstyle=\color{green!40!gray}, % white comments
+stringstyle=\ttfamily\color{purple!50}, % typewriter type for strings
+showstringspaces=false}% no special string spaces
+}
+{}
+
+
+\begin{document}
+
+\section{介绍}
+
+\subsection{bibmap是什么}
+
+bibmap是一个用于处理参考文献的latex宏包，
+包含一个sty文件，用于设置参考文献处理时的选项。
+一个bibmap程序，用于在后端处理参考文献数据。
+
+bibmap宏包加载了natbib，chapterbib宏包，用于latex参考文献生成，bibmap程序类似bibtex程序用于处理参考文献数据。
+
+bibmap宏包的工作原理有点类似biblatex，但又是极度简化的，目的是直接利用现有的latex宏包(比如natbib，chapterbib)，避免像biblatex那样重写一整套的解决方案。而后端程序的运作又有点类似bibtex，但bibmap格式化文献表需要的样式文件时python数据和代码，因此是非常简单的，目的是让用户可以方便的设置参考文献格式，而不用去设计语法复杂的bst文件。
+
+目前附带的bibmap程序是用python代码写的，后期会打包为可执行程序。
+
+\subsection{bibmap的两大核心功能}
+
+\subsubsection{参考文献生成}
+
+参考文献生成类似于传统基于bibtex的方法。主要分如下几步：
+
+1. 写tex文件源代码，其中参考文献相关宏包使用bibmap，无需再加载natbib。也不能使用biblatex，因为这是传统的方法，使用biblatex就冲突了。
+可以为bibmap宏包设置一些选项。文档中正常引用文献，在需要生成文献表的地方加入命令\verb|\bibliography{bibfile}|
+
+2. 第一遍xelatex编译tex源代码比如：
+\verb|xelatex test.tex|，
+第二遍用bibmap程序运行，命令为：
+\verb|python biblatex-map.py test|，
+第三和四遍使用xelatex编译tex源代码
+\verb|xelatex test.tex|。
+则能生成满足格式要求的参考文献表。
+
+bibmap宏包利用了natbib等宏包来形成合适的参考文献引用标注标签，利用bibmap程序生成格式化的thebibliography环境。
+一定程度上，bibmap程序是bibtex程序的替代，且它的参考文献格式设置要比bst文件简单得多。而bibmap宏包则只是对natbib等宏包的集成和利用，通过一些方便的选项设置接口，简化一些格式选择。
+
+\subsubsection{bib文件修改}
+
+bibmap程序的另一大功能是对bib文件的数据进行修改。这可以与tex文档相关，也可以不相关。不相关时可以直接利用bibmap程序对指定bib文件做指定格式的数据处理，相关时则利用指定的格式对bib文件做类似biblatex和biber做的动态数据修改。
+
+bibmap程序对bib文件的数据修改，直接借鉴biblatex的设计，可以说是一套python的重新实现，使用逻辑基本一致。
+可以对bib文件的条目和域做非常细致的处理和修改。
+
+\section{参考文献生成的详细说明}
+
+\subsection{bibmap宏包选项}
+
+
+\subsection{参考文献生成示例}
+
+
+\subsection{参考文献格式化设置说明}
+
+介绍怎么写文献格式化的py文件
+
+
+\section{bib文件修改的详细说明}
+
+\subsection{bib文件修改示例}
+
+
+\subsection{bib文件修改设置说明}
+
+介绍怎么写数据修改的py文件
+
+
+\section{bibmap程序基本用法}
+
+\subsection{bibmap程序输入参数}
+
+biblatex-map.py
+
+filename 单个输入文件的文件名，可带后缀名如bib或aux，无后缀名时默认为辅助文件.aux
+
+[-h] 输出帮助
+
+[-a AUXFILE] 辅助文件的文件名，可带后缀名.aux，如果filename已经设置aux文件则无效
+
+[-b BIBFILE] 文献数据库文件名，可带后缀名.bib，如果filename已经设置bib文件则无效
+
+[-s STYFILE] 设置文献样式文件的文件名，可带后缀名.py，不给出则使用默认样式文件
+
+[-m MAPFILE] 数据库修改设置文件文件名，可带后缀名.py，不给出则使用默认设置文件
+
+[--nofmt] 给出该选项则不做格式化输出
+
+[--nobdm] 给出该选项则不做不做bib数据修改
+
+其中涉及到三种文件：
+
+一是aux文件，如果是要得到格式化的文献表，那么这是最重要的文件，由tex编译生成，当使用bibmap宏包时，可以通过宏包选项设置样式文件，而bib文件通过bibliography命令也会在该文件中指出。
+
+二是bib文件，这是参考文献数据源文件，可以由通过bibliography命令在aux文件内给出，也可以直接利用选项给出。
+
+三是py文件，这是用于设置数据修改和文献格式化的文件，是python代码，通常bibmap*.py是用于bib文件数据修改的。
+而bibstyle*.py是用于格式化文献表的。
+
+
+
+\subsection{bib文件数据修改}
+
+直接在命令行输入脚本及其参数：
+
+\begin{example}{bib文件数据修改命令-默认情况}{code:bib:modify}
+\begin{pycode}
+python biblatex-map.py biblatex-map-test.bib
+\end{pycode}
+\end{example}
+
+此时，bibmap读取biblatex-map-test.bib文件，并根据默认的数据修改设置bibmapdefault.py做修改，此时还会自动的做格式化后的文献表输出。
+
+\begin{example}{bib文件数据修改命令-不输出格式化文献表}{code:bib:modifya}
+\begin{pycode}
+python biblatex-map.py biblatex-map-test.bib --nofmt
+\end{pycode}
+\end{example}
+
+此时不再输出格式化后的文献表。
+
+\begin{example}{bib文件数据修改命令-指定数据修改设置}{code:bib:modifyb}
+\begin{pycode}
+python biblatex-map.py biblatex-map-test.bib --nofmt -m bibmapaddkw.py
+\end{pycode}
+\end{example}
+
+此时使用指定的数据修改设置bibmapaddkw.py代替默认的bibmapdefault.py对数据库bib文件做修改。
+
+
+
+\subsection{参考文献格式化输出}
+
+直接在命令行输入脚本及其参数：
+
+\begin{example}{参考文献格式化命令-默认情况}{code:bib:fmt}
+\begin{pycode}
+python biblatex-map.py egtest
+\end{pycode}
+\end{example}
+
+此时输入一个辅助文件egtest.aux，其它所有的参数根据对egtest.aux的解析来获取，如果没有解析到，若存在默认的设置，则使用默认的设置文件。若没有默认设置，则可以通过可选参数来指定：
+
+\begin{example}{参考文献格式化命令-指定bib文件}{code:bib:fmta}
+\begin{pycode}
+python biblatex-map.py egtest -b biblatex-map-test.bib
+\end{pycode}
+\end{example}
+
+当aux文件未给出格式化设置文件时，也可以用-s选项给出，格式化设置文件(即文献样式文件)，比如
+\begin{example}{参考文献格式化命令-指定样式文件}{code:bib:fmta}
+\begin{pycode}
+python biblatex-map.py egtest -s bibstyleauthoryear.py
+\end{pycode}
+\end{example}
+
+
+
+
+
+
+\end{document}
