@@ -62,7 +62,7 @@
 \hfill\makebox[0pt][l]{\raisebox{-\ruleraised}[0pt][0pt]{\ruler{downright}{\ruletotalen}}\hss}%
 }}
 \fancyhead[CO]{%
-参考文献处理程序bibmap%HEAD CENTER
+参考文献宏包bibmap和bib文件处理程序bibmap%HEAD CENTER
 }
 \fancyfoot[L]{%
 \raisebox{-\skipfootrule}{%
@@ -374,4 +374,33 @@ itemsep=0pt,leftmargin=0em,itemindent=0em}%注意，font或format中的最后一
 %\usepackage{filecontents}
 
 
-
+\lstnewenvironment{pycode}%
+{\lstset{% general command to set parameter(s)
+%name=#1,
+%label=#2,
+%caption=\lstname,
+linewidth=\linewidth,
+breaklines=true,
+%showspaces=true,
+extendedchars=false,
+columns=fullflexible,%flexible,
+aboveskip=2pt,
+boxpos=t,
+rulesep=0pt,
+frame=tb,
+framesep=0pt,
+rulecolor=\color{gblabelcolor},
+fontadjust=true,
+language=Python,
+backgroundcolor=\color{gbyellow!3},%\color{yellow}, %背景颜色
+numbers=left,
+numberstyle=\tiny\color{gblabelcolor},
+basicstyle=\footnotesize\ttfamily, % print whole listing small
+keywordstyle=\bfseries\color{gbemphcolor},%\underbar,
+% underlined bold black keywords
+identifierstyle=, % nothing happens
+commentstyle=\color{green!40!gray}, % white comments
+stringstyle=\ttfamily\color{purple!50}, % typewriter type for strings
+showstringspaces=false}% no special string spaces
+}
+{}

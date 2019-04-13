@@ -94,7 +94,7 @@
 %标注样式的处理
 \str_case_x:nn {\l__bibmap_cite_style_str}
 {
-    {numeric} {\RequirePackage[super,square]{natbib}}
+    {numeric} {\RequirePackage[super,square,sort&compress]{natbib}}
     {authoryear} {\RequirePackage[authoryear]{natbib}}
 }
 
@@ -153,6 +153,9 @@
 
 %\RequirePackage[super,square]{natbib}%number,authoryear
 \RequirePackage{url,xurl}
+\Urlmuskip=0mu plus 0.1mu
+\newcommand{\doi}[1]{\href{https://doi.org/#1}{\url{#1}}}
+\urlstyle{rm}
 %\usepackage{xurl}
 %\def\UrlBreaks{%
 %  \do\/%

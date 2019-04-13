@@ -1,10 +1,17 @@
-# biblatex-map.py
 
-a python script to deal, modify and generalize the bib file.
 
-the processing logic is comply with the rule of `Dynamic Modification of Data` of bilatex, specification is almost the same, the only difference is : all the tex commands such as `\maps`,`\map`,`\step` in tex source file are changed to a json formated coefficient.
+# bibmap Package : A bibliography Package
 
-to some extent it is a python equivalent of the data map feature of biber.
+-------------------------------
+ 
+bibmap is a bibliography Package, contains a `.sty` used to config bibliography generation and 
+a bibmap.py program used to deal bib file at backend.
+
+package bibmap loads natbib to generate the citation and bibliography list.
+citestyle, bibstyle, mapstyle(bib file modification style) can be set with package options.
+
+backend program bibmap is like bibtex/biber used to deal bibfile, the output is bbl file 
+which can be loaded directly by latex to generate a bibliography.
 
 -------------------------------
 
@@ -15,77 +22,159 @@ Homepage: <https://github.com/hushidong/biblatex-map>
 License：MIT license
 
 --------------------------------------
-usage: 
 
-run the following command in python console:
+## tow key functions of bibmap pacakge
 
-`./biblatex-map.py`
+### bibliography generation
 
-input bib file is set in `biblatex-map.py`:
+the citation generation is based on natbib loaded by bibmap, and the bibliography generation is based on 
+bibmap.py with a bibstyle file which is a very simple python code file.
+
+features :
+
+* bibstyle file is python code file which contains some coefficients can be easily set. more simpler than bst. 
+
+* output contains a bbl file can be input by tex file.
+
+* output contains a tex file and a html file can be used in other places.
+
+* format of the bibliography is completedly controlled by the bibstyle file.
+
+* internal logic implemented by bibmap includes: sorting by options, formation with options for namelist, literal list, date ,literal and range field, items in bib entry controlled by options.
+
+### bib file modification
+
+bib file modification function is very like biblatex's dynamic data modification, the logic is almost the same, to some extend it is a python reimplementation.
+bib entries and fields can be deal and modified delicately.
+
+features :
+
+* bib file reading and parsing
+
+* bib transient saving: save the cited references form a big database to a  small bib file, save bib file to json format file.
+
+* bibentry modification: modification of entrytype, entry fields. 
+
+
+## usage：
+
+### bibmap package
+
+* A MWE
 
 ```
-if __name__=="__main__":
-    
-    #set the input bib file
-	inputbibfile='biblatex-map-test.bib'
-	
-	#set the aux file
-	#this is not necessary
-	#auxfile='tex-source-code.aux'
+\documentclass{article}
+    \usepackage{ctex}
+    \usepackage{xcolor}
+    \usepackage{toolbox}
+    \usepackage{hyperref}
+    \usepackage{lipsum}
+    \usepackage[paperwidth=16cm,paperheight=10cm,top=10pt,bottom=10pt,left=1cm,right=1cm,showframe,showcrop]{geometry}
+\usepackage[citestyle=numeric,bibstyle=gb7714-2015]{bibmap}
+\usepackage{filecontents}
+\begin{filecontents}{\jobname.bib}
+@techreport{calkin,
+  author       = {Calkin, D and Ager, A and Thompson, M},
+  title        = {A Comparative Risk Assessment Framework for Wildland Fire
+                 Management: the 2010 Cohesive Strategy Science Report},
+  number       = {RMRS-GTR-262},
+  year         = {2011},
+  pages        = {8--9},
+}
+\end{filecontents}
+
+    \begin{document}
+
+    REFERENCES\cite{calkin}
+
+    \bibliography{\jobname}
+
+    \end{document} 
 ```
 
-output bib/json file is generated automatically, 
-if an aux file is given ,the entries in output file are restricted to the references in aux file.
+* compiling method
 
-modifications wanted to be done are set in `biblatex-map.py` too, please set the json formatted argument `sourcemaps`:
+four steps compiling:
+```
+xelatex jobname
+bibmap.py jobname}
+xelatex jobname
+xelatex jobname
+```
 
-```
-#the SOURCE maps is consist of all the modification maps
-#all the maps are executed on every entry in the bib file
-sourcemaps=[
-	[#map1:change the entrytype ELECTRONIC to online
-		[{"typesource":"ELECTRONIC","typetarget":"online"}]#step1
-	],
-	[#map2:change the field name source to url
-		[{"fieldsource":"source","fieldtarget":"url"}]#step1
-	],
-	[#map3:change the urldate with format “yyyy-m-d” to the format “yyyy-mm-dd”, note: the regex is given directly
-		[{"fieldsource":"urldate","match":r'(\d\d\d\d)\-(\d)\-(\d)',"replace":r'\1-0\2-0\3',"overwrite":True}]#step1
-	],
-	[#map4:change the urldate with format “yyyy-m-d” to the format “yyyy-mm-dd”, note: the regex is given directly
-		[{"fieldsource":"date","match":r'(\d\d\d\d)\-(\d)\-(\d)',"replace":r'\1-0\2-0\3',"overwrite":True}]#step1
-	],
-	[#map5:change the field name refdate to urldate
-		[{"fieldsource":"refdate","fieldtarget":"urldate"}]#step1
-	],
-	[#map6:set field note of entry of type newspaper with field value news
-		[{"pertype":"newspaper"}],#step1
-		[{"fieldset":"note","fieldvalue":"news","overwrite":True}]#step2
-	],
-	[#map7:if field version is exist,set field edition with the value of the version
-		[{"fieldsource":"version","final":True}],#step1
-		[{"fieldset":"edition","origfieldval":True}]#step2
-	],
-	[#map8:set field keywords with entrykey
-		[{"fieldsource":"entrykey"}],#step1
-		[{"fieldset":"keywords","origfieldval":True}]#step2
-	],
-	[#map9:if an entry has note field, append the value of note to the keywords
-		[{"fieldsource":"note","final":True}],#step1
-		[{"fieldset":"keywords","origfieldval":True,"overwrite":True,"append":True}]#step2
-	],
-	 [#map10:determing the language of the title according to the unicode range of the character in title
-		 [{"fieldsource":"title","match":r'[\u2FF0-\u9FA5]',"final":True}],#step1
-		 [{"fieldset":"userd","fieldvalue":"chinese"}]#step2
-	 ],
-]
-```
+### bibmap.py
+
+bibmap.py is a python script can be run directly with in the support of python environment, it can be easily downloaded and installed from the python website.
+
+
+command in cmds for bibmap.py:
+
+
+bibmap.py
+
+`filename` a file name with or without an extension like .bib or .aux, if no extension was given, the file is treated as an aux file.
+
+`[-h]` help
+
+`[-a AUXFILE]` specify a aux file, invalid if the parameter filename is an aux file 
+
+`[-b BIBFILE]` specify a bib file, invalid if the parameter filename is an bib file 
+
+`[-s STYFILE]` specify a bibstyle file, using the default style file if not given.
+
+`[-m MAPFILE]` specify a mapstyle file(data modification style file), using the default style file if not given.
+
+`[--nofmt]` do not format the bibliography if given
+
+`[--nobdm]` do not modify the bibfile if given
+
+where, three types of files may be used:
+
+the first type is aux file
+
+the seconde type is bib file 
+
+the third type is py file，the bibstyle file and the mapstyle file are all the py file which contain python code.
+
+
+### command for bib modification
+
+run the following command in cmd：
+
+`bibmap.py biblatex-map-test.bib`
+
+the biblatex-map-test.bib will be read and parsed and modified with the config in the default mapstyle file bibmapdefault.py, then the bbl file with formatted bibliography will also be output.
+
+`bibmap.py biblatex-map-test.bib --nofmt`
+
+this command do not output bbl file.
+
+`bibmap.py biblatex-map-test.bib --nofmt -m bibmapaddkw.py`
+
+this command specify a user defined mapstyle file bibmapaddkw.py other than the default bibmapdefault.py
+
+
+
+### command for bibliography formating
+
+run the following command in cmd：
+
+`bibmap.py egtest`
+
+which specify a aux file egtest, all the setting will be read from the egtest.aux. if you want to set a bibfile, you can run:
+
+`bibmap.py egtest -b biblatex-map-test.bib`
+
+if  want to  set a bibstyle file , you  can run:
+
+`bibmap.py egtest -s bibstyleauthoryear.py`
+
 
 
 ## history：
 v1.0 2019/02/09
-v1.0a 
-	* 完善了bib文件解析，包括无包围符号的域值的解析，comment，string类型的解析。
+v1.0a 2019/04/12
+
 
 
 
@@ -102,141 +191,175 @@ v1.0a
 * [biblatex-check bib文件检查工具](https://github.com/Pezmc/BibLatex-Check)
 
 
+
 --------------------------------------
-## 介绍
 
-是一个用于处理、修改和规范化bib文件的python脚本。
+# bibmap 宏包
 
-处理的逻辑遵循biblatex的动态数据修改的规范，修改参数设置基本相同，只是把biblatex用tex命令表示的`\maps`、`\map`和`\step`转换为用json格式表示。
+bibmap 是一个参考文献宏包，包含一个 sty 文件，用于设置参考文献处理时的选项;
+一个 bibmap 程序，用于在后端处理参考文献数据。
 
-等价于用python重新实现了biber的动态数据修改功能。
+bibmap 宏包加载了 natbib等宏包，用于 latex 参考文献标注和文献表的生成。
+可以通过几个选项指定需要的标注样式、文献表著录样式、以及bib数据修改的样式。
 
--------------------------------
+bibmap 后端程序类似 bibtex/biber 程序用于处理参考文献数据，其输出类似于
+bibtex 为 bbl 文件，用于tex编译器读取后编译生成文献表。
 
-本来想将这一内容放到Pezmc开发的biblatex_check脚本中，但想想还是纯粹点好了。
+## bibmap 宏包两大核心功能
 
--------------------------------
+### 参考文献表格式化
+
+bibmap 宏包的标注样式基于natbbib宏包实现，而著录样式采用极简单的python代码来设置。
+
+该功能主要特点包括:
+
+* bibmap使用的样式文件为python代码构成的文本文件，设置极为方便，避免用户使用复杂的bst语法
+
+* 根据样式文件输出格式化后的 bbl 文件，便于 latex 文档直接使用。
+
+* 转存格式化的参考文献表文本为文本文件和网⻚文件，便于在其它文档中直
+接使用。
+
+* 除了 bibmap 程序内部处理逻辑外，样式文件可以全面控制参考文献的格式
+化。
+
+* bibmap 实现的内部处理: 根据选项进行排序，根据选项对姓名列表域、文本
+列表域、日期域、文本域、范围域格式化，根据选项对条目输出项进行组织和格式化。
+
+### bib 数据修改
+
+bib 文件修改功能，借鉴 biblatex 的设计，逻辑基本一致，可以说是一套python 的重新实现，
+可以对 bib 文件的条目和域做非常细致的处理和修改。
+
+该功能主要特点包括:
+
+* bib 文件的读取和解析
+
+* bib 文件的转存，包括从大的 bib 文件抽取引用的文献保存为一个小的 bib 文
+件，将 bib 文件的内容存储为 json 格式的问题。
+
+* 参考文献条目的修改，包括条目类型的修改，条目内部的域的修改等，包括
+删除、变化、转换等等。
+
+
 
 ## 用法：
 
-直接在python命令行中运行
+### bibmap宏包
 
-`./biblatex-map.py`
-
-需要修改的bib文件在`biblatex-map.py`修改：
+* 最小工作示例MWE
 
 ```
-if __name__=="__main__":
-    
-    #设置输入的bib文件
-	inputbibfile='biblatex-map-test.bib'
-	
-	#set the aux file
-	#this is not necessary
-	#auxfile='tex-source-code.aux'
+\documentclass{article}
+    \usepackage{ctex}
+    \usepackage{xcolor}
+    \usepackage{toolbox}
+    \usepackage{hyperref}
+    \usepackage{lipsum}
+    \usepackage[paperwidth=16cm,paperheight=10cm,top=10pt,bottom=10pt,left=1cm,right=1cm,showframe,showcrop]{geometry}
+\usepackage[citestyle=numeric,bibstyle=gb7714-2015]{bibmap}
+\usepackage{filecontents}
+\begin{filecontents}{\jobname.bib}
+@techreport{calkin,
+  author       = {Calkin, D and Ager, A and Thompson, M},
+  title        = {A Comparative Risk Assessment Framework for Wildland Fire
+                 Management: the 2010 Cohesive Strategy Science Report},
+  number       = {RMRS-GTR-262},
+  year         = {2011},
+  pages        = {8--9},
+}
+\end{filecontents}
+
+    \begin{document}
+
+    文献\cite{wfz,bjsrmzfbgt,zgtsgxh}\cite{calkin,buseck}
+
+    \bibliography{\jobname}
+
+    \end{document} 
 ```
 
-输出的bib文件自动生成，当设置了aux文件后，那么输出的bib文件中条目将限制为aux中引用的文献条目。
+* 编译方式
 
-修改bib文件内容的配置用json格式表示，直接在`biblatex-map.py`修改sourcemaps参数：
-
+四步编译:
 ```
-#maps所有的修改用map构成一个maps
-sourcemaps=[
-	[#map1:将ELECTRONIC类型转换为online类型
-		[{"typesource":"ELECTRONIC","typetarget":"online"}]#step1
-	],
-	[#map2:将source域转换为url域
-		[{"fieldsource":"source","fieldtarget":"url"}]#step1
-	],
-	[#map3:将urldate域的信息“yyyy-m-d”转换为“yyyy-mm-dd”,注意正则表达式直接写不用在外面套""
-		[{"fieldsource":"urldate","match":r'(\d\d\d\d)\-(\d)\-(\d)',"replace":r'\1-0\2-0\3'}]#step1
-	],
-	[#map4:将urldate域的信息“yyyy-m-d”转换为“yyyy-mm-dd”,注意正则表达式直接写不用在外面套""
-		[{"fieldsource":"date","match":r'(\d\d\d\d)\-(\d)\-(\d)',"replace":r'\1-0\2-0\3',"overwrite":True}]#step1
-	],
-	[#map5:将refdate域转换为urldate域
-		[{"fieldsource":"refdate","fieldtarget":"urldate"}]#step1
-	],
-	[#map6:对于newspaper类型，设置note为news
-		[{"pertype":"newspaper"}],#step1
-		[{"fieldset":"note","fieldvalue":"news","overwrite":True}]#step2
-	],
-	[#map7:设置edition域等于version
-		[{"fieldsource":"version","final":True}],#step1
-		[{"fieldset":"edition","origfieldval":True}]#step2
-	],
-	[#map8:设置entrykey域设置给keywords
-		[{"fieldsource":"entrykey"}],#step1
-		[{"fieldset":"keywords","origfieldval":True}]#step2
-	],
-	[#map9:对于存在note域的情况，将其值添加到keywords
-		[{"fieldsource":"note","final":True}],#step1
-		[{"fieldset":"keywords","origfieldval":True,"overwrite":True,"append":True}]#step2
-	],
-	 [#map10:根据标题的字符编码范围确定标题的语言类型
-		 [{"fieldsource":"title","match":r'[\u2FF0-\u9FA5]',"final":True}],#step1
-		 [{"fieldset":"userd","fieldvalue":"chinese"}]#step2
-	 ],
-]
+xelatex jobname
+bibmap.py jobname}
+xelatex jobname
+xelatex jobname
 ```
 
-sourcemaps参数其实是json格式的。
-sourcemaps是一个列表，记录所有的修改，一个修改是一个map，也是一个列表。
-一个map列表中有任意数量的step(步骤)，一个step内由一个key-val参数构成字典(dict)数据结构。
+### bibmap程序
 
-处理逻辑是这样：
+bibmap程序目前为打包成可执行文件，而以py脚本的形式存在，因此运行需要python环境的支持，
+而这仅需要下载安装官网的python安装包即可。
+
+bibmap程序的命令行参数如下:
+
 ```
-	for map in maps #遍历maps中的所有map
-		for entry in entries #对所有的条目均执行该map
-			for step in map #遍历map中的所有step
-				code for the step to modify the bib entry				 
+bibmap.py
+
+filename 单个输入文件的文件名，可带后缀名如bib或aux，无后缀名时默认为辅助文件.aux
+
+[-h] 输出帮助
+
+[-a AUXFILE] 辅助文件的文件名，可带后缀名.aux，如果filename已经设置aux文件则无效
+
+[-b BIBFILE] 文献数据库文件名，可带后缀名.bib，如果filename已经设置bib文件则无效
+
+[-s STYFILE] 设置文献样式文件的文件名，可带后缀名.py，不给出则使用默认样式文件
+
+[-m MAPFILE] 数据库修改设置文件文件名，可带后缀名.py，不给出则使用默认设置文件
+
+\verb|[--nofmt]| 给出该选项则不做格式化输出
+
+\verb|[--nobdm]| 给出该选项则不做不做bib数据修改
 ```
 
-需要注意：python中正则和perl中的略有不同，比如python用\xHH,\uHHHH,\UHHHHHHHH表示unicode字符，而perl直接用\x{HHHH}表示。
+其中涉及到三种文件：
 
-## need to do：
+一是aux文件，如果是要得到格式化的文献表，那么这是最重要的文件，由tex编译生成，当使用bibmap宏包时，可以通过宏包选项设置样式文件，而bib文件通过bibliography命令也会在该文件中指出。
 
-已实现的选项：
-typesource=?entrytype?
-typetarget=?entrytype?
-fieldsource=?entryfield?
-fieldtarget=?entryfield?
-match=?regexp?
-matchi=?regexp?
-notmatch=?regexp?
-notmatchi=?regexp?
-replace=?regexp?
+二是bib文件，这是参考文献数据源文件，可以由通过bibliography命令在aux文件内给出，也可以直接利用选项给出。
 
-notfield=?entryfield?
-final=true, false default: false
-origfieldval=true, false default: false
-append=true, false default: false
-pertype
-pernottype
+三是py文件，这是用于设置数据修改和文献格式化的文件，是python代码。宏包自带的样式，通常bibmap*.py是用于bib文件数据修改的，而bibstyle*.py是用于格式化文献表的。
 
-fieldset=?entryfield?
-fieldvalue=?string?
-null=true, false default: false
-origfield=true, false default: false
-origentrytype=true, false default: false
-origfieldval=true, false default: false
+
+使用方式为:
 
 
 
-未实现的选项
+### bib文件修改
 
-entryclone=?clonekey?
-entrynew=?entrynewkey?
-entrynewtype=?string?
-entrytarget=?string?
-entrynocite=true, false default: false
-entrynull=true, false default: false
+直接在命令行输入脚本及其参数：
 
-1. match 大小写区分的match
+`bibmap.py biblatex-map-test.bib`
+
+此时，bibmap读取biblatex-map-test.bib文件，并根据默认的数据修改设置bibmapdefault.py做修改，此时还会自动的做格式化后的文献表输出。
+
+`bibmap.py biblatex-map-test.bib --nofmt`
+
+此时不再输出格式化后的文献表。
+
+`bibmap.py biblatex-map-test.bib --nofmt -m bibmapaddkw.py`
+
+此时使用指定的数据修改设置bibmapaddkw.py代替默认的bibmapdefault.py对数据库bib文件做修改。
 
 
 
+### 参考文献格式化
 
+直接在命令行输入脚本及其参数：
+
+`bibmap.py egtest`
+
+此时输入一个辅助文件egtest.aux，其它所有的参数根据对egtest.aux的解析来获取，如果没有解析到，若存在默认的设置，则使用默认的设置文件。
+若没有默认设置，则可以通过可选参数来指定：
+
+`bibmap.py egtest -b biblatex-map-test.bib`
+
+当aux文件未给出格式化设置文件时，也可以用-s选项给出，格式化设置文件(即文献样式文件)，比如
+
+`bibmap.py egtest -s bibstyleauthoryear.py`
 
 

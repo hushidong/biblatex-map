@@ -1,12 +1,102 @@
 # biblatex-map.py
 
-是一个用于处理、修改和规范化bib文件的python脚本。
+a python script to deal, modify and generalize the bib file.
 
-主要功能包括：
-1. 基于biblatex的source map的逻辑修改bib文件中的参考文献信息
-2. 输入bib文件的解析，输出修改后的bib文件，以及json格式的参考文献文件
-3. 输出定制著录格式比如GB/T 7714-2015标准的参考文献表，输出文本或者thebibliography环境。简化格式定制方式
-4. 进一步可以实现一个宏包，实现一个简化功能的低配版biblatex
+the processing logic is comply with the rule of `Dynamic Modification of Data` of bilatex, specification is almost the same, the only difference is : all the tex commands such as `\maps`,`\map`,`\step` in tex source file are changed to a json formated coefficient.
+
+to some extent it is a python equivalent of the data map feature of biber.
+
+usage: 
+
+run the following command in python console:
+
+`./biblatex-map.py`
+
+input bib file is set in `biblatex-map.py`:
+
+```
+if __name__=="__main__":
+    
+    #set the input bib file
+	inputbibfile='biblatex-map-test.bib'
+	
+	#set the aux file
+	#this is not necessary
+	#auxfile='tex-source-code.aux'
+```
+
+output bib/json file is generated automatically, 
+if an aux file is given ,the entries in output file are restricted to the references in aux file.
+
+modifications wanted to be done are set in `biblatex-map.py` too, please set the json formatted argument `sourcemaps`:
+
+```
+#the SOURCE maps is consist of all the modification maps
+#all the maps are executed on every entry in the bib file
+sourcemaps=[
+	[#map1:change the entrytype ELECTRONIC to online
+		[{"typesource":"ELECTRONIC","typetarget":"online"}]#step1
+	],
+	[#map2:change the field name source to url
+		[{"fieldsource":"source","fieldtarget":"url"}]#step1
+	],
+	[#map3:change the urldate with format “yyyy-m-d” to the format “yyyy-mm-dd”, note: the regex is given directly
+		[{"fieldsource":"urldate","match":r'(\d\d\d\d)\-(\d)\-(\d)',"replace":r'\1-0\2-0\3',"overwrite":True}]#step1
+	],
+	[#map4:change the urldate with format “yyyy-m-d” to the format “yyyy-mm-dd”, note: the regex is given directly
+		[{"fieldsource":"date","match":r'(\d\d\d\d)\-(\d)\-(\d)',"replace":r'\1-0\2-0\3',"overwrite":True}]#step1
+	],
+	[#map5:change the field name refdate to urldate
+		[{"fieldsource":"refdate","fieldtarget":"urldate"}]#step1
+	],
+	[#map6:set field note of entry of type newspaper with field value news
+		[{"pertype":"newspaper"}],#step1
+		[{"fieldset":"note","fieldvalue":"news","overwrite":True}]#step2
+	],
+	[#map7:if field version is exist,set field edition with the value of the version
+		[{"fieldsource":"version","final":True}],#step1
+		[{"fieldset":"edition","origfieldval":True}]#step2
+	],
+	[#map8:set field keywords with entrykey
+		[{"fieldsource":"entrykey"}],#step1
+		[{"fieldset":"keywords","origfieldval":True}]#step2
+	],
+	[#map9:if an entry has note field, append the value of note to the keywords
+		[{"fieldsource":"note","final":True}],#step1
+		[{"fieldset":"keywords","origfieldval":True,"overwrite":True,"append":True}]#step2
+	],
+	 [#map10:determing the language of the title according to the unicode range of the character in title
+		 [{"fieldsource":"title","match":r'[\u2FF0-\u9FA5]',"final":True}],#step1
+		 [{"fieldset":"userd","fieldvalue":"chinese"}]#step2
+	 ],
+]
+```
+
+
+## history：
+v1.0 2019/02/09
+v1.0a 
+	* 完善了bib文件解析，包括无包围符号的域值的解析，comment，string类型的解析。
+
+
+
+
+--------------------------------------
+## Related Links
+
+* [Biblatex 宏包](https://github.com/plk/biblatex)
+* [Beamer 文档类](https://github.com/josephwright/beamer)
+* [biblatex 宏包中文手册 ](https://github.com/hushidong/biblatex-zh-cn)
+* [biblatex 简明使用手册](https://github.com/hushidong/biblatex-solution-to-latex-bibliography)
+* [biblatex-tutorial 摘译](https://github.com/hushidong/biblatex-tutorial-cn)
+* [biblatex-map bib文件修改工具](https://github.com/hushidong/biblatex-map/)
+* [biblatex-check bib文件检查工具](https://github.com/Pezmc/BibLatex-Check)
+
+
+--------------------------------------
+## 介绍
+
+是一个用于处理、修改和规范化bib文件的python脚本。
 
 处理的逻辑遵循biblatex的动态数据修改的规范，修改参数设置基本相同，只是把biblatex用tex命令表示的`\maps`、`\map`和`\step`转换为用json格式表示。
 
@@ -17,15 +107,6 @@
 本来想将这一内容放到Pezmc开发的biblatex_check脚本中，但想想还是纯粹点好了。
 
 -------------------------------
-
-Maintainer: huzhenzhen <hzzmail@163.com>
-
-Homepage: <https://github.com/hushidong/biblatex-map>
-
-License：MIT license
-
-
---------------------------------------
 
 ## 用法：
 
@@ -46,7 +127,7 @@ if __name__=="__main__":
 	#auxfile='tex-source-code.aux'
 ```
 
-输出的bib/json文件自动生成，当设置了aux文件后，那么输出的bib文件中条目将限制为aux中引用的文献条目。
+输出的bib文件自动生成，当设置了aux文件后，那么输出的bib文件中条目将限制为aux中引用的文献条目。
 
 修改bib文件内容的配置用json格式表示，直接在`biblatex-map.py`修改sourcemaps参数：
 
@@ -113,9 +194,7 @@ typetarget=?entrytype?
 fieldsource=?entryfield?
 fieldtarget=?entryfield?
 match=?regexp?
-matchi=?regexp?
 notmatch=?regexp?
-notmatchi=?regexp?
 replace=?regexp?
 
 notfield=?entryfield?
@@ -135,13 +214,14 @@ origfieldval=true, false default: false
 
 
 未实现的选项
-
 entryclone=?clonekey?
 entrynew=?entrynewkey?
 entrynewtype=?string?
 entrytarget=?string?
 entrynocite=true, false default: false
 entrynull=true, false default: false
+matchi=?regexp?
+notmatchi=?regexp?
 
 1. match 大小写区分的match
 
