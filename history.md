@@ -1,34 +1,68 @@
 
-3. 借鉴xpinyin的方式实现拼音排序，借鉴perl模块的方式和数据实现笔画排序。
 
-1. 当需要对标题等域做大小写转换是，要把命令进行保护，比如\LaTeX等
-
-3. readme 英文版的更新。
 
 1. 目前读取文件的bib文件应该是utf-8 无bom格式。
 
-* 文档内的多个文献表的解决用chapterbib试试看？
+2. 著录表中的extrayear是否要处理？目前暂无需求
 
-12. 文本中{}的忽略，而输出到tex的文本中的{}不忽略
-到正常文本中的利用符号追踪方法成对的消除{}，或者也不消除，
-而是在html文件中做类似于tex中的编组操作，保护大小写的作用要体现。
-保护大小写的{}在域处理中必须要处理完成，而用于格式的编组{}必须要保留。
 
-* 文本输出替换，bbl输出的替换，HTML不同的替换，三者不同的替换要考虑
+4. pyinstaller打包成exe文件
 
-* 文本输出的内容中去掉{}
-输出给bbl的保留，关键是\url等命令可能需要的替换，文本中的替换，html文件中的替换
-
-13. pyinstaller打包成exe文件
-
-9. match 大小写区分的match需要实现
-
-10. 一些biblatex的map选项需要实现，包括entryclone=?clonekey?
+5. 一些biblatex的map选项需要实现，包括
+		entryclone=?clonekey?
 		entrynew=?entrynewkey?
 		entrynewtype=?string?
 		entrytarget=?string?
 		entrynocite=true, false default: false
 		entrynull=true, false default: false
+		match 大小写区分的matchi
+		
+		
+		
+#### 20190419
+
+* bibmap宏包的完善
+		
+* 文档内的多个文献表的解决用chapterbib，兼容性测试完成
+
+* natbib报错的排除，当采用上标标签时，引用前面应该有内容，否则第一个会包unskip不能再垂直环境中使用的问题。
+
+
+* 文本输出替换，bbl输出的替换，HTML不同的替换，三者不同的替换要考虑
+
+文本中{}的忽略，而输出到tex的文本中的{}不忽略
+到正常文本中的利用符号追踪方法成对的消除{}，或者也不消除，
+而是在html文件中做类似于tex中的编组操作，保护大小写的作用要体现。
+保护大小写的{}在域处理中必须要处理完成，而用于格式的编组{}必须要保留。
+输出给bbl的保留，对于tex和html关键是\url等命令可能需要的替换
+
+		
+#### 20190418
+
+1. uniquename和uniquelist完善。
+
+从遍历的角度重新设计了uniquename选项下的比较，uniquelist只是利用uniquename，因为它只是姓名数量的扩张，没有其它的变化。
+		
+
+#### 20190416
+
+1. 当需要对标题等域做大小写转换是，要把命令进行保护，比如\LaTeX等
+
+* 标注姓名的歧义处理。初步实现uniquename，uniquelist等选项。
+
+* 姓名的前后缀
+
+* 标注中的姓名处理
+
+* Anon可以在著录格式设置中，用替代字符串实现。或者在bib数据修改时增加域的处理。		
+
+* natbib 做标注样式的修改，测试。
+		
+#### 20190415
+
+* 借鉴xpinyin的方式实现拼音输出，借鉴perl模块和unicodecldr的实现拼音和笔画排序。
+
+* readme 英文版的更新。
 
 #### 20190413
 		

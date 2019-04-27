@@ -174,7 +174,7 @@ if  want to  set a bibstyle file , you  can run:
 ## history：
 v1.0 2019/02/09
 v1.0a 2019/04/12
-
+v1.0b 2019/04/19
 
 
 

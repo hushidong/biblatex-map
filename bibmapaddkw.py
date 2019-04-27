@@ -7,7 +7,7 @@
 #重设新的任务处理
 sourcemaps=[
 	[#map1:设置entrykey域设置给keywords
-		[{"fieldsource":"entrykey"}],#step1
-		[{"fieldset":"keywords","origfieldval":True,"overwrite":True}]#step2
+		{"fieldsource":"entrykey"},#step1
+		{"fieldset":"keywords","origfieldval":True,"overwrite":True}#step2
 	],
 ]

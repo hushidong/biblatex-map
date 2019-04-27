@@ -1,0 +1,39 @@
+
+
+% !Mode:: "TeX:UTF-8"
+% 用于情况
+%
+
+\documentclass[twoside]{book}
+    \usepackage{ctex}%[zihao=-4]
+    \usepackage{fontspec}
+\setmainfont{CMU Serif}
+\setCJKmainfont {SourceHanSerifSC-Regular.otf}
+    \usepackage{xcolor}
+    \usepackage{toolbox}
+    \usepackage[colorlinks,citecolor=blue]{hyperref}
+    \usepackage{lipsum}
+    \usepackage{geometry}%,showframe,showcrop
+\geometry{
+  paper      = a4paper,
+  vmargin    = 2.54cm,
+  hmargin    = 3.17cm,
+  headheight = 0.8cm,
+  headsep    = 0.24cm,
+  footskip   = 0.79cm,
+}
+\usepackage[bibstyle=gb7714-2015ay]{bibmap}%标注(引用)样式citestyle，著录样式bibstyle都采用gb7714-2015样式
+
+\usepackage{chapterbib}
+
+
+    \begin{document}
+
+
+\include{chaptera}
+
+
+\include{chapterb}
+
+
+    \end{document} 

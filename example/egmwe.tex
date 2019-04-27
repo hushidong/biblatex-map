@@ -5,7 +5,7 @@
     \usepackage{hyperref}
     \usepackage{lipsum}
     \usepackage[paperwidth=16cm,paperheight=10cm,top=10pt,bottom=10pt,left=1cm,right=1cm,showframe,showcrop]{geometry}
-\usepackage[citestyle=numeric,bibstyle=gb7714-2015]{bibmap}
+\usepackage[citestyle=numeric,bibstyle=gb7714-2015ay]{bibmap}
 \usepackage{filecontents}
 \begin{filecontents}{\jobname.bib}
 @techreport{calkin,
@@ -60,6 +60,8 @@
     \begin{document}
 
     文献\cite{wfz,bjsrmzfbgt,zgtsgxh}\cite{calkin,buseck}
+
+    文献\cite[15]{calkin}\cite[25-30]{buseck}
 
     \bibliography{\jobname}
 

@@ -29,6 +29,41 @@ import operator #数学计算操作符
 import argparse #命令行解析
 import locale #用locale的方法来进行中文排序，windows下是gbk，一级汉字按拼音排，二级按笔画数排
 
+#引入拼音和笔画顺序的排序数据
+import hanzicollationpinyin
+import hanzicollationstroke
+import hanzipinyindatabase
+
+sqpinyindata=hanzicollationpinyin.sqpinyindata
+sqstrokedata=hanzicollationstroke.sqstrokedata
+hzpinyindata=hanzipinyindatabase.pinyindatabase
+
+#
+#bib数据修改所用的选项数据库
+#用于检查用户设置的选项
+bibmapoptiondatabase={
+'typesource':'entrytype', #对应的值为 entrytype名
+'typetarget':'entrytype', #对应的值为 entrytype名
+'fieldsource':'entryfield', #对应的值为 entryfield名
+'fieldtarget':'entryfield', #对应的值为 entryfield名
+'match':'regexp', #对应的值为 regexp(正则表达式)
+'notmatch':'regexp', #对应的值为 regexp(正则表达式)
+'replace':'regexp', #对应的值为 regexp(正则表达式)
+'notfield':'entryfield', #对应的值为 entryfield名
+'final':[True,False], #对应的值为 true和false(bool值)
+'origfieldval':[True,False], #对应的值为 true, false(bool值)
+'append':[True,False], #对应的值为 true, false(bool值)
+'pertype':'entrytype', #对应的值为 entrytype名即条目类型
+'pernottype':'entrytype', #对应的值为 entrytype名即条目类型
+'fieldset':'entryfield', #对应的值为 entryfield名
+'fieldvalue':'string', #对应的值为 string(字符串)
+'null':[True,False], #对应的值为 true, false(bool值)
+'origfield':[True,False], #对应的值为 true, false(bool值)
+'origentrytype':[True,False], #对应的值为 true, false(bool值)
+'origfieldval':[True,False], #对应的值为 true, false(bool值)
+'fieldfunction':'sethzpinyin', #对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。在 在域内容处理是，当给出'fieldfunction':'sethzpinyin'选项时，程序会调用sethzpinyin函数以域内容为参数，输出其对应的拼音。
+}
+
 #
 #格式化参考文献所用的全局选项数据库
 #用于检查用户设置的选项
@@ -36,7 +71,6 @@ formatoptiondatabase={
 "style":['numeric','numeric'],#写bbl信息的设置选项,authoryear,'numeric'
 "nameformat":['uppercase','lowercase','givenahead','familyahead','pinyin','reverseorder'],#姓名处理选项：uppercase,lowercase,given-family,family-given,pinyin
 "giveninits":['space','dotspace','dot','terse','false'],#使用名的缩写，space表示名见用空格分隔，dotspace用点加空格，dot用点，terse无分隔，false不使用缩写
-'sortascending':[True,False],#排序使用升序还是降序，默认是升序，设置为False则为降序
 "usesuffix":[True,False],#使用后缀名
 "maxbibnames":3,#
 "minbibnames":3,#
@@ -46,6 +80,8 @@ formatoptiondatabase={
 "moreitems":[True,False],#
 "lanorder":'none',#文种排序，指定语言全面的顺序['chinese','japanese','korean','english','french','russian']
 "sorting":'none',#排序，或者指定一个域列表比如['key','author','year','title']
+"sortlocale":['none','pinyin','stroke','system'],#本地化排序:'none'，'pinyin'，'stroke'，'system'，none不使用，system是操作系统提供的的locale，pinyin，stroke是bibmap根据unicode-cldr实现的排序
+'sortascending':[True,False],#排序使用升序还是降序，默认是升序，设置为False则为降序
 "date":['year','iso','ymd'],#'日期处理选项'：year，iso，等
 "urldate":['year','iso','ymd'],#'日期处理选项'：year，iso，等
 "origdate":['year','iso','ymd'],#'日期处理选项'：year，iso，等
@@ -210,19 +246,21 @@ def formatallbibliography():
 	#             先处理完文献语言以及排序问题
 	#
 	#sortfieldlist用于保存排序的域
-	sortfieldlist=['sortkey']#第一个排序域是key/sortkey，用sortkey表示用key/sortkey进行排序
-	print('INFO: sorting with sortkey as the first key')
+	sortfieldlist=[]#
 	
 	if formatoptions['lanorder']=='none':
 		pass
 	else:
-		print('INFO: sorting with language as the seconde key')
-		sortfieldlist.append('sortlang')#第二个排序域是文种，这里用sortlang来进行文种的排序
+		print('INFO: sorting with language as the first key')
+		sortfieldlist.append('sortlang')#第一个排序域是文种，这里用sortlang来进行文种的排序
 		sortlangdict={}#用于设置对应的语言的排序数字
 		tempserialno=1
 		for lan in formatoptions['lanorder']:
 			sortlangdict[lan]=tempserialno
 			tempserialno+=1
+			
+	sortfieldlist.append('sortkey')#第二个排序域是key/sortkey，用sortkey表示用key/sortkey进行排序
+	print('INFO: sorting with sortkey as the second key')
 	
 	sortingflag=True #标记一下便于后面判断
 	if formatoptions['sorting']=='none':#如果sorting选项不为none，那么将其设置的域作为接下来的排序域来排序
@@ -367,15 +405,15 @@ def formatallbibliography():
 		#接着处理排序的前期准备工作，根据全局的排序设置选项，在条目中保存排序需要的信息
 		#
 		if sortingflag:
-			#首先处理sortkey域的信息
+			#首先处理sortlan域的信息
+			if 'sortlang' in sortfieldlist:
+				bibentry['sortlang']=sortlangdict[bibentry['language']]
+				
+			#接着处理sortkey域的信息
 			if 'key' in bibentry:
 				bibentry['sortkey']=bibentry['key']
 			else:
 				bibentry['sortkey']=''
-				
-			#接着处理sortlan域的信息
-			if 'sortlang' in sortfieldlist:
-				bibentry['sortlang']=sortlangdict[bibentry['language']]
 			
 			#接着处理各个排序域的信息
 			for fieldsource in formatoptions['sorting']:
@@ -425,34 +463,66 @@ def formatallbibliography():
 	#
 	#3. 接着根据排序信息对条目进行排序
 	if sortingflag:
+		tempsna=0
 		#print('sortfieldlist=',sortfieldlist)
 		sortfieldlist.reverse()#reverse()变换位置但不返回新的list
 		#print('sortfieldlist=',sortfieldlist)
-		#tempsna=0
 		#print('-------------')
 		#for bibentry in newbibentries:
 		#	print(tempsna,bibentry)
 		
-		#设置locale排序
-		locale.setlocale(locale.LC_COLLATE,'')
-		print('INFO: sorting with local:',locale.getdefaultlocale())
+		
+		#输出一下升降序信息
 		if formatoptions['sortascending']:
 			print('INFO: sorting in ascending order')
 		else:
 			print('INFO: sorting in descending order')
 		
-		for sortfield in sortfieldlist:
-			#print('-------------sort with',sortfield,'----------')
-			#tempsna+=1
-			if formatoptions['sortascending']:#升序排列
-				newbibentries=sorted(newbibentries,key=lambda dict: locale.strxfrm(str(dict[sortfield])))
-			else:#降序排列
-				newbibentries=sorted(newbibentries,key=lambda dict: locale.strxfrm(str(dict[sortfield])),reverse=True)
-			
-			#for bibentry in newbibentries:
-			#	print(tempsna,bibentry)
-			
-	
+		print('INFO: sorting with locale:'+formatoptions['sortlocale'])
+		if formatoptions['sortlocale']=='none':
+			for sortfield in sortfieldlist:
+				#print('-------------sort with',sortfield,'----------')
+				#tempsna+=1
+				if formatoptions['sortascending']:#升序排列
+					newbibentries=sorted(newbibentries,key=lambda dict: str(dict[sortfield]))
+				else:#降序排列
+					newbibentries=sorted(newbibentries,key=lambda dict: str(dict[sortfield]),reverse=True)
+					
+		elif formatoptions['sortlocale']=='system':
+			#设置locale排序
+			locale.setlocale(locale.LC_COLLATE,'')
+			print('INFO: sorting with local:',locale.getdefaultlocale())
+			for sortfield in sortfieldlist:
+				#print('-------------sort with',sortfield,'----------')
+				#tempsna+=1
+				if formatoptions['sortascending']:#升序排列
+					newbibentries=sorted(newbibentries,key=lambda dict: locale.strxfrm(str(dict[sortfield])))
+				else:#降序排列
+					newbibentries=sorted(newbibentries,key=lambda dict: locale.strxfrm(str(dict[sortfield])),reverse=True)
+				
+				#for bibentry in newbibentries:
+				#	print(tempsna,bibentry)
+				
+		elif formatoptions['sortlocale']=='pinyin':
+			for sortfield in sortfieldlist:
+				#print('-------------sort with',sortfield,'----------')
+				#tempsna+=1
+				if formatoptions['sortascending']:#升序排列
+					newbibentries=sorted(newbibentries,key=lambda dict: comparepinyin(str(dict[sortfield])))
+				else:#降序排列
+					newbibentries=sorted(newbibentries,key=lambda dict: comparepinyin(str(dict[sortfield])),reverse=True)
+				#for bibentry in newbibentries:
+				#	print(tempsna,bibentry)
+					
+		elif formatoptions['sortlocale']=='stroke':
+			for sortfield in sortfieldlist:
+				if formatoptions['sortascending']:#升序排列
+					newbibentries=sorted(newbibentries,key=lambda dict: comparestroke(str(dict[sortfield])))
+				else:#降序排列
+					newbibentries=sorted(newbibentries,key=lambda dict: comparestroke(str(dict[sortfield])),reverse=True)
+		else:
+			print('WARNING: sortlocale is not defined!')
+		
 	#
 	#4. 将所有需要输出的文献进行格式化
 	for bibentry in newbibentries:
@@ -468,6 +538,44 @@ def formatallbibliography():
 		
 	return None
 
+#
+#
+#用于输出字符串对应拼音顺序的字符串
+def comparepinyin(stra):
+	strb=''
+	for chari in stra:
+		if chari in sqpinyindata:
+			strb=strb+'字'+str(hex(sqpinyindata.index(chari)+4096))#加字是为了避免与西文字符混淆
+		else:
+			strb=strb+chari
+	return strb
+
+#
+#
+#用于输出字符串对应笔画顺序的字符串	
+def comparestroke(stra):
+	strb=''
+	for chari in stra:
+		if chari in sqstrokedata:
+			strb=strb+'字'+str(hex(sqstrokedata.index(chari)+4096))
+		else:
+			strb=strb+chari
+	return strb
+
+#
+#
+#用于设置字符串的拼音字符串		
+def sethzpinyin(stra):
+	strb=''
+	for chari in stra:
+		if chari in hzpinyindata:
+			strb=strb+str(hzpinyindata[chari])
+			#print(strb)
+		else:
+			strb=strb+chari
+			#print(strb)
+	return strb
+	
 #
 #
 #格式化一个文献条目文本
@@ -693,7 +801,7 @@ def formatfield(bibentry,fieldinfo,lastfield):
 				if  isinstance(numtemp,int):
 					fieldtext=fieldtext+fieldinfo['prestringifnumber']
 			except:
-				print('info:waring the field value can not convert to integer')
+				print('INFO: the field value can not convert to integer when deal prestringifnumber')
 		
 		if 'prestring' in fieldinfo:
 			fieldtext=fieldtext+fieldinfo['prestring']
@@ -714,7 +822,7 @@ def formatfield(bibentry,fieldinfo,lastfield):
 				if  isinstance(numtemp,int):
 					fieldtext=fieldtext+fieldinfo['posstringifnumber']
 			except:
-				print('info:waring the field value can not convert to integer')
+				print('INFO: the field value can not convert to integer when deal posstringifnumber')
 		
 		#后置标点输出
 		if 'pospunct' in fieldinfo:
@@ -2126,30 +2234,30 @@ def execsourcemap():
 			#print("map info=",map)
 			for step in map:#every step in map
 				if mapcontinue>0:#对前面已经final完成的情况做限制
-					for keyvals in step:#key-vals in step
-						for k,v in keyvals.items():#step 是有迹可循的，每个step总是存在一些东西，找到这些做其中的逻辑即可
-							#print(k,v)
+					keyvals=step #step is a key-vals dict 
+					for k,v in keyvals.items():#step 是有迹可循的，每个step总是存在一些东西，找到这些做其中的逻辑即可
+						#print(k,v)
+						
+						if k=="typesource":#条目类型设置
+							mapcontinue=maptypesource(keyvals,bibentry,typesrcinfo)#coef is dict
 							
-							if k=="typesource":#条目类型设置
-								mapcontinue=maptypesource(keyvals,bibentry,typesrcinfo)#coef is dict
-								
-							elif k=="fieldsource":#域查找或设置
-								mapcontinue=mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo)#
-								#print("fieldsource step:",fieldsrcinfo)
-								
-							elif k=="fieldset":#域设置
-								mapcontinue=mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo)#
-								
-							elif k=="pertype": #类型限制
-								mapcontinue=mappertype(keyvals,constraintinfo)
-								
-							elif k=="pernottype":#类型限制
-								mapcontinue=mappernottype(keyvals,constraintinfo)
-								
-							elif k=="notfield":#域限制
-								mapcontinue=mapnotfield(keyvals,bibentry,fieldsrcinfo,constraintinfo)#
-							else:
-								pass
+						elif k=="fieldsource":#域查找或设置
+							mapcontinue=mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo)#
+							#print("fieldsource step:",fieldsrcinfo)
+							
+						elif k=="fieldset":#域设置
+							mapcontinue=mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo)#
+							
+						elif k=="pertype": #类型限制
+							mapcontinue=mappertype(keyvals,constraintinfo)
+							
+						elif k=="pernottype":#类型限制
+							mapcontinue=mappernottype(keyvals,constraintinfo)
+							
+						elif k=="notfield":#域限制
+							mapcontinue=mapnotfield(keyvals,bibentry,fieldsrcinfo,constraintinfo)#
+						else:
+							pass
 
 								
 #
@@ -2289,6 +2397,8 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
 			elif k=='origfield':
 				fieldvalue=fieldsrcinfo['fieldsource']
 				print(fieldvalue)
+			elif k=="fieldfunction":
+				fieldfunction=v
 			elif k=='null':
 				fieldvalue=None
 				print(fieldvalue)
@@ -2298,7 +2408,12 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
 				overwrite=v
 			else:
 				pass
-				
+			
+		if fieldfunction:
+			if fieldfunction=='sethzpinyin':
+				fieldvalue=sethzpinyin(fieldvalue)
+			else:
+				print('WARNING: field function "'+fieldfunction+'" for mapping is not defined!')
 		
 		print("fieldset=",fieldset)
 		if overwrite:
@@ -2536,7 +2651,7 @@ def bibmapinput():
 		inputstyfile=inputfiles['styfile']
 			
 	if inputfiles['mapfile']:
-		inputstyfile=inputfiles['mapfile']
+		inputmapfile=inputfiles['mapfile']
 		
 	#把当前路径加入到sys.path中便于python加载当前目录下的模块
 	print('sys.path=',sys.path)
@@ -2562,13 +2677,15 @@ def bibmapinput():
 			if line.startswith("\\bibmap@bibstyle"):
 				m = re.search(r'\\bibmap@bibstyle {(.*)}',line)#注意贪婪算法的影响，所以要排除\}字符
 				print('m.group(1):',m.group(1))
-				inputstyfile = m.group(1)
+				if not inputstyfile:#当命令行未指定styfile时
+					inputstyfile = m.group(1)
 				if '.py' not in inputstyfile:
 					inputstyfile = inputstyfile+'.py'
 			if line.startswith("\\bibmap@mapstyle"):
 				m = re.search(r'\\bibmap@mapstyle {(.*)}',line)#注意贪婪算法的影响，所以要排除\}字符
 				print('m.group(1):',m.group(1))
-				inputmapfile = m.group(1)
+				if not inputmapfile:#当命令行未指定mapfile时
+					inputmapfile = m.group(1)
 				if '.py' not in inputmapfile:
 					inputmapfile = inputmapfile+'.py'
 		fInAux.close()
@@ -2630,7 +2747,18 @@ def bibmapinput():
 		strmapmodule=inputmapfile
 	mapmodule=__import__(strmapmodule)
 	print(mapmodule)
-	sourcemaps=mapmodule.sourcemaps
+	
+	if 'sourcemaps' in dir(mapmodule):#做sourcemaps参数设置检查
+		sourcemaps=mapmodule.sourcemaps
+	else:
+		sourcemaps=[]
+	
+	#print(dir(mapmodule))
+	if 'multiplepinyin' in dir(mapmodule):#做multiplepinyin参数设置检查
+		if mapmodule.multiplepinyin:#如果map样式文件中有对多音字的首音设置，那么做处理
+			for k,v in mapmodule.multiplepinyin.items():
+				hzpinyindata[k]=v
+	
 	if '.py' in inputstyfile:
 		strsetmodule=inputstyfile.replace('.py','')
 	else:
@@ -2652,10 +2780,13 @@ def bibmapinput():
 	
 	#检查输入的信息是否正确，并给出错误提示信息
 	#
-	#检查全局选项信息
+	#检查map样式文件设置是否正确
+	checkbibdatamapstyle()
+	
+	#检查bib样式全局选项信息
 	checkformatoptions()
 	
-	#检查格式设置信息
+	#检查bib样式格式设置信息
 	checkbibliographystyle()
 	
 	
@@ -2692,6 +2823,37 @@ class MapStyleSetError(Exception):
 		Exception.__init__(self)
 		self.message=message 
 		
+#
+#
+#检查bib数据修改的选项设置是否正确
+def checkbibdatamapstyle():
+	for map in sourcemaps:
+		for step in map:
+			for k,v in step:
+				if k in bibmapoptiondatabase:
+					if isinstance(bibmapoptiondatabase[k],list):
+						if v in bibmapoptiondatabase[k]:
+							pass
+						else:
+							try:
+								print('Error: mapstyle option value "'+v+'" for option "'+k+'" is not in bibmapoptiondatabase!\n')
+								raise MapStyleSetError('Error: mapstyle option value "'+v+'" for option "'+k+'" is not in bibmapoptiondatabase!')
+							except MapStyleSetError as e:
+								raise MapStyleSetError(e.message)
+				else:
+					try:
+						print('Error: mapstyle option"'+k+'" is not defined and not in bibmapoptiondatabase!\n')
+						raise MapStyleSetError('Error: mapstyle option"'+k+'" is not defined and not in bibmapoptiondatabase!')
+					except MapStyleSetError as e:
+						raise MapStyleSetError(e.message)
+	return None
+				
+				
+	
+			
+#
+#
+#检查bibliography格式的全局选项设置是否正确	
 def checkformatoptions():#formatoptions等是全局的不用传递
 
 	for k,v in formatoptions.items():
@@ -2711,8 +2873,12 @@ def checkformatoptions():#formatoptions等是全局的不用传递
 				raise MapStyleSetError('Error: global option"'+k+'" is not in formatoptions!')
 			except MapStyleSetError as e:
 				raise MapStyleSetError(e.message)
-			
-def checkbibliographystyle():#bibliographystyle,typestrings等时全局的不用传递
+	return None
+		
+#
+#
+#检查bibliography格式的条目著录格式设置是否正确			
+def checkbibliographystyle():#bibliographystyle,typestrings等是全局的不用传递
 	
 	for entrytype,entryfmt in bibliographystyle.items():#对每个条目类型检查
 		if entrytype not in typestrings:
@@ -2743,7 +2909,7 @@ def checkbibliographystyle():#bibliographystyle,typestrings等时全局的不用
 										raise MapStyleSetError('Error: style set option value"'+v+'" of option"'+k+'" is not defined!\n')
 									except MapStyleSetError as e:
 										raise MapStyleSetError(e.message)
-					
+	return None				
 	
 	
 
