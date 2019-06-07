@@ -91,7 +91,7 @@ bib 文件修改功能，借鉴 biblatex 的设计，逻辑基本一致，可以
 四步编译:
 ```
 xelatex jobname
-bibmap.py jobname}
+bibmap.py jobname
 xelatex jobname
 xelatex jobname
 ```
