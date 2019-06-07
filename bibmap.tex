@@ -10,7 +10,7 @@
 
 
 \begin{document}
-
+\thispagestyle{empty}
 \begin{center}
 \heiti{\zihao{3} bibmap宏包和bibmap程序使用手册
 \footnote{Address: https://github.com/hushidong/biblatex-map}}
@@ -22,7 +22,7 @@
 
 \end{center}
 
-\section{介绍}
+\section{简介}
 
 \subsection{bibmap是什么}
 
@@ -34,7 +34,7 @@ bibmap宏包加载了natbib，chapterbib等宏包，用于latex参考文献标�
 
 bibmap后端程序类似bibtex/biber程序用于处理参考文献数据，其输出类似于bibtex，输出的bbl文件包含latex直接能用的信息，而不像biber那样输出的是需要biblatex识别和处理的信息，但bibmap与bibtex的最大差别在于，bibmap格式化文献表所用的样式文件是python数据和代码，因此是简单易懂的，目的是让用户可以更方便的设置参考文献格式，而不用去设计语法复杂的bst文件。
 
-目前附带的bibmap程序是用python代码写的，后期会打包为可执行程序。
+目前附带的bibmap程序是包括python源代码，可以直接运行bibmap.PY程序，在windows下可以利用打包成的bibmap.exe程序。
 
 \subsection{bibmap的两大核心功能}
 
@@ -44,19 +44,29 @@ bibmap后端程序类似bibtex/biber程序用于处理参考文献数据，其�
 
 1. 写tex文件源代码。
 
-参考文献相关宏包加载仅使用bibmap，无需再加载natbib，也不能使用biblatex，因为这是传统的方法，同时使用biblatex会产生冲突。加载bibmap宏包时，可以为bibmap宏包设置一些选项。文档中正常引用文献，在需要生成文献表的地方加入命令\verb|\bibliography{bibfile}|
+参考文献相关宏包加载仅使用bibmap，无需再加载natbib，也不能使用biblatex(因为这是传统的方法，同时使用biblatex会产生冲突)。加载bibmap宏包时，可以为bibmap宏包设置一些选项(见\ref{sec:bm:opt}节)。文档中正常使用cite等命令来引用文献，在需要生成文献表的地方加入命令\verb|\bibliography{bibfile}|。
 
 2. 编译文档源代码。
 
 第一遍xelatex编译tex源代码比如：
-\verb|xelatex test.tex|，
+
+\verb|xelatex test.tex|
+
 第二遍用bibmap程序运行，命令为：
-\verb|python biblatex-map.py test|，
+
+\verb|python bibmap.py test|
+
+或
+
+\verb|bibmap.exe test|
+
 第三和四遍使用xelatex编译tex源代码
+
 \verb|xelatex test.tex|。
+
 则能生成满足格式要求的参考文献表。
 
-从实质上看，bibmap宏包利用了natbib等宏包来形成合适的参考文献引用标注标签，利用bibmap程序生成格式化的thebibliography环境。bibmap程序一定程度上可以说是bibtex程序的替代，但它的参考文献格式设置要比bst文件简单得多，且由于使用现代python语言相比bibtex具有一些新的优势。而bibmap宏包则只是对natbib等宏包的集成和利用，通过一些方便的选项设置接口，简化一些格式选择。
+从实质上看，bibmap宏包利用了natbib等宏包来形成合适的参考文献引用标注标签，利用bibmap程序生成格式化的thebibliography环境。可以说，bibmap程序一定程度上是bibtex程序的替代，但它的参考文献格式设置要比bst文件简单得多，且由于使用现代python语言相比bibtex具有一些新的优势。而bibmap宏包则只是对natbib等宏包的集成和利用，通过一些方便的选项设置接口，简化一些格式选择。
 
 \subsubsection{bib文件修改}
 
@@ -68,31 +78,31 @@ bibmap程序对bib文件的数据修改，直接借鉴biblatex的设计，可以
 
 参考文献生成的基本逻辑是这样的:
 
-1. 首先加载bibmap宏包的tex文件第一次编译后，bibmap宏包会将一些设置信息，比如样式文件、bib文件、文献引用等信息写入aux文件。
+1)  首先，加载bibmap宏包的tex文件第一次编译后，bibmap宏包将会在aux文件中写入一些设置信息，比如样式文件、bib文件、文献引用等。
 
-2. 接着，运行bibmap程序。
+2)  接着，运行bibmap程序。
 
-(a)首先bibmap程序将读取aux文件，获取bib文件，样式文件，文献引用信息。
+(a) 首先bibmap程序将读取aux文件，获取bib文件、样式文件、文献引用信息；
 
-(b)接着bibmap程序读取并解析bib文件，将有用信息放入bibentries字典中。
+(b) 接着bibmap程序读取并解析bib文件，将有用信息放入bibentries字典中；
 
-(c)接着bibmap程序读取bib文件修改样式文件，根据样式文件中的选项对bibentries字典中各个条目做修改。
+(c) 接着bibmap程序读取bib修改样式文件，根据样式文件中的选项对bibentries字典中各个条目做修改；
 
-(d)接着bibmap程序读取样式文件，根据设置的全局选项对引用文献做排序处理，得到bibentries字典。
+(d) 接着bibmap程序读取参考文献著录样式文件，根据设置的全局选项对引用文献做排序处理，得到新的bibentries字典；
 
-(e)接着bibmap程序开始对排序后的bibentries字典中的各条参考文献bibentry进行格式化。格式化过程中根据选项信息，分条目类型处理。每个条目要出个各个输出项，每个输出项要处理相关的域格式，以及输出项前后的标点和字符串。整个条目的文本还需要处理替换字符串，本地化字符串，替换标点等，以形成最终的条目的输出格式。所有的格式化后的条目组成一个字典便于输出。
+(e) 接着bibmap程序对排序后的bibentries字典中的各条参考文献bibentry进行格式化。格式化过程中根据选项信息，分条目类型处理。每个条目由各个输出项组成，每个输出项要处理相关的域格式，以及输出项前后的标点和字符串。整个条目的文本还需要处理替换字符串(比如本地化字符串)、替换标点等，以形成最终输出的条目著录格式。所有的格式化后的条目组成一个字典便于输出；
 
-(f)最后bibmap程序输出新的bib文件，json格式的文件，这是bib数据修改的结果。输出bbl文件，md文件，html文件，这是参考文献格式化后的结果。bbl文件用于latex文档，md用于文本复制，html用于网页显示。
+(f) 最后bibmap程序首先输出新的bib文件，json格式的文件，这是bib数据修改的结果。接着输出bbl文件，md文件，html文件，这是参考文献格式化后的结果。bbl文件用于latex文档，md用于文本复制，html用于网页显示。
 
-3. 接着再编译tex文件，这时tex编译器自动读取bbl文件用于生产参考文献表，此时的参考文献表的标签和正文引用的标签未完成。
+3) 接着再编译tex文件，这时tex编译器自动读取bbl文件用于生产参考文献表，此时的参考文献表的标签和正文引用的标签未完成。
 
-4. 接着最后一遍编译tex文件，tex编译器读取前一步编译写入到aux文件中的信息，来生成正文中文献引用的标注，以及文献表中的序号标签。
+4)  接着最后一遍编译tex文件，tex编译器读取前一步编译写入到aux文件中的信息，来生成正文中文献引用的标注，以及文献表中的序号标签。
 
 这四步编译逻辑与基于bibtex的方法是完全一致的，差别仅在于第二步的处理，利用bibmap程序代替了bibtex程序，以及内部的处理逻辑的差异。
 
 
 
-\subsection{bibmap宏包及选项和命令}
+\subsection{bibmap宏包及选项和命令}\label{sec:bm:opt}
 tex文档使用bibmap宏包时，其加载方式与一般宏包一致，需要注意加载bibmap宏包后，无需再加载natbib，也不能使用biblatex。
 
 \begin{example}{bibmap宏包加载}{usage:bibmap:load}
@@ -106,9 +116,9 @@ bibmap宏包可用的选项包括:
 \begin{description}
   \item[citestyle] 用于指定文献引用的标注样式，主要包括numeric，authoryear。所以的标注样式基于natbib宏包实现，设置numeric等价于为natbib设置super,square,sort\&compress选项，设置authoryear等价于为natbib设置authoryear选项。
 
-  \item[bibstyle] 用于指定文献表的著录样式，主要包括gb7714-2015,gb7714-2015ay，或者其它用户自定义的样式。设置gb7714-2015时调用宏包自带的bibstylenumeric.py样式文件生成文献表，设置gb7714-2015ay时调用宏包自带的bibstyleauthoryear.py样式文件生成文献表。当指定用户自定义的样式时则给出样式文件的文件名，比如bibstyle=chineseerj，表示调用chineseerj.py样式文件来生成文献表。
+  \item[bibstyle] 用于指定文献表的著录样式，主要包括gb7714-2015,gb7714-2015ay，或者其它用户自定义的样式。设置gb7714-2015时调用宏包自带的bibstylenumeric.py样式文件生成文献表，设置gb7714-2015ay时调用宏包自带的bibstyleauthoryear.py样式文件生成文献表。当指定用户自定义的样式时则给出样式文件的文件名，比如bibstyle=bibstyleexample，表示调用bibstyleexample.py样式文件来生成文献表。
 
-  \item[mapsytle] 用于指定参考文献数据修改样式，主要包括default，或者其它用户自定义的样式。设置default时调用宏包自带的bibmapdefault.py对bib文件进行修改。当指定用户自定义的样式时则给出样式文件的文件名，比如mapstyle=userdatamap，表示调用userdatamap.py 样式文件来修改bib文件。
+  \item[mapstyle] 用于指定参考文献数据修改样式，主要包括default，或者其它用户自定义的样式。设置default时调用宏包自带的bibmapdefault.py对bib文件进行修改。当指定用户自定义的样式时则给出样式文件的文件名，比如mapstyle=userdatamap，表示调用userdatamap.py 样式文件来修改bib文件。
 
   \item[\textbackslash citestyle]
   \verb|\citestyle{}|、\verb|\setcitestyle{}|、\verb|\bibpunct{}| 可以用来局部设置修改文献引用的标注样式，比如在某一章中需要使用numeric样式，
@@ -234,13 +244,13 @@ egchapterbib.tex 展示了分章文献的用法。
 
 参考文献格式化工作主要由bibmap程序结合样式文件来实现。bibmap程序主要实现的功能有:
 
-1. 根据样式文件输出格式化后的bbl文件，便于latex文档直接使用。
+1) 根据样式文件输出格式化后的bbl文件，便于latex文档直接使用。
 
-2. 转存格式化的参考文献表文本为文本文件和网页文件，便于在其它文档中直接使用。
+2) 转存格式化的参考文献表文本为文本文件和网页文件，便于在其它文档中直接使用。
 
-3. 除了bibmap程序内部处理逻辑外，样式文件可以全面控制参考文献的格式化。
+3) 除了bibmap程序内部处理逻辑外，样式文件可以全面控制参考文献的格式化。
 
-4. bibmap实现的内部处理: 根据选项进行排序，根据选项对姓名列表域、文本列表域、日期域、文本域、范围域格式化，根据选项对条目输出项进行组织和格式化。
+4) bibmap实现的内部处理: 根据选项进行排序，根据选项对姓名列表域、文本列表域、日期域、文本域、范围域格式化，根据选项对条目输出项进行组织和格式化。
 
 有时间进一步介绍内部处理逻辑的实现。
 
@@ -531,11 +541,11 @@ bibliographystyle={
 
 bib文件修改功能主要有如下几个:
 
-1. bib文件的读取和解析
+1) bib文件的读取和解析
 
-2. bib文件的转存，包括从大的bib文件抽取引用的文献保存为一个小的bib文件，将bib文件的内容存储为json格式的问题。
+2) bib文件的转存，包括从大的bib文件抽取引用的文献保存为一个小的bib文件，将bib文件的内容存储为json格式的问题。
 
-3. 参考文献条目的修改，包括条目类型的修改，条目内部的域的修改等，包括删除、变化、转换等等。
+3) 参考文献条目的修改，包括条目类型的修改，条目内部的域的修改等，包括删除、变化、转换等等。
 
 修改的逻辑是bibmap程序读取数据修改样式文件内的sourcemaps参数，这个sourcemaps参数与biblatex中sourcemap非常像，基本的逻辑也是一样的，只是把tex的写法转换成了python方便表示的写法，就是把biblatex用tex命令表示的\verb|\maps|、\verb|\map|和\verb|\step|转换为用json格式表示。sourcemaps参数的设置方法见下一节。
 
@@ -742,7 +752,7 @@ null表示域值不存在，即用于删除当前域。origfield用于标签前�
 
 \subsection{bibmap程序输入参数}
 
-bibmap.py
+bibmap.py或bibmap.exe
 
 filename 单个输入文件的文件名，可带后缀名如bib或aux，无后缀名时默认为辅助文件.aux
 
@@ -758,7 +768,7 @@ filename 单个输入文件的文件名，可带后缀名如bib或aux，无后�
 
 \verb|[--nofmt]| 给出该选项则不做格式化输出
 
-\verb|[--nobdm]| 给出该选项则不做不做bib数据修改
+\verb|[--nobdm]| 给出该选项则不做bib数据修改
 
 其中涉及到三种文件：
 
@@ -777,6 +787,8 @@ filename 单个输入文件的文件名，可带后缀名如bib或aux，无后�
 \begin{example}{bib文件数据修改命令-默认情况}{code:bib:modify}
 \begin{pycode}
 python bibmap.py biblatex-map-test.bib
+或
+bibmap.exe biblatex-map-test.bib
 \end{pycode}
 \end{example}
 
@@ -785,6 +797,8 @@ python bibmap.py biblatex-map-test.bib
 \begin{example}{bib文件数据修改命令-不输出格式化文献表}{code:bib:modifya}
 \begin{pycode}
 python bibmap.py biblatex-map-test.bib --nofmt
+或
+bibmap.exe biblatex-map-test.bib  --nofmt
 \end{pycode}
 \end{example}
 
@@ -793,6 +807,8 @@ python bibmap.py biblatex-map-test.bib --nofmt
 \begin{example}{bib文件数据修改命令-指定数据修改设置}{code:bib:modifyb}
 \begin{pycode}
 python bibmap.py biblatex-map-test.bib --nofmt -m bibmapaddkw.py
+或
+bibmap.exe biblatex-map-test.bib --nofmt -m bibmapaddkw.py
 \end{pycode}
 \end{example}
 
@@ -807,6 +823,8 @@ python bibmap.py biblatex-map-test.bib --nofmt -m bibmapaddkw.py
 \begin{example}{参考文献格式化命令-默认情况}{code:bib:fmt}
 \begin{pycode}
 python bibmap.py egtest
+或
+bibmap.exe egtest
 \end{pycode}
 \end{example}
 
@@ -815,6 +833,8 @@ python bibmap.py egtest
 \begin{example}{参考文献格式化命令-指定bib文件}{code:bib:fmta}
 \begin{pycode}
 python bibmap.py egtest -b biblatex-map-test.bib
+或
+bibmap.exe egtest -b biblatex-map-test.bib
 \end{pycode}
 \end{example}
 
@@ -822,13 +842,15 @@ python bibmap.py egtest -b biblatex-map-test.bib
 \begin{example}{参考文献格式化命令-指定样式文件}{code:bib:fmta}
 \begin{pycode}
 python bibmap.py egtest -s bibstyleauthoryear.py
+或
+bibmap.exe egtest -s bibstyleauthoryear.py
 \end{pycode}
 \end{example}
 
 
 \section{结论}
 
-本宏包最初的工作，只是想为修改bib文件方便，而设计一个python脚本，而不去使用bib管理软件，或者使用biber程序(biber使用tex的输入，为修改bib而写一个tex文件有点多余)。做到一定程度后，本来想为biblatex-check脚本做个pr了事，但没想到又接着写下去了，慢慢变成了两个主要功能，一是参考文献bib文件数据修改，二是参考文献格式化，既便于bib文件的修改、转换和保存，也便于格式化后直接给latex应用或者文本复制和网页显示。第二个功能整体上已经类似于bibtex，所以也就继续完善下来，最终形成了目前的bibmap宏包。基于传统的参考文献生成方法，利用natbib等现成宏包，替代bibtex程序，形成一个便于参考文献生成的脚本程序和宏包。
+本宏包最初的工作，只是想设计一个python脚本，方便对bib文件进行修改，而不去使用bib管理软件或者使用biber程序(biber 做bib修改需要tex文件支持，因而为修改bib必须写一个tex文件)。做到一定程度后，本想为biblatex-check脚本做个pr了事，但没想到又接着写下去了，慢慢变成了两个主要功能，一是参考文献bib文件数据修改，二是参考文献格式化，既便于bib文件的修改、转换和保存，也便于格式化后直接给latex应用或者文本复制和网页显示。第二个功能整体上已经类似于bibtex，所以也就继续完善下来，最终形成了目前的bibmap宏包。基于传统的参考文献生成方法，利用natbib等现成宏包，替代bibtex程序，形成一个便于参考文献生成的程序和宏包。
 
 目前功能已经大体实现，欢迎大家使用，并提出各方面的意见建议!
 
@@ -837,7 +859,7 @@ python bibmap.py egtest -s bibstyleauthoryear.py
 \clearpage
 \appendix
 
-因为bibmap宏包的标注样式基于natbib宏包实现，而要使用分章的参考文献，那么需要使用chapterbib宏包，因此多这两个宏包做一些介绍方便使用。
+因为bibmap宏包的标注样式基于natbib宏包实现，而要使用分章的参考文献，那么需要使用chapterbib宏包，因此对这两个宏包做一些介绍方便使用。
 
 \section{natbib宏包用法简介}
 

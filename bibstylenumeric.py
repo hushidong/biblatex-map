@@ -20,6 +20,8 @@ formatoptions={
 "labelname":['author','editor','translator','bookauthor','title'],#作者年制中作者标签的域的选择设置，比如['author','editor','translator','bookauthor','title'],
 "labelyear":['year','endyear','urlyear'],#作者年制中作者标签的域的选择设置，比如['year','endyear','urlyear']
 "labelextrayear":True,#是否使用bibextrayear，citeextrayear来消除姓名列表的歧义
+"uniquename":'true',#false 不对姓名消除歧义，init则仅使用名的首字母来消除，true则首先使用首字母，不行则使用全名['false','init','true']
+"uniquelist":'true',#false 不对姓名消除歧义，minyear则判断时加入labelyear，true不使用year直接对列表消除歧义['false','minyear','true']
 "date":'year',#'日期处理选项'：year，iso，等
 "urldate":'iso',#'日期处理选项'：year，iso，等
 "origdate":'year',#'日期处理选项'：year，iso，等

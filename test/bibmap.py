@@ -68,13 +68,22 @@ bibmapoptiondatabase={
 #格式化参考文献所用的全局选项数据库
 #用于检查用户设置的选项
 formatoptiondatabase={
-"style":['numeric','numeric'],#写bbl信息的设置选项,authoryear,'numeric'
+"style":['numeric','authoryear'],#这个选项目前暂无功能
 "nameformat":['uppercase','lowercase','givenahead','familyahead','pinyin','reverseorder'],#姓名处理选项：uppercase,lowercase,given-family,family-given,pinyin
+"citenameformat":['titlecase','uppercase'],#标注中的姓名处理选项：uppercase,titlecase
 "giveninits":['space','dotspace','dot','terse','false'],#使用名的缩写，space表示名见用空格分隔，dotspace用点加空格，dot用点，terse无分隔，false不使用缩写
+"useprefix":[True,False],#使用前缀名
 "usesuffix":[True,False],#使用后缀名
 "maxbibnames":3,#
 "minbibnames":3,#
+"maxcitenames":1,#
+"mincitenames":1,#
 "morenames":[True,False],#
+"labelname":"author",#作者年制中作者标签的域的选择设置，比如['author','editor','translator','bookauthor','title'],实际是一个随意设置的列表，这里为了检查机制正常则不设为列表，因为若设为列表，就会检查值是否在database设置的范围内
+"labelyear":"year",#作者年制中作者标签的域的选择设置，比如['year','endyear','urlyear']
+"labelextrayear":[True,False],#是否使用bibextrayear，citeextrayear来消除姓名列表的歧义
+"uniquename":['false','init','true'],#false 不对姓名消除歧义，init则仅使用名的首字母来消除，true则首先使用首字母，不行则使用全名
+"uniquelist":['false','minyear','true'],#false 不对姓名消除歧义，minyear则判断时加入labelyear，true不使用year直接对列表消除歧义
 "maxbibitems":1,#
 "minbibitems":1,#
 "moreitems":[True,False],#
@@ -121,8 +130,29 @@ def printbibliography():
 	print("INFO: writing cited references to '" + mdoutfile + "'")
 	
 	biblabelnumber=0
-	for entrykey,prtbibentry in bibliographytext.items():
+	newbibliographytext=copy.deepcopy(bibliographytext)
+	for entrykey,prtbibentry in newbibliographytext.items():
 		if len(prtbibentry)>0:
+			#print(prtbibentry)
+			#\allowbreak字符串的替换
+			if r'\allowbreak' in prtbibentry:
+				prtbibentry=re.sub(r'\\allowbreak','',prtbibentry)
+			
+			#\newblock字符串的替换
+			if r'\newblock' in prtbibentry:
+				prtbibentry=re.sub(r'\\newblock','',prtbibentry)
+				
+			#\url字符串的替换
+			if r'\url' in prtbibentry:
+				prtbibentry=re.sub(r'\\url','',prtbibentry)
+				
+			#\doi字符串的替换
+			if r'\doi' in prtbibentry:
+				prtbibentry=re.sub(r'\\doi','',prtbibentry)
+			
+			#print(prtbibentry)
+			#sys.exit(-1)
+			
 			biblabelnumber=biblabelnumber+1
 			fout.write('['+str(biblabelnumber)+'] '+prtbibentry+'\n')
 	fout.close()
@@ -138,8 +168,26 @@ def printbibliography():
 	fout.write('<tr><td height="1" width="566" align="center" colspan="1" bgcolor="teal"></td></tr>')
 	
 	biblabelnumber=0
-	for entrykey,prtbibentry in bibliographytext.items():
+	for entrykey,prtbibentry in newbibliographytext.items():
+
 		if len(prtbibentry)>0:
+			
+			#\allowbreak字符串的替换
+			if r'\allowbreak' in prtbibentry:
+				prtbibentry=re.sub(r'\\allowbreak','',prtbibentry)
+			
+			#\newblock字符串的替换
+			if r'\newblock' in prtbibentry:
+				prtbibentry=re.sub(r'\\newblock','',prtbibentry)
+				
+			#\url字符串的替换
+			if r'\url' in prtbibentry:
+				prtbibentry=re.sub(r'\\url','',prtbibentry)
+				
+			#\doi字符串的替换
+			if r'\doi' in prtbibentry:
+				prtbibentry=re.sub(r'\\doi','',prtbibentry)
+			
 			biblabelnumber=biblabelnumber+1
 			fout.write('<tr> <td width="480" height="15" colspan="6"><font color="blue">')
 			fout.write('<span style="font-family: 宋体; font-size: 14">')
@@ -159,7 +207,7 @@ def printbibliography():
 	fout = open(bbloutfile, 'w', encoding="utf8")
 	print("INFO: writing cited references to '" + bbloutfile + "'")
 	
-	fout.write(r'\begin{thebibliography}{'+str(len(bibentries))+'}\n')
+	fout.write(r'\begin{thebibliography}{'+str(len(bibliographytext))+'}\n')
 	
 	biblabelnumber=0
 	for entrykey,prtbibentry in bibliographytext.items():
@@ -168,15 +216,23 @@ def printbibliography():
 			
 			entrykeystr=entrykey
 			
-			for bibentry in bibentries:
-				if bibentry['entrykey']==entrykey:
-					entryciteauthor=formatlabelauthor(bibentry)
-					entryciteyear=formatlabelyear(bibentry)
-					entrycitelabel=entryciteauthor[0]+'('+entryciteyear+')'+entryciteauthor[1]
-					#Baker et~al.(1995)Baker and Jackson
-					break
+			entrycitelabel=''
+			#仅当'labelname'选项存在时处理
+			if 'labelname' in formatoptions:
+				for bibentry in bibentries:
+					if bibentry['entrykey']==entrykey:
+						entryciteauthor=formatlabelauthor(bibentry)
+						if 'labelyear' in bibentry:
+							entryciteyear=bibentry['labelyear']
+						else:
+							entryciteyear='N.d.'
+						if 'labelextrayear' in bibentry: #formatlabelyear(bibentry)
+							entryciteyear=entryciteyear+bibentry['labelextrayear']
+						entrycitelabel=entryciteauthor[0]+'('+entryciteyear+')'+entryciteauthor[1]
+						#Baker et~al.(1995) Baker and Jackson
+						break
 			
-			if formatoptions['style']=='authoryear':
+			if 'labelname' in formatoptions:
 				fout.write(r'\bibitem['+entrycitelabel+']{'+entrykeystr+'}'+prtbibentry+'\n')
 			else:
 				fout.write(r'\bibitem['+str(biblabelnumber)+']{'+entrykeystr+'}'+prtbibentry+'\n')
@@ -191,32 +247,46 @@ def printbibliography():
 #
 def formatlabelauthor(bibentry):
 	
-	if 'author' in bibentry:
-		namelist=bibentry['author']
-	elif 'editor' in bibentry:
-		namelist=bibentry['editor']
-	elif 'translator' in bibentry:
-		namelist=bibentry['translator']
-	else:
-		namelist='Anon'
+	#从formatoptions["labelname"]获取备选域
+	fieldexistflag=False
+	for field in formatoptions["labelname"]:
+		if field in bibentry:
+			namelist=bibentry[field]
+			fieldexistflag=True
+			break
+	if not fieldexistflag:#citation尽管使用Anon并不合适，但作为最后的手段
+		return ['Anon','Anon']
+
+	citenamelist=bibentry['labelname']
+	
+	#自定义标点的处理
+	while r'\printdelim' in citenamelist:
+		m = re.search(r'\\printdelim{([^\}]*)}',citenamelist)#注意贪婪算法的影响，所以要排除\}字符
+		citenamelist=re.sub(r'\\printdelim{[^\}]*}',localpuncts[m.group(1)],citenamelist,count=1)
+	
+	
+	#本地化字符串的处理
+	while r'\bibstring' in citenamelist:
+		language=languagejudgement(bibentry,citenamelist)
+		m = re.search(r'\\bibstring{([^\}]*)}',citenamelist)#注意\字符的匹配，即便是在r''中也需要用\\表示
+		citenamelist=re.sub(r'\\bibstring{[^\}]*}',localstrings[m.group(1)][language],citenamelist,count=1)
 		
-	return [namelist,namelist]
+	return [citenamelist,namelist]
 
 #
 #authoryear样式提供标注标签的年份信息
 #
 def formatlabelyear(bibentry):
 	
-	if 'year' in bibentry:
-		yearlist=bibentry['year']
-	elif 'eventyear' in bibentry:
-		yearlist=bibentry['eventyear']
-	elif 'origyear' in bibentry:
-		yearlist=bibentry['origyear']
-	elif 'urlyear' in bibentry:
-		yearlist=bibentry['urlyear']
-	else:
-		yearlist='N.D.'
+	#从formatoptions["labelyear"]获取备选域
+	fieldexistflag=False
+	for field in formatoptions["labelyear"]:
+		if field in bibentry:
+			yearlist=bibentry[field]
+			fieldexistflag=True
+			break
+	if not fieldexistflag:#
+		return 'N.d'
 		
 	return yearlist
 
@@ -233,11 +303,14 @@ def formatallbibliography():
 	#1. 将引用的文献存到一个新的列表中，便于排序
 	labelnumber=0
 	newbibentries=[]
+	bibentrynotsame=set()
 	for bibentry in bibentries:
 		if bibentry["entrykey"] in usedIds or not usedIds:
-			labelnumber=labelnumber+1
-			bibentry['labelnumber']=labelnumber
-			newbibentries.append(bibentry)
+			if bibentry["entrykey"] not in bibentrynotsame:
+				labelnumber=labelnumber+1
+				bibentry['labelnumber']=labelnumber
+				bibentrynotsame.add(bibentry["entrykey"])
+				newbibentries.append(bibentry)
 	
 	print('INFO: '+str(labelnumber)+'s references to be outputed')
 	
@@ -399,8 +472,55 @@ def formatallbibliography():
 		elif 'title' in bibentry:#若不存在则首先title域做判断
 			language=languagejudgement(bibentry,'title')
 			bibentry['language']=language
-		#print('language=',bibentry['language'])
+		print('language of bibentry: ',bibentry['entrykey'],' is: ',bibentry['language'])
 		
+	#
+	#2.1 姓名列表的歧义的处理，先于排序
+	#仅当'labelname'选项存在时处理
+	if 'labelname' in formatoptions:
+		for bibentry in newbibentries:
+			
+			#姓名列表标签备选域处理
+			fieldlabelname=''
+			for field in formatoptions['labelname']:
+				if field in bibentry:
+					fieldlabelname=field
+					break
+			if not fieldlabelname:
+				print('INFO: warning label name field is not defined')
+				bibentry['noauthor']='Anon'
+				fieldlabelname='noauthor'
+				
+			#年份标签备选域处理
+			fieldlabelyear=''
+			for field in formatoptions['labelyear']:
+				if field in bibentry:
+					fieldlabelyear=field
+					break
+			if not fieldlabelyear:
+				print('INFO: warning label name field is not defined')
+				bibentry['noyear']='N.D.'
+				fieldlabelyear='noyear'
+				
+			#先把姓名列表解析处理存储起来，便于后面处理
+			bibentry['labelnameraw']=labelnamelistparser(bibentry,fieldlabelname)
+			bibentry['labelyearraw']=bibentry[fieldlabelyear]
+		
+		#处理姓名列表的模糊问题
+		newbibentries=dealambiguity(newbibentries)
+		
+		for bibentry in newbibentries:
+			#格式化labelname，labelyear。而labelextrayear还得等排序以后才能得到
+			bibentry['labelname']=labelnameformat(bibentry)
+			bibentry['labelyear']=bibentry['labelyearraw']
+			print('entry:',bibentry['entrykey'])
+			print('labelname=',bibentry['labelname'])
+			print('labelyear=',bibentry['labelyear'])
+		
+	
+	#
+	#2.2 排序的域的信息的准备
+	for bibentry in newbibentries:
 		#
 		#接着处理排序的前期准备工作，根据全局的排序设置选项，在条目中保存排序需要的信息
 		#
@@ -522,6 +642,28 @@ def formatallbibliography():
 					newbibentries=sorted(newbibentries,key=lambda dict: comparestroke(str(dict[sortfield])),reverse=True)
 		else:
 			print('WARNING: sortlocale is not defined!')
+			
+	#
+	#3.1 接着根据排序条目处理labelextrayear
+	#仅当'labelname'选项存在时处理
+	if 'labelname' in formatoptions:
+		extrayearrawdict={}
+		for bibentry in newbibentries:
+			if 'labelextrayearraw' in bibentry:
+				extrayearkey=str(bibentry['labelextrayearraw'])
+				if extrayearkey not in extrayearrawdict:
+					extrayearrawdict[extrayearkey]=1
+					bibentry['labelextrayearraw']=1
+				else:
+					extrayearrawdict[extrayearkey]+=1
+					bibentry['labelextrayearraw']=extrayearrawdict[extrayearkey]
+		for bibentry in newbibentries:
+			if 'labelextrayearraw' in bibentry:
+				if isinstance(bibentry['labelextrayearraw'],int):
+					bibentry['labelextrayear']=setnumberalpha(bibentry['labelextrayearraw'])
+				print('labelextrayear=',bibentry['labelextrayear'])
+	
+	#sys.exit(-1)
 		
 	#
 	#4. 将所有需要输出的文献进行格式化
@@ -537,6 +679,760 @@ def formatallbibliography():
 		print('entry id=',entryidtemp,' bibtexkey="'+k+'"\n'+v,'\n'+'-'.center(50,'-'))
 		
 	return None
+
+	
+#
+#处理uniquename=true即full选项非歧义，与dealambiguity中给出的=init的处理不同，采用另一种思路
+#
+def dealuniquename(sameentryset,truncnamenum,checkstart):
+	'''
+	返回处理过的sameentryset，如果能够处理完成，那么带有labelusedparts项
+	checkstart表示从第几个姓名开始比较，一般情况下是0
+	'''
+	usedpartslist=[]
+	labelusedparts=[]
+	#几个姓名那么就有几个family
+	for i in range(truncnamenum):
+		labelusedparts.append(['family'])
+	
+	#truncnamenum*4中可能的情况
+	#一个姓名一个姓名的判断，如果一个姓名足够了，那么就已经完成
+	#如果一个姓名的所有情况都无法实现，那么只要比较第二个姓名即可
+	for i in range(truncnamenum):
+		if i>=checkstart:
+			for j in range(4):
+				if j==0:
+					lableusedpartstemp=copy.deepcopy(labelusedparts)
+					lableusedpartstemp[i].append('giveni')
+					usedpartslist.append(lableusedpartstemp)
+				elif j==1:
+					lableusedpartstemp=copy.deepcopy(labelusedparts)
+					lableusedpartstemp[i].append('giveni')
+					lableusedpartstemp[i].append('middlei')
+					usedpartslist.append(lableusedpartstemp)
+				elif j==2:
+					lableusedpartstemp=copy.deepcopy(labelusedparts)
+					lableusedpartstemp[i].append('given')
+					lableusedpartstemp[i].append('middlei')
+					usedpartslist.append(lableusedpartstemp)
+				elif j==3:
+					lableusedpartstemp=copy.deepcopy(labelusedparts)
+					lableusedpartstemp[i].append('given')
+					lableusedpartstemp[i].append('middle')
+					usedpartslist.append(lableusedpartstemp)
+	print(usedpartslist)
+	
+	
+	#
+	#遍历所有的labelusedparts情况，生成label字符串，然后判断能否消除歧义
+	sameentrysetnum=len(sameentryset)
+	unambiguityflag=False
+	for labelusedparts in usedpartslist:
+		
+		#
+		labelnamerawstrs={}
+		for bibentry in sameentryset:
+		
+			rawlabelnames=bibentry['labelnameraw']
+			rawnamenumber=bibentry['rawnamenumber'] #labelauthor的姓名数量
+			trunamenumber=truncnamenum #labelauthor的截断后姓名数量
+			rawnameothers=bibentry['rawnameothers'] #labelauthor是否含有and others
+			
+			labelnamerawstr=''
+			nameliststop=trunamenumber
+			nameliststart=1
+			namelistcount=0
+			
+			for namepartsinfo in rawlabelnames[:nameliststop]:
+				namelistcount=namelistcount+1
+				if namelistcount==nameliststop and namelistcount>1:#当没有others时最后一个姓名前加的标点
+					
+					#最后一个姓名的处理
+					singlenamefmtstr=namepartsinfo['family'].lower()
+					
+					nameinfo=labelusedparts[-1]
+					if 'giveni' in nameinfo and 'giveni' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['giveni'].lower()
+					elif 'given' in nameinfo and 'given' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['given'].lower()
+						
+					if 'middlei' in nameinfo and 'middlei' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['middlei'].lower()
+					elif 'middle' in nameinfo and 'middle' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['middle'].lower()
+					
+					#加入到姓名列表字符串中
+					labelnamerawstr=labelnamerawstr+' '+singlenamefmtstr
+					
+				elif namelistcount==nameliststart:#第一个姓名
+
+					singlenamefmtstr=namepartsinfo['family'].lower()
+					
+					nameinfo=labelusedparts[0]
+					if 'giveni' in nameinfo and 'giveni' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['giveni'].lower()
+					elif 'given' in nameinfo and 'given' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['given'].lower()
+						
+					if 'middlei' in nameinfo and 'middlei' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['middlei'].lower()
+					elif 'middle' in nameinfo and 'middle' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['middle'].lower()
+					
+					#加入到姓名列表字符串中
+					labelnamerawstr=labelnamerawstr+singlenamefmtstr
+					
+				else:
+					
+					singlenamefmtstr=namepartsinfo['family'].lower()
+					nameinfo=labelusedparts[namelistcount-1]
+					if 'giveni' in nameinfo and 'giveni' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['giveni'].lower()
+					elif 'given' in nameinfo and 'given' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['given'].lower()
+						
+					if 'middlei' in nameinfo and 'middlei' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['middlei'].lower()
+					elif 'middle' in nameinfo and 'middle' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['middle'].lower()
+					
+					#加入到姓名列表字符串中
+					labelnamerawstr=labelnamerawstr+singlenamefmtstr
+			
+			#print('---1--',nameformattedstr)
+			if trunamenumber < rawnamenumber or rawnameothers:
+				if formatoptions['morenames']:#只有设置morenames为true是才输出other的相关信息
+					labelnamerawstr=labelnamerawstr+' others'
+					#print('---2--',nameformattedstr)
+			
+			#默认的姓名字符串保存到字典中便于判断和后面处理
+			if labelnamerawstr not in labelnamerawstrs:
+				labelnamerawstrs[labelnamerawstr]=[bibentry['entrykey']]
+			else:
+				labelnamerawstrs[labelnamerawstr].append(bibentry['entrykey'])
+		
+		print('labelusedparts=',labelusedparts)
+		print('labelnamerawstrs=',labelnamerawstrs)
+		if len(labelnamerawstrs)==sameentrysetnum:#当歧义消除时，则退出
+			unambiguityflag=True
+			
+			for bibentry in sameentryset:
+				bibentry['labelusedparts']=labelusedparts
+
+			break
+	
+	return sameentryset,unambiguityflag
+	
+
+#
+#处理uniquename=init选项非歧义，与dealambiguity中给出的=init的处理不同，采用另一种思路
+#
+def dealuniquenameinit(sameentryset,truncnamenum,checkstart):
+	'''
+	返回处理过的sameentryset，如果能够处理完成，那么带有labelusedparts项
+	checkstart表示从第几个姓名开始比较，一般情况下是0
+	'''
+	usedpartslist=[]
+	labelusedparts=[]
+	#几个姓名那么就有几个family
+	for i in range(truncnamenum):
+		labelusedparts.append(['family'])
+	
+	#truncnamenum*4中可能的情况
+	#一个姓名一个姓名的判断，如果一个姓名足够了，那么就已经完成
+	#如果一个姓名的所有情况都无法实现，那么只要比较第二个姓名即可
+	for i in range(truncnamenum):
+		if i>= checkstart:
+			for j in range(2):
+				if j==0:
+					lableusedpartstemp=copy.deepcopy(labelusedparts)
+					lableusedpartstemp[i].append('giveni')
+					usedpartslist.append(lableusedpartstemp)
+				elif j==1:
+					lableusedpartstemp=copy.deepcopy(labelusedparts)
+					lableusedpartstemp[i].append('giveni')
+					lableusedpartstemp[i].append('middlei')
+					usedpartslist.append(lableusedpartstemp)
+	print(usedpartslist)
+	
+	
+	#
+	#遍历所有的labelusedparts情况，生成label字符串，然后判断能否消除歧义
+	sameentrysetnum=len(sameentryset)
+	unambiguityflag=False
+	for labelusedparts in usedpartslist:
+		
+		#
+		labelnamerawstrs={}
+		for bibentry in sameentryset:
+		
+			rawlabelnames=bibentry['labelnameraw']
+			rawnamenumber=bibentry['rawnamenumber'] #labelauthor的姓名数量
+			trunamenumber=truncnamenum #labelauthor的截断后姓名数量
+			rawnameothers=bibentry['rawnameothers'] #labelauthor是否含有and others
+			
+			labelnamerawstr=''
+			nameliststop=trunamenumber
+			nameliststart=1
+			namelistcount=0
+			
+			for namepartsinfo in rawlabelnames[:nameliststop]:
+				namelistcount=namelistcount+1
+				if namelistcount==nameliststop and namelistcount>1:#当没有others时最后一个姓名前加的标点
+					
+					#最后一个姓名的处理
+					singlenamefmtstr=namepartsinfo['family'].lower()
+					
+					nameinfo=labelusedparts[-1]
+					if 'giveni' in nameinfo and 'giveni' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['giveni'].lower()
+						
+					if 'middlei' in nameinfo and 'middlei' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['middlei'].lower()
+					
+					#加入到姓名列表字符串中
+					labelnamerawstr=labelnamerawstr+' '+singlenamefmtstr
+					
+				elif namelistcount==nameliststart:#第一个姓名
+
+					singlenamefmtstr=namepartsinfo['family'].lower()
+					
+					nameinfo=labelusedparts[0]
+					if 'giveni' in nameinfo and 'giveni' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['giveni'].lower()
+						
+					if 'middlei' in nameinfo and 'middlei' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['middlei'].lower()
+					
+					#加入到姓名列表字符串中
+					labelnamerawstr=labelnamerawstr+singlenamefmtstr
+					
+				else:
+					
+					singlenamefmtstr=namepartsinfo['family'].lower()
+					nameinfo=labelusedparts[namelistcount-1]
+					if 'giveni' in nameinfo and 'giveni' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['giveni'].lower()
+						
+					if 'middlei' in nameinfo and 'middlei' in namepartsinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['middlei'].lower()
+					
+					#加入到姓名列表字符串中
+					labelnamerawstr=labelnamerawstr+singlenamefmtstr
+			
+			#print('---1--',nameformattedstr)
+			if trunamenumber < rawnamenumber or rawnameothers:
+				if formatoptions['morenames']:#只有设置morenames为true是才输出other的相关信息
+					labelnamerawstr=labelnamerawstr+' others'
+					#print('---2--',nameformattedstr)
+			
+			#默认的姓名字符串保存到字典中便于判断和后面处理
+			if labelnamerawstr not in labelnamerawstrs:
+				labelnamerawstrs[labelnamerawstr]=[bibentry['entrykey']]
+			else:
+				labelnamerawstrs[labelnamerawstr].append(bibentry['entrykey'])
+				
+		if len(labelnamerawstrs)==sameentrysetnum:#当歧义消除时，则退出
+			unambiguityflag=True
+			
+			for bibentry in sameentryset:
+				bibentry['labelusedparts']=labelusedparts
+
+			break
+	
+	return sameentryset,unambiguityflag
+	
+#
+#处理uniquelist即无论是minyear，还是true都是一样的逻辑
+#
+def dealuniquelist(sameentryset,truncnamenum):
+	'''
+	返回处理过的sameentryset，如果能够处理完成，那么带有labelusedparts项，以及增加的truncnamenum数
+	'''
+	
+	labelusedparts=[]
+	#几个姓名那么就有几个family
+	for i in range(truncnamenum):
+		labelusedparts.append(['family'])
+		
+	print('truncnamenum=',truncnamenum)
+	
+	unambiguityflag=False
+	sameentrysetnum=len(sameentryset)
+	while truncnamenum<sameentryset[0]['rawnamenumber']:
+		truncnamenum=truncnamenum+1
+			
+		if formatoptions['uniquename']=='init':
+			sameentryset,unambiguityflag=dealuniquenameinit(sameentryset,truncnamenum,truncnamenum-1)
+			
+		elif formatoptions['uniquename']=='true':
+			print('truncnamenum=',truncnamenum)
+			sameentryset,unambiguityflag=dealuniquename(sameentryset,truncnamenum,truncnamenum-1)
+			
+		else: 
+			labelnamerawstrs={}
+			labelusedparts.append(['family'])
+			for bibentry in sameentryset:
+				labelnamerawstr=namepartsinfo['family'].lower()
+				#默认的姓名字符串保存到字典中便于判断和后面处理
+				if labelnamerawstr not in labelnamerawstrs:
+					labelnamerawstrs[labelnamerawstr]=[bibentry['entrykey']]
+				else:
+					labelnamerawstrs[labelnamerawstr].append(bibentry['entrykey'])
+					
+				if len(labelnamerawstrs)==sameentrysetnum:#当歧义消除时，则退出
+					unambiguityflag=True
+					
+					for bibentry in sameentryset:
+						bibentry['labelusedparts']=labelusedparts
+					break
+		
+		if unambiguityflag:
+			for bibentry in sameentryset:
+				bibentry['trunamenumber']=truncnamenum
+			break
+	
+	return sameentryset,unambiguityflag
+	
+#
+#处理姓名列表的模糊问题
+def dealambiguity(newbibentries):
+
+	#1. 先citation中的处理，bib中是类似的处理
+	#1.1 根据基本选项判断原始状态下是否需要存在有歧义的文献
+	labelnamerawstrs={}
+	for bibentry in newbibentries:
+		
+		#1. 计算姓名原始总数和截断后的总数
+		rawlabelnames=bibentry['labelnameraw']
+		rawnameothers=False
+		if 'morename' in rawlabelnames[-1]:
+			rawnamenumber=len(rawlabelnames)-1
+			rawnameothers=True
+		else:
+			rawnamenumber=len(rawlabelnames)
+		if rawnamenumber > formatoptions['maxcitenames']:
+			trunamenumber=formatoptions['mincitenames']
+		else:
+			trunamenumber=rawnamenumber
+		
+		#记录一下信息
+		bibentry['rawnamenumber']=rawnamenumber #记录labelauthor的姓名数量
+		bibentry['trunamenumber']=trunamenumber #记录labelauthor的截断后姓名数量
+		bibentry['rawnameothers']=rawnameothers #记录labelauthor是否含有and others
+
+		#截断后的姓名列表构成一个字符串，用于相同判断	
+		labelnamerawstr=''		
+		j=0
+		for namepartsinfo in rawlabelnames:
+			if j<trunamenumber:#在截断的范围内
+				labelnamerawstr=labelnamerawstr+namepartsinfo['family'].lower()+" "
+			else:#之外，则判断一下是否还有姓名，有的话加上others
+				if rawnameothers or rawnamenumber>trunamenumber:
+					labelnamerawstr=labelnamerawstr+'other'
+				break #仅做一次就够了
+			j=j+1
+				
+		
+		#默认的姓名字符串保存到字典中便于判断和后面处理
+		if labelnamerawstr not in labelnamerawstrs:
+			labelnamerawstrs[labelnamerawstr]=[bibentry['entrykey']]
+		else:
+			labelnamerawstrs[labelnamerawstr].append(bibentry['entrykey'])
+	
+	#
+	#1.2 对产生歧义的文献进行处理
+	labelnamerawstrsb=labelnamerawstrs #labelnamerawstrs后面要用到，因为直接复制的代码，所以这里换一个存一下
+	for k,v in labelnamerawstrsb.items():
+		if len(v)>1:#当list>1，那么存在相同的
+		
+			#显示一下信息
+			print(v)
+			print(k)
+			
+			#记录有歧义的条目，放到一起，便于处理
+			samenamestring=k
+			sameentrysetnum=len(v)
+			sameentryset=[]
+			for entrykeya in v:
+				for bibentry in newbibentries:
+					if entrykeya==bibentry['entrykey']:
+						print(bibentry['labelnameraw'])
+						sameentryset.append(bibentry)
+			
+			unambiguityflag=False
+			
+			#
+			#1.2.1 处理非歧义:首先根据uniquename选项考虑
+			if formatoptions['uniquename']=='false':
+				pass
+			elif formatoptions['uniquename']=='init':
+				
+				#用list来记录可以消除歧义时，使用的姓名成分
+				labelusedparts=[]
+				truncnamenum=sameentryset[0]['trunamenumber']
+				for i in range(truncnamenum):
+					labelusedparts.append(['family'])
+				print('labelusedparts=',labelusedparts)
+				
+				#根据截断姓名的数量逐个处理姓名使其非歧义
+				for i in range(truncnamenum):
+					#print('i=',i)
+					labelnamerawstrs={}
+					labelusedparts[i].append('giveni')
+					for bibentry in sameentryset:
+						rawnamenumber=bibentry['rawnamenumber']
+						trunamenumber=bibentry['trunamenumber']
+						rawnameothers=bibentry['rawnameothers']
+						rawlabelnames=bibentry['labelnameraw']
+						
+						labelnamerawstr=''
+						j=0
+						for namepartsinfo in rawlabelnames:
+							if j<trunamenumber:#在截断的范围内
+								labelnamerawstr=labelnamerawstr+namepartsinfo['family'].lower()+" "
+								if 'giveni' in namepartsinfo:
+									labelnamerawstr=labelnamerawstr+namepartsinfo['giveni'].lower()+" "
+							else:#之外，则判断一下是否还有姓名，有的话加上others
+								if rawnameothers or rawnamenumber>trunamenumber:
+									labelnamerawstr=labelnamerawstr+'other'
+								break #仅做一次就够了
+							j=j+1
+						
+						#默认的姓名字符串保存到字典中便于判断和后面处理
+						if labelnamerawstr not in labelnamerawstrs:
+							labelnamerawstrs[labelnamerawstr]=[bibentry['entrykey']]
+						else:
+							labelnamerawstrs[labelnamerawstr].append(bibentry['entrykey'])
+						
+					if len(labelnamerawstrs)==sameentrysetnum:#当歧义消除时，则退出
+						unambiguityflag=True
+						break
+					else:
+						labelnamerawstrs={}
+						labelusedparts[i].append('middlei')
+						for bibentry in sameentryset:
+							rawnamenumber=bibentry['rawnamenumber']
+							trunamenumber=bibentry['trunamenumber']
+							rawnameothers=bibentry['rawnameothers']
+							rawlabelnames=bibentry['labelnameraw']
+							
+							labelnamerawstr=''
+							j=0
+							for namepartsinfo in rawlabelnames:
+								if j<trunamenumber:#在截断的范围内
+									labelnamerawstr=labelnamerawstr+namepartsinfo['family'].lower()+" "
+									if 'giveni' in namepartsinfo:
+										labelnamerawstr=labelnamerawstr+namepartsinfo['giveni'].lower()+" "
+									if 'middlei' in namepartsinfo:
+										labelnamerawstr=labelnamerawstr+namepartsinfo['middlei'].lower()+' '
+								else:#之外，则判断一下是否还有姓名，有的话加上others
+									if rawnameothers or rawnamenumber>trunamenumber:
+										labelnamerawstr=labelnamerawstr+'other'
+									break #仅做一次就够了
+								j=j+1
+							
+							#默认的姓名字符串保存到字典中便于判断和后面处理
+							if labelnamerawstr not in labelnamerawstrs:
+								labelnamerawstrs[labelnamerawstr]=[bibentry['entrykey']]
+							else:
+								labelnamerawstrs[labelnamerawstr].append(bibentry['entrykey'])
+						
+						if len(labelnamerawstrs)==sameentrysetnum:#当歧义消除时，则退出
+							unambiguityflag=True
+							break
+						
+					print('unambiguityflag=',unambiguityflag)
+					print('labelusedparts=',labelusedparts)
+				
+				if unambiguityflag:
+					for bibentry in sameentryset:
+						bibentry['labelusedparts']=labelusedparts
+					
+					#替换处理完的条目，用于返回
+					for bibentry in sameentryset:
+						k=0
+						for bibentrya in newbibentries:
+							if bibentrya["entrykey"]==bibentry["entrykey"]:
+								del newbibentries[k]
+								newbibentries.insert(k,bibentry)
+							k=k+1
+					print('INFO: uniquename based unambiguity seceed!!')
+					continue
+					
+			elif formatoptions['uniquename']=='true':
+				
+				#与前一个选项的实现逻辑略有不同，使用dealuniquename函数实现
+				#前一个选项也可以用dealuniquename实现，只是之前已经调试完毕，那种逻辑也就留下来
+				truncnamenum=sameentryset[0]['trunamenumber']
+				sameentryset,unambiguityflag=dealuniquename(sameentryset,truncnamenum,0)
+				
+				if unambiguityflag:
+					#替换处理完的条目，用于返回
+					for bibentry in sameentryset:
+						k=0
+						for bibentrya in newbibentries:
+							if bibentrya["entrykey"]==bibentry["entrykey"]:
+								del newbibentries[k]
+								newbibentries.insert(k,bibentry)
+							k=k+1
+					print('INFO: uniquename based unambiguity seceed!!')
+					continue
+					
+				#print(sameentryset)
+				#sys.exit(-1)
+		
+			#
+			#1.2.2 处理非歧义: 接着根据uniquelist选项考虑
+			if formatoptions['uniquelist']=='false':
+				
+				if not unambiguityflag:#使用uniquelist无法消除歧义
+					for bibentry in sameentryset:
+						bibentry['labelextrayearraw']=v #将相同作者的条目记录下来，便于后面排序的时候处理处合适的extrayear值，比如a，b，c等。
+				else:
+					pass
+				
+				#替换处理完的条目，用于返回
+				for bibentry in sameentryset:
+					k=0
+					for bibentrya in newbibentries:
+						if bibentrya["entrykey"]==bibentry["entrykey"]:
+							del newbibentries[k]
+							newbibentries.insert(k,bibentry)
+						k=k+1
+				
+				
+				
+			elif formatoptions['uniquelist']=='minyear':
+				labelnamerawstrs={}
+				for bibentry in sameentryset:
+					labelnamerawstr=''
+					labelnamerawstr=samenamestring+bibentry['labelyearraw']
+					
+					#默认的姓名字符串保存到字典中便于判断和后面处理
+					if labelnamerawstr not in labelnamerawstrs:
+						labelnamerawstrs[labelnamerawstr]=[bibentry['entrykey']]
+					else:
+						labelnamerawstrs[labelnamerawstr].append(bibentry['entrykey'])
+				
+				if len(labelnamerawstrs)==sameentrysetnum:#当歧义消除时，则退出
+					unambiguityflag=True
+					print('INFO: uniquelist minyear based unambiguity seceed!!')
+					continue
+				
+				sameentryset,unambiguityflag=dealuniquelist(sameentryset,truncnamenum)
+				
+				if not unambiguityflag:#使用uniquelist无法消除歧义
+					for bibentry in sameentryset:
+						bibentry['labelextrayearraw']=v #将相同作者的条目记录下来，便于后面排序的时候处理处合适的extrayear值，比如a，b，c等。
+				else:
+					print('INFO: uniquelist based unambiguity seceed!!')
+					
+				#替换处理完的条目，用于返回
+				for bibentry in sameentryset:
+					k=0
+					for bibentrya in newbibentries:
+						if bibentrya["entrykey"]==bibentry["entrykey"]:
+							del newbibentries[k]
+							newbibentries.insert(k,bibentry)
+						k=k+1
+				
+			elif formatoptions['uniquelist']=='true':
+			
+				sameentryset,unambiguityflag=dealuniquelist(sameentryset,truncnamenum)
+				
+				print('unambiguityflag=',unambiguityflag)
+				print(sameentryset)
+				
+				#sys.exit(-1)
+				
+				if not unambiguityflag:#使用uniquelist无法消除歧义
+					for bibentry in sameentryset:
+						bibentry['labelextrayearraw']=v #将相同作者的条目记录下来，便于后面排序的时候处理处合适的extrayear值，比如a，b，c等。
+				else:
+					print('INFO: uniquelist based unambiguity seceed!!')
+					
+				#替换处理完的条目，用于返回
+				for bibentry in sameentryset:
+					k=0
+					for bibentrya in newbibentries:
+						if bibentrya["entrykey"]==bibentry["entrykey"]:
+							del newbibentries[k]
+							newbibentries.insert(k,bibentry)
+						k=k+1
+				
+			else:
+				print("INFO: option value for uniquelist is not defined!")
+	
+	
+	for bibentryc in newbibentries:
+		print(bibentryc,'\n')
+	
+	return newbibentries
+	
+#
+#将数字顺序转换为字母顺序
+def setnumberalpha(number):
+	numa=ord('a')
+	if number >= 0:
+		numb=numa+number-1
+		numalpha=chr(numb)
+	elif number > 25:
+		print('WARNING: number is too big')
+	else:
+		print('WARNING: number is negtive')
+	return numalpha
+	
+	
+#
+#
+#label姓名列表解析
+#label姓名列表的选项仅使用全局选项
+def labelnamelistparser(bibentry,fieldsource):
+	fieldcontents=bibentry[fieldsource]
+	
+	#首先做针对{}保护的处理
+	#{}有可能保护一部分，有可能保护全部
+	#首先判断{}是否存在，若存在，那么可以确定需要做保护处理，否则用常规处理
+	#当然这些事情可以在一个函数中处理
+
+	#首先姓名列表进行分解，包括用' and '和' AND '做分解
+	#利用safetysplit函数实现安全的分解
+	seps=[' and ',' AND ']
+	fieldcontents=fieldcontents.strip()
+	fieldauthors=safetysplit(fieldcontents,seps)
+
+	#print('fieldauthors:',fieldauthors)
+	
+	#接着从各个姓名得到更详细的分解信息
+	fieldnames=[]
+	for name in fieldauthors:
+		if name.lower() == 'others':
+			nameinfo={'morename':True}
+		else:
+			if fieldlanguage(name)=='chinese':#当中文姓名中存在逗号先去除
+				if ', ' in name:
+					name=name.replace(', ','')
+			else:
+				pass
+			nameinfo=singlenameparser(name)
+		fieldnames.append(nameinfo)
+	
+	return fieldnames
+
+
+	
+#
+#
+#格式化labelname
+def labelnameformat(bibentry):
+	'''
+	逻辑如下:
+	1. 首先根据trunnamenumber确定所要使用的姓名数
+	2. 根据labelusedparts给出使用的姓名成分
+	3. 最后根据trunnamenumber和rawnnamenumber以及rawnameothers来给出etal或等
+	'''
+		
+	if 'citenameformat' in formatoptions:#label仅使用全局的选项
+		nameformat=formatoptions['citenameformat']
+	else:#最后使用默认的选项
+		nameformat='titlecase'
+		
+	if 'giveninits' in formatoptions:#label仅使用全局的选项
+		giveninits=formatoptions['giveninits']
+	else:#最后使用默认的选项
+		giveninits='space'
+	
+	rawlabelnames=bibentry['labelnameraw']
+	rawnamenumber=bibentry['rawnamenumber'] #labelauthor的姓名数量
+	trunamenumber=bibentry['trunamenumber'] #labelauthor的截断后姓名数量
+	rawnameothers=bibentry['rawnameothers'] #labelauthor是否含有and others
+	if 'labelusedparts' in bibentry:
+		labelusedparts=bibentry['labelusedparts']
+	else:
+		labelusedparts=False
+		
+	
+	nameformattedstr=''
+	nameliststop=trunamenumber
+	nameliststart=1
+	namelistcount=0
+	
+	for namepartsinfo in rawlabelnames[:nameliststop]:
+		namelistcount=namelistcount+1
+		if namelistcount==nameliststop and namelistcount>1:#当没有others时最后一个姓名前加的标点
+			
+			#单个姓名的处理
+			if nameformat=='uppercase':
+				singlenamefmtstr=namepartsinfo['family'].upper()
+			else:
+				singlenamefmtstr=namepartsinfo['family'].title()
+			
+			#labelusedparts的存在表示处理过歧义问题
+			if labelusedparts:
+				#根据选项确定使用名的缩写
+				nameinfo=labelusedparts[-1]
+				if giveninits=='space':#space表示名见用空格分隔，
+					if 'giveni' in nameinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['giveni'].upper()
+				elif giveninits=='dotspace':#dotspace用点加空格，
+					if 'giveni' in nameinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['giveni'].upper()+'.'
+				elif giveninits=='dot':#dot用点，
+					if 'giveni' in nameinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['giveni'].upper()+'.'
+				elif giveninits=='terse':#terse无分隔，
+					if 'giveni' in nameinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['giveni'].upper()
+				elif giveninits=='false' or giveninits==False:#false不使用缩写
+					if 'given' in nameinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['given'].upper()
+						
+				#根据选项确定使用名的缩写
+				if giveninits=='space':#space表示名见用空格分隔，
+					if 'middlei' in nameinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['middlei'].upper()
+				elif giveninits=='dotspace':#dotspace用点加空格，
+					if 'middlei' in nameinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['middlei'].upper()+'.'
+				elif giveninits=='dot':#dot用点，
+					if 'middlei' in nameinfo:
+						singlenamefmtstr=singlenamefmtstr+namepartsinfo['middlei'].upper()+'.'
+				elif giveninits=='terse':#terse无分隔，
+					if 'middlei' in nameinfo:
+						singlenamefmtstr=singlenamefmtstr+namepartsinfo['middlei'].upper()
+				elif giveninits=='false' or giveninits==False:#false不使用缩写
+					if 'middle' in nameinfo:
+						singlenamefmtstr=singlenamefmtstr+' '+namepartsinfo['middle'].upper()
+			
+			#加入到姓名列表字符串中
+			nameformattedstr=nameformattedstr+r'\printdelim{finalnamedelim}'+singlenamefmtstr
+			
+		elif namelistcount==nameliststart:#第一个姓名
+			#单个姓名的处理
+			if nameformat=='uppercase':
+				labelnamerawstr=namepartsinfo['family'].upper()
+			else:
+				labelnamerawstr=namepartsinfo['family'].title()
+			#加入到姓名列表字符串中
+			nameformattedstr=nameformattedstr+labelnamerawstr
+		else:
+			#单个姓名的处理
+			if nameformat=='uppercase':
+				labelnamerawstr=namepartsinfo['family'].upper()
+			else:
+				labelnamerawstr=namepartsinfo['family'].title()
+			#加入到姓名列表字符串中
+			nameformattedstr=nameformattedstr+r'\printdelim{multinamedelim}'+labelnamerawstr
+	
+	#print('---1--',nameformattedstr)
+	if trunamenumber < rawnamenumber or rawnameothers:
+		if formatoptions['morenames']:#只有设置morenames为true是才输出other的相关信息
+			nameformattedstr=nameformattedstr+r'\printdelim{andothorsdelim}\bibstring{andothers}'
+			#print('---2--',nameformattedstr)
+		
+	return nameformattedstr
+	
 
 #
 #
@@ -771,7 +1667,7 @@ def formatfield(bibentry,fieldinfo,lastfield):
 			fieldsource=None
 			
 	
-	#当域不被忽略时，那么做替换处理
+	#当所需的域不存在，且当前著录项不应忽略时，那么做替换处理
 	if not fieldsource and not fieldomit:
 		if 'replstring' in fieldinfo and fieldinfo['replstring']:
 			#print('replstring')
@@ -899,16 +1795,20 @@ def languagejudgement(bibentry,fieldsource):
 #根据域值所在的字符范围确定域的语言
 #
 def fieldlanguage(fieldvalueinfo):
-
-	if re.match(r'[\u2FF0-\u9FA5]', fieldvalueinfo):
+	
+	#要特别注意re中match，fullmatch，search之间的差异
+	#match是只匹配从头开始的内容，若头不匹配，则不匹配
+	#fullmatch则是全部字符串匹配，若有一处不匹配，则不匹配
+	#search则是搜索匹配的字符串的位置，若有匹配，则范围位置，否则返回None
+	if re.search(r'[\u2FF0-\u9FA5]', fieldvalueinfo):
 		language='chinese'
-	elif re.match(r'[\u3040-\u30FF\u31F0}-\u31FF]', fieldvalueinfo):
+	elif re.search(r'[\u3040-\u30FF\u31F0-\u31FF]', fieldvalueinfo):
 		language='japanese'
-	elif re.match(r'[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]', fieldvalueinfo):
+	elif re.search(r'[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7AF]', fieldvalueinfo):
 		language='korean'
-	elif re.match(r'[\u0400-\u052F]', fieldvalueinfo):
+	elif re.search(r'[\u0400-\u052F]', fieldvalueinfo):
 		language='russian'
-	elif re.match(r'[\u0100-\u017F]', fieldvalueinfo):
+	elif re.search(r'[\u0100-\u017F]', fieldvalueinfo):
 		language='french'
 	else:
 		language='english'
@@ -984,6 +1884,153 @@ def safetysplit(strtosplt,seps):
 	#print(namesnew)
 	return namesnew
 
+	
+#
+#
+#姓名列表解析:用于标注
+#增加条目给出的选项
+def citenamelistparser(bibentry,fieldsource,options):
+	fieldcontents=bibentry[fieldsource]
+	
+	#首先做针对{}保护的处理
+	#{}有可能保护一部分，有可能保护全部
+	#首先判断{}是否存在，若存在，那么可以确定需要做保护处理，否则用常规处理
+	#当然这些事情可以在一个函数中处理
+
+	#首先姓名列表进行分解，包括用' and '和' AND '做分解
+	#利用safetysplit函数实现安全的分解
+	seps=[' and ',' AND ']
+	fieldcontents=fieldcontents.strip()
+	fieldauthors=safetysplit(fieldcontents,seps)
+
+	#print('fieldauthors:',fieldauthors)
+	
+	#接着从各个姓名得到更详细的分解信息
+	fieldnames=[]
+	for name in fieldauthors:
+		if name.lower() == 'others':
+			nameinfo={'morename':True}
+		else:
+			if fieldlanguage(name)=='chinese':#当中文姓名中存在逗号先去除
+				if ', ' in name:
+					name=name.replace(', ','')
+			else:
+				pass
+			nameinfo=singlenameparser(name)
+		fieldnames.append(nameinfo)
+	
+	#最后根据全局和局部选项进行格式化
+	nameformattedstr=''
+	
+	#根据'maxcitenames'和'mincitenames'截短
+	if 'maxcitenames' in options:#首先使用条目中的选项
+		if len(fieldnames)>options['maxcitenames']:
+			fieldnamestrunc=fieldnames[:options['mincitenames']]
+			nameinfo={'morename':True}
+			fieldnamestrunc.append(nameinfo)
+		else:
+			fieldnamestrunc=fieldnames
+	elif 'maxcitenames' in formatoptions:#接着使用全局选项
+		if len(fieldnames)>formatoptions['maxcitenames']:
+			fieldnamestrunc=fieldnames[:formatoptions['mincitenames']]
+			nameinfo={'morename':True}
+			fieldnamestrunc.append(nameinfo)
+		else:
+			fieldnamestrunc=fieldnames
+	else:
+		fieldnamestrunc=fieldnames
+	
+	
+	#这里根据条目本身的信息，以及条目类型的格式设置中的信息来确定姓名的格式选项
+	#姓名四个选项：nameformat，giveninits作为主要的设置选项，可以在文献条目内容中设置，也可以在类型选项中设置，也可以全局设置
+	#usesuffix和morenames则仅做全局设置
+	if 'citenameformat' in bibentry:#当bib中条目本身存在存在域'nameformat'
+		option={'citenameformat':bibentry['citenameformat']}
+	elif 'citenameformat' in options:#当条目类型选项中存在域'nameformat'
+		option={'citenameformat':options['citenameformat']}
+	else:
+		option={}
+		
+	
+	#print('fieldnamestrunc:',fieldnamestrunc)
+	nameliststop=len(fieldnamestrunc)
+	nameliststart=1
+	namelistcount=0
+	for nameinfo in fieldnamestrunc:
+		namelistcount=namelistcount+1
+		if 'morename' in nameinfo:
+			if formatoptions['morenames']:#只有设置morenames为true是才输出other的相关信息
+				nameformattedstr=nameformattedstr+r'\printdelim{andothorsdelim}\bibstring{andothers}'
+		else:
+			if namelistcount==nameliststop and namelistcount>1:#当没有others时最后一个姓名前加的标点
+				nameformattedstr=nameformattedstr+r'\printdelim{finalnamedelim}'+citesinglenameformat(nameinfo,option)
+			elif namelistcount==nameliststart:
+				nameformattedstr=singlenameformat(nameinfo,option)
+			else:
+				nameformattedstr=nameformattedstr+r'\printdelim{multinamedelim}'+citesinglenameformat(nameinfo,option)
+	
+	return nameformattedstr
+	
+	
+	
+#
+#
+#单个姓名格式化
+def citesinglenameformat(nameinfo,option):
+	
+	singlenamefmtstr=''
+		
+	if 'citenameformat' in option:#首先使用bib中条目本身和条目类型给出的选项
+		nameformat=option['citenameformat']
+	elif 'citenameformat' in formatoptions:#接着使用全局的选项
+		nameformat=formatoptions['citenameformat']
+	else:#最后使用默认的选项
+		nameformat='titlecase'
+	
+
+	#根据单个姓名格式化选项来实现具体的格式
+	if nameformat=='uppercase':
+		
+		if 'prefix' in nameinfo:
+			singlenamefmtstr=nameinfo['prefix'].title()
+		else:
+			singlenamefmtstr=''
+		
+		if nameinfo['family'].startswith('{'):
+			singlenamefmtstr=singlenamefmtstr+nameinfo['family']
+		else:
+			singlenamefmtstr=singlenamefmtstr+nameinfo['family'].upper()
+				
+		#根据选项确定使用后缀
+		if formatoptions["usesuffix"]:#
+			if 'suffix' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+', '+nameinfo['suffix']
+
+	elif nameformat=='titlecase':
+	
+		if 'prefix' in nameinfo:
+			singlenamefmtstr=nameinfo['prefix'].title()
+		else:
+			singlenamefmtstr=''
+		
+		#
+		if nameinfo['family'].startswith('{'):
+			singlenamefmtstr=singlenamefmtstr+nameinfo['family']
+		else:
+			singlenamefmtstr=singlenamefmtstr+nameinfo['family'].title()
+			
+		#根据选项确定使用后缀
+		if formatoptions["usesuffix"]:#
+			if 'suffix' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+', '+nameinfo['suffix'].title()
+		
+	else:
+		print('WARNING: value of option citenameformat: '+nameformat+' is not defined!!')
+	
+	return singlenamefmtstr
+
+	
+	
 #
 #
 #姓名列表解析
@@ -1102,10 +2149,15 @@ def singlenameformat(nameinfo,option):
 	#根据单个姓名格式化选项来实现具体的格式
 	if nameformat=='uppercase':
 		
-		if nameinfo['family'].startswith('{'):
-			singlenamefmtstr=nameinfo['family']
+		if 'prefix' in nameinfo and formatoptions["useprefix"]:
+			singlenamefmtstr=nameinfo['prefix'].title()+' '
 		else:
-			singlenamefmtstr=nameinfo['family'].upper()
+			singlenamefmtstr=''
+		
+		if nameinfo['family'].startswith('{'):
+			singlenamefmtstr=singlenamefmtstr+nameinfo['family']
+		else:
+			singlenamefmtstr=singlenamefmtstr+nameinfo['family'].upper()
 		
 		#根据选项确定使用名的缩写
 		if giveninits=='space':#space表示名见用空格分隔，
@@ -1140,9 +2192,14 @@ def singlenameformat(nameinfo,option):
 				singlenamefmtstr=singlenamefmtstr+', '+nameinfo['suffix']
 
 	elif nameformat=='lowercase':
+	
+		if 'prefix' in nameinfo and formatoptions["useprefix"]:
+			singlenamefmtstr=nameinfo['prefix'].title()+' '
+		else:
+			singlenamefmtstr=''
 		
 		#不管有没有保护，都不做字母大小写修改
-		singlenamefmtstr=nameinfo['family']
+		singlenamefmtstr=singlenamefmtstr+nameinfo['family']
 		
 		#根据选项确定使用名的缩写
 		#当使用名的首字母缩写时大写
@@ -1172,10 +2229,17 @@ def singlenameformat(nameinfo,option):
 				singlenamefmtstr=singlenamefmtstr+' '+nameinfo['given']
 			if 'middle' in nameinfo:
 				singlenamefmtstr=singlenamefmtstr+' '+nameinfo['middle']
+				
+		#根据选项确定使用后缀
+		if formatoptions["usesuffix"]:#
+			if 'suffix' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+', '+nameinfo['suffix']
 	
 		
 	elif nameformat=='given-family':
-	
+		
+		#given在前的不使用前缀
+		
 		#根据选项确定使用名的缩写
 		#当使用名的首字母缩写时大写
 		#否则不做字母大小写变化
@@ -1208,10 +2272,20 @@ def singlenameformat(nameinfo,option):
 		#不管有没有保护，都不做字母大小写修改
 		singlenamefmtstr=singlenamefmtstr+' '+nameinfo['family']
 		
+		#根据选项确定使用后缀
+		if formatoptions["usesuffix"]:#
+			if 'suffix' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+', '+nameinfo['suffix']
+		
 	elif nameformat=='family-given':
 	
+		if 'prefix' in nameinfo and formatoptions["useprefix"]:
+			singlenamefmtstr=nameinfo['prefix'].title()+' '
+		else:
+			singlenamefmtstr=''
+		
 		#不管有没有保护，都把姓设置为titlecase模式
-		singlenamefmtstr=nameinfo['family'].title()
+		singlenamefmtstr=singlenamefmtstr+nameinfo['family'].title()
 		
 		#根据选项确定使用名的缩写
 		#当使用名的首字母缩写时大写
@@ -1242,8 +2316,15 @@ def singlenameformat(nameinfo,option):
 			if 'middle' in nameinfo:
 				singlenamefmtstr=singlenamefmtstr+' '+nameinfo['middle']
 		
+		#根据选项确定使用后缀
+		if formatoptions["usesuffix"]:#
+			if 'suffix' in nameinfo:
+				singlenamefmtstr=singlenamefmtstr+', '+nameinfo['suffix']
+		
 	elif nameformat=='pinyin':
 	
+		#pinyin不使用前缀、后缀
+		
 		#不管有没有保护，都把姓设置为uppercase模式
 		singlenamefmtstr=nameinfo['family'].upper()
 		
@@ -1257,9 +2338,14 @@ def singlenameformat(nameinfo,option):
 	elif nameformat=='reverseorder':
 		
 		if namelistcount==1:#第一个姓名用family-given
+		
+			if 'prefix' in nameinfo and formatoptions["useprefix"]:
+				singlenamefmtstr=nameinfo['prefix'].title()+' '
+			else:
+				singlenamefmtstr=''
 			
 			#不管有没有保护，都把姓设置为titlecase模式
-			singlenamefmtstr=nameinfo['family'].title()
+			singlenamefmtstr=singlenamefmtstr+nameinfo['family'].title()
 			
 			#根据选项确定使用名的缩写
 			#当使用名的首字母缩写时大写
@@ -1289,6 +2375,11 @@ def singlenameformat(nameinfo,option):
 					singlenamefmtstr=singlenamefmtstr+' '+nameinfo['given']
 				if 'middle' in nameinfo:
 					singlenamefmtstr=singlenamefmtstr+' '+nameinfo['middle']
+					
+			#根据选项确定使用后缀
+			if formatoptions["usesuffix"]:#
+				if 'suffix' in nameinfo:
+					singlenamefmtstr=singlenamefmtstr+', '+nameinfo['suffix']
 			
 		else:#后面的姓名全部用given-family
 			#根据选项确定使用名的缩写
@@ -1322,6 +2413,11 @@ def singlenameformat(nameinfo,option):
 					
 			#不管有没有保护，都不做字母大小写修改
 			singlenamefmtstr=singlenamefmtstr+' '+nameinfo['family']
+			
+			#根据选项确定使用后缀
+			if formatoptions["usesuffix"]:#
+				if 'suffix' in nameinfo:
+					singlenamefmtstr=singlenamefmtstr+', '+nameinfo['suffix']
 
 	else:
 		print('WARNING: value of option nameformat: '+nameformat+' is not defined!!')
@@ -1540,157 +2636,205 @@ def literalfieldparser(bibentry,fieldsource,options):
 	
 #
 #处理字符串的大小写的函数:
-#
+#其中对{}做了保护
+#对\和{之间的字符做了保护
 def mkstrsetencecase(fieldstring):
 	#首先查找{}保护的所有字符串
-	s1=re.findall('\{.*?\}',fieldstring)
-		
+	s0=re.findall(r'\\.*?\{.*?\}',fieldstring)
+	
 	a=fieldstring
+	if s0:
+		strsn=0
+		for stra1 in s0:
+			strsn=strsn+1
+			a=a.replace(stra1,'$'+str(strsn)+'$')
+
+	s1=re.findall('\{.*?\}',a)
+	
 	if s1:
 		#保护字符串用特殊字符串代替，特殊字符串与分割字符串没有任何关联
-		strsn=0
+		strsn=len(s0)
 		for stra1 in s1:
 			strsn=strsn+1
 			a=a.replace(stra1,'$'+str(strsn)+'$')
-		#print(a)
 	
-		#对字符串做大小写变换:
-		a1=a[0].upper()
-		a2=a[1:].lower()
-		a=a1+a2
-        
-		#对字符串做还原
-		strsn=0
+	#对字符串做大小写变换:
+	a1=a[0].upper()
+	a2=a[1:].lower()
+	a=a1+a2
+      
+	#对字符串做还原	  
+	if s1:
+		strsn=len(s0)
 		for stra1 in s1:
 			strsn=strsn+1
 			a=a.replace('$'+str(strsn)+'$',stra1)
 	
-	else:
-		#对字符串做大小写变换:
-		a1=a[0].upper()
-		a2=a[1:].lower()
-		a=a1+a2
-			
+	if s0:
+		strsn=0
+		for stra1 in s0:
+			strsn=strsn+1
+			a=a.replace('$'+str(strsn)+'$',stra1)
+
 	strtoreturn=a
 	return strtoreturn
 		
 def mkstrtitlecase(fieldstring):
 	#首先查找{}保护的所有字符串
-	s1=re.findall('\{.*?\}',fieldstring)
-		
+	s0=re.findall(r'\\.*?\{.*?\}',fieldstring)
+	
 	a=fieldstring
+	if s0:
+		strsn=0
+		for stra1 in s0:
+			strsn=strsn+1
+			a=a.replace(stra1,'$'+str(strsn)+'$')
+
+	s1=re.findall('\{.*?\}',a)
+	
 	if s1:
 		#保护字符串用特殊字符串代替，特殊字符串与分割字符串没有任何关联
-		strsn=0
+		strsn=len(s0)
 		for stra1 in s1:
 			strsn=strsn+1
 			a=a.replace(stra1,'$'+str(strsn)+'$')
-		#print(a)
 	
-		#对字符串做大小写变换:
-		a=a.title()
-        
-		#对字符串做还原
-		strsn=0
+	#对字符串做大小写变换:
+	a=a.title()
+      
+	#对字符串做还原	  
+	if s1:
+		strsn=len(s0)
 		for stra1 in s1:
 			strsn=strsn+1
 			a=a.replace('$'+str(strsn)+'$',stra1)
 	
-	else:
-		#对字符串做大小写变换:
-		a=a.title()
+	if s0:
+		strsn=0
+		for stra1 in s0:
+			strsn=strsn+1
+			a=a.replace('$'+str(strsn)+'$',stra1)
 			
 	strtoreturn=a
 	return strtoreturn
 
 def mkstruppercase(fieldstring):
+
 	#首先查找{}保护的所有字符串
-	s1=re.findall('\{.*?\}',fieldstring)
-		
+	s0=re.findall(r'\\.*?\{.*?\}',fieldstring)
+	
 	a=fieldstring
+	if s0:
+		strsn=0
+		for stra1 in s0:
+			strsn=strsn+1
+			a=a.replace(stra1,'$'+str(strsn)+'$')
+
+	s1=re.findall('\{.*?\}',a)
+	
 	if s1:
 		#保护字符串用特殊字符串代替，特殊字符串与分割字符串没有任何关联
-		strsn=0
+		strsn=len(s0)
 		for stra1 in s1:
 			strsn=strsn+1
 			a=a.replace(stra1,'$'+str(strsn)+'$')
-		#print(a)
 	
-		#对字符串做大小写变换:
-		a=a.upper()
-        
-		#对字符串做还原
-		strsn=0
+	#对字符串做大小写变换:
+	a=a.upper()
+      
+	#对字符串做还原	  
+	if s1:
+		strsn=len(s0)
 		for stra1 in s1:
 			strsn=strsn+1
 			a=a.replace('$'+str(strsn)+'$',stra1)
 	
-	else:
-		#对字符串做大小写变换:
-		a=a.upper()
+	if s0:
+		strsn=0
+		for stra1 in s0:
+			strsn=strsn+1
+			a=a.replace('$'+str(strsn)+'$',stra1)
 			
 	strtoreturn=a
 	return strtoreturn	
 
 def mkstrlowercase(fieldstring):
 	#首先查找{}保护的所有字符串
-	s1=re.findall('\{.*?\}',fieldstring)
-		
+	s0=re.findall(r'\\.*?\{.*?\}',fieldstring)
+	
 	a=fieldstring
+	if s0:
+		strsn=0
+		for stra1 in s0:
+			strsn=strsn+1
+			a=a.replace(stra1,'$'+str(strsn)+'$')
+
+	s1=re.findall('\{.*?\}',a)
+	
 	if s1:
 		#保护字符串用特殊字符串代替，特殊字符串与分割字符串没有任何关联
-		strsn=0
+		strsn=len(s0)
 		for stra1 in s1:
 			strsn=strsn+1
 			a=a.replace(stra1,'$'+str(strsn)+'$')
-		#print(a)
 	
-		#对字符串做大小写变换:
-		a=a.lower()
-        
-		#对字符串做还原
-		strsn=0
+	#对字符串做大小写变换:
+	a=a.lower()
+      
+	#对字符串做还原	  
+	if s1:
+		strsn=len(s0)
 		for stra1 in s1:
 			strsn=strsn+1
 			a=a.replace('$'+str(strsn)+'$',stra1)
 	
-	else:
-		#对字符串做大小写变换:
-		a=a.lower()
-			
+	if s0:
+		strsn=0
+		for stra1 in s0:
+			strsn=strsn+1
+			a=a.replace('$'+str(strsn)+'$',stra1)
+	
 	strtoreturn=a
 	return strtoreturn	
 
 def mkstrsmallcaps(fieldstring):
 	#首先查找{}保护的所有字符串
-	s1=re.findall('\{.*?\}',fieldstring)
-		
+	s0=re.findall(r'\\.*?\{.*?\}',fieldstring)
+	
 	a=fieldstring
+	if s0:
+		strsn=0
+		for stra1 in s0:
+			strsn=strsn+1
+			a=a.replace(stra1,'$'+str(strsn)+'$')
+
+	s1=re.findall('\{.*?\}',a)
+	
 	if s1:
 		#保护字符串用特殊字符串代替，特殊字符串与分割字符串没有任何关联
-		strsn=0
+		strsn=len(s0)
 		for stra1 in s1:
 			strsn=strsn+1
 			a=a.replace(stra1,'$'+str(strsn)+'$')
-		#print(a)
 	
-		#对字符串做大小写变换:
-		a1=a[0].upper()
-		a2=a[1:]
-		a=a1+r'\textsc{'+a2+'}'
-        
-		#对字符串做还原
-		strsn=0
+	#对字符串做大小写变换:
+	a1=a[0].upper()
+	a2=a[1:]
+	a=a1+r'\textsc{'+a2+'}'
+      
+	#对字符串做还原	  
+	if s1:
+		strsn=len(s0)
 		for stra1 in s1:
 			strsn=strsn+1
 			a=a.replace('$'+str(strsn)+'$',stra1)
 	
-	else:
-		#对字符串做大小写变换:
-		a1=a[0].upper()
-		a2=a[1:]
-		a=a1+r'\textsc{'+a2+'}'
-			
+	if s0:
+		strsn=0
+		for stra1 in s0:
+			strsn=strsn+1
+			a=a.replace('$'+str(strsn)+'$',stra1)
+		
 	strtoreturn=a
 	return strtoreturn	
 		
@@ -1841,14 +2985,15 @@ def rangefieldparser(bibentry,fieldsource):
 #
 #打开bib文件
 def readfilecontents(bibFile):
+
+	global bibfilecontents
+	global usedIds
+	
 	print("INFO: Reading references from '" + bibFile + "'")
 	try:
 		fIn = open(bibFile, 'r', encoding="utf8")
-		global bibfilecontents
 		bibfilecontents=fIn.readlines()
 		fIn.close()
-		
-		global usedIds
 		
 		#当使用nocite{*}引用全部文献时做的标记，全部引用则设置setemptyflag=True
 		#便于后面处理，比如将usedIds直接置空，表示引用全部的文献。
@@ -2363,6 +3508,7 @@ def maptypesource(keyvals,bibentry,typesrcinfo):
 		else:
 			typesrcinfo['typesource']=None
 		return retrunval
+
 #
 #
 # 域信息设置
@@ -2492,14 +3638,14 @@ def mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo):
 		
 			if fieldsource in bibentry:
 				if fieldmatch:
-					m = re.match(fieldmatch, bibentry[fieldsource])
+					m = re.search(fieldmatch, bibentry[fieldsource])
 					if m:
 						fieldsrcinfo[fieldsource]=[bibentry[fieldsource],fieldmatch]
 					else:
 						fieldsrcinfo[fieldsource]=[None] #正则不匹配，则返回为None
 
 				elif fieldmatchi:
-					m = re.match(fieldmatchi, bibentry[fieldsource])
+					m = re.search(fieldmatchi, bibentry[fieldsource])
 					if m:
 						fieldsrcinfo[fieldsource]=[bibentry[fieldsource],fieldmatchi]
 					else:
@@ -2593,8 +3739,8 @@ class BibFileinputError(Exception):
 #输入命令行解析
 inputbibfile=''
 inputauxfile=''
-inputstyfile='bibstylenumeric.py'
-inputmapfile='bibmapdefault.py'
+inputstyfile=''
+inputmapfile=''
 
 
 #
@@ -2603,6 +3749,8 @@ inputmapfile='bibmapdefault.py'
 def bibmapinput():
 	#要使用全局变量先声明一下
 	global inputbibfile,inputauxfile,inputstyfile,inputmapfile
+	global subauxfilelist,subbibfilelist,substyfilelist,submapfilelist #主文档包含的子文档的aux文件
+
 
 	#创建一个解析器
 	parser = argparse.ArgumentParser(description='Process input files for bibmap')
@@ -2660,11 +3808,16 @@ def bibmapinput():
 	sys.path.append(pathtoadd)
 	print('sys.path=',sys.path)
 
-		
+	# print('aux:',inputauxfile)
+	# print('bib:',inputbibfile)
+	# print('sty:',inputstyfile)
+	# print('map:',inputmapfile)
+	
 		
 	#3.接着辅助文件aux中提供的参数
 	#可能有多个bib文件的需求，这个问题等明确chapterbib使用确定
 	#辅助文件aux中提供的参数可以覆盖前面设置的参数
+	subauxfilelist=[]
 	if inputauxfile:
 		fInAux = open(inputauxfile, 'r', encoding="utf8")
 		for line in fInAux:
@@ -2674,13 +3827,16 @@ def bibmapinput():
 				inputbibfile = m.group(1)
 				if '.bib' not in inputbibfile:
 					inputbibfile=inputbibfile+'.bib'
+					
 			if line.startswith("\\bibmap@bibstyle"):
 				m = re.search(r'\\bibmap@bibstyle {(.*)}',line)#注意贪婪算法的影响，所以要排除\}字符
 				print('m.group(1):',m.group(1))
+				
 				if not inputstyfile:#当命令行未指定styfile时
 					inputstyfile = m.group(1)
 				if '.py' not in inputstyfile:
 					inputstyfile = inputstyfile+'.py'
+					
 			if line.startswith("\\bibmap@mapstyle"):
 				m = re.search(r'\\bibmap@mapstyle {(.*)}',line)#注意贪婪算法的影响，所以要排除\}字符
 				print('m.group(1):',m.group(1))
@@ -2688,30 +3844,96 @@ def bibmapinput():
 					inputmapfile = m.group(1)
 				if '.py' not in inputmapfile:
 					inputmapfile = inputmapfile+'.py'
+			
+			if line.startswith("\\@input"):
+				m = re.search(r'\\@input\s*{(.*).aux\s*}',line)#注意贪婪算法的影响，所以要排除\}字符
+				print('m.group(1):',m.group(1))
+				subauxfile = m.group(1)
+				if '.aux' not in subauxfile:
+					subauxfile+='.aux'
+				if subauxfile not in subauxfilelist:
+					subauxfilelist.append(subauxfile)
+					
 		fInAux.close()
 	
-	if not inputbibfile:
+	if not inputbibfile and not subauxfilelist:
 		try:
 			raise BibFileinputError('error：未指定bib文件，请用-b选项直接指定或者在aux文件内指定！')
 		except BibFileinputError as e:
 			raise BibFileinputError(e.message)
-			
+	
 	if not inputstyfile:
-		try:
-			raise BibFileinputError('error：著录格式设置文件出错，请重新指定！')
-		except BibFileinputError as e:
-			raise BibFileinputError(e.message)
-			
+		print('INFO：著录格式设置文件未指定，使用默认的样式bibstylenumeric.py！')
+		inputstyfile='bibstylenumeric.py' #使用默认的设置
+		
 	if not inputmapfile:
-		try:
-			raise BibFileinputError('error：数据修改设置文件出错，请重新指定！')
-		except BibFileinputError as e:
-			raise BibFileinputError(e.message)
+		print('INFO：数据修改设置文件未指定，使用默认的样式bibmapdefault.py！')
+		inputmapfile='bibmapdefault.py' #使用默认的设置
+	
+	print('aux:',inputauxfile)
+	print('bib:',inputbibfile)
+	print('sty:',inputstyfile)
+	print('map:',inputmapfile)
+	
+	
+	subbibfilelist=[]
+	substyfilelist=[]
+	submapfilelist=[]
+	#读取子文档的信息
+	if subauxfilelist:
+		for subauxfile in subauxfilelist:
+		
+			subbibfile=''
+			substyfile=''
+			submapfile=''
 			
-	print(inputauxfile)
-	print(inputbibfile)
-	print(inputstyfile)
-	print(inputmapfile)
+			fInAux = open(subauxfile, 'r', encoding="utf8")
+			
+			for line in fInAux:
+				if line.startswith("\\bibdata"):
+					m = re.search(r'\\bibdata{(.*)}',line)#注意贪婪算法的影响，所以要排除\}字符
+					print('m.group(1):',m.group(1))
+					subbibfile = m.group(1)
+					if '.bib' not in subbibfile:
+						subbibfile=subbibfile+'.bib'
+						
+				if line.startswith("\\bibmap@bibstyle"):
+					m = re.search(r'\\bibmap@bibstyle {(.*)}',line)#注意贪婪算法的影响，所以要排除\}字符
+					print('m.group(1):',m.group(1))
+					substyfile = m.group(1)
+					if '.py' not in substyfile:
+						substyfile = substyfile+'.py'
+						
+				if line.startswith("\\bibmap@mapstyle"):
+					m = re.search(r'\\bibmap@mapstyle {(.*)}',line)#注意贪婪算法的影响，所以要排除\}字符
+					print('m.group(1):',m.group(1))
+					submapfile = m.group(1)
+					if '.py' not in submapfile:
+						submapfile = submapfile+'.py'
+
+			fInAux.close()
+			
+			if subbibfile:#子文档内没有指定文件，那么使用主文档的信息
+				subbibfilelist.append(subbibfile)
+			else:
+				subbibfilelist.append(inputbibfile)
+			
+			if substyfile:#子文档内没有指定文件，那么使用主文档的信息
+				substyfilelist.append(substyfile)
+			else:
+				substyfilelist.append(inputstyfile)
+
+			if submapfile:#子文档内没有指定文件，那么使用主文档的信息
+				submapfilelist.append(submapfile)
+			else:
+				submapfilelist.append(inputmapfile)
+			
+	print('subaux:',subauxfilelist)
+	print('subbib:',subbibfilelist)
+	print('substy:',substyfilelist)
+	print('submap:',submapfilelist)
+	
+	#sys.exit(-1)
 	
 	
 	##------------------------------------------
@@ -2740,81 +3962,206 @@ def bibmapinput():
 	global bibliographystyle
 	
 	
-	#导入设置参数模块，导入设置数据
-	if '.py' in inputmapfile:
-		strmapmodule=inputmapfile.replace('.py','')
-	else:
-		strmapmodule=inputmapfile
-	mapmodule=__import__(strmapmodule)
-	print(mapmodule)
+	#当主文档存在inputbibfile时，那么做主文档的处理
+	if inputbibfile:
 	
-	if 'sourcemaps' in dir(mapmodule):#做sourcemaps参数设置检查
-		sourcemaps=mapmodule.sourcemaps
-	else:
-		sourcemaps=[]
-	
-	#print(dir(mapmodule))
-	if 'multiplepinyin' in dir(mapmodule):#做multiplepinyin参数设置检查
-		if mapmodule.multiplepinyin:#如果map样式文件中有对多音字的首音设置，那么做处理
-			for k,v in mapmodule.multiplepinyin.items():
-				hzpinyindata[k]=v
-	
-	if '.py' in inputstyfile:
-		strsetmodule=inputstyfile.replace('.py','')
-	else:
-		strsetmodule=inputstyfile
-	setmodule=__import__(strsetmodule)
-	print(setmodule)
-	
-	formatoptions=setmodule.formatoptions
-	
-	localstrings=setmodule.localstrings
-	localpuncts=setmodule.localpuncts
-	replacestrings=setmodule.replacestrings
-	typestrings=setmodule.typestrings
-	
-	datatypeinfo=setmodule.datatypeinfo
-	
-	bibliographystyle=setmodule.bibliographystyle
-	
-	
-	#检查输入的信息是否正确，并给出错误提示信息
-	#
-	#检查map样式文件设置是否正确
-	checkbibdatamapstyle()
-	
-	#检查bib样式全局选项信息
-	checkformatoptions()
-	
-	#检查bib样式格式设置信息
-	checkbibliographystyle()
-	
-	
-	
-	#读取bib和aux文件信息
-	readfilecontents(inputbibfile)
-	
-	#bib文件解析
-	bibentryparsing()
-	
-	if inputfiles['nobdm']:
-		pass
-	else:
-		#根据map的信息执行bib文件map
-		execsourcemap()
-	
-	#输出map后的bib文件
-	writefilenewbib(inputbibfile)
-	
-	
-	if inputfiles['nofmt']:
-		pass
-	else:
-		#根据输入的设置参数对文献进行格式化
-		formatallbibliography()
+		#导入设置参数模块，导入设置数据
+		#
+		#bib数据修改模块导入
+		if '.py' in inputmapfile:
+			strmapmodule=inputmapfile.replace('.py','')
+		else:
+			strmapmodule=inputmapfile
+
+		try:
+			mapmodule=__import__(strmapmodule)
+			print(mapmodule)
+		except ImportError as e:
+			print('error：数据修改设置文件出错，请重新指定！')
+			raise BibFileinputError(e.message)
 		
-		#输出格式化后的文献数据
-		printbibliography()
+		if 'sourcemaps' in dir(mapmodule):#做sourcemaps参数设置检查
+			sourcemaps=mapmodule.sourcemaps
+		else:
+			sourcemaps=[]
+		
+		#print(dir(mapmodule))
+		if 'multiplepinyin' in dir(mapmodule):#做multiplepinyin参数设置检查
+			if mapmodule.multiplepinyin:#如果map样式文件中有对多音字的首音设置，那么做处理
+				for k,v in mapmodule.multiplepinyin.items():
+					hzpinyindata[k]=v
+		
+		#
+		#文献数据格式化模块导入
+		if '.py' in inputstyfile:
+			strsetmodule=inputstyfile.replace('.py','')
+		else:
+			strsetmodule=inputstyfile
+			
+		try:
+			setmodule=__import__(strsetmodule)
+			print(setmodule)
+		except ImportError as e:
+			print('error：著录格式设置文件出错，请重新指定！')
+			raise BibFileinputError(e.message)
+		
+		print(setmodule)
+		
+		formatoptions=setmodule.formatoptions
+		
+		localstrings=setmodule.localstrings
+		localpuncts=setmodule.localpuncts
+		replacestrings=setmodule.replacestrings
+		typestrings=setmodule.typestrings
+		
+		datatypeinfo=setmodule.datatypeinfo
+		
+		bibliographystyle=setmodule.bibliographystyle
+		
+		#检查输入的信息是否正确，并给出错误提示信息
+		#
+		#检查map样式文件设置是否正确
+		checkbibdatamapstyle()
+		
+		#检查bib样式全局选项信息
+		checkformatoptions()
+		
+		#检查bib样式格式设置信息
+		checkbibliographystyle()
+		
+		#读取bib和aux文件信息
+		readfilecontents(inputbibfile)
+		
+		#bib文件解析
+		bibentryparsing()
+		
+		if inputfiles['nobdm']:
+			pass
+		else:
+			#根据map的信息执行bib文件map
+			execsourcemap()
+			#输出map后的bib文件
+			writefilenewbib(inputbibfile)
+		
+		
+		if inputfiles['nofmt']:
+			pass
+		else:
+			#根据输入的设置参数对文献进行格式化
+			formatallbibliography()
+			
+			#输出格式化后的文献数据
+			printbibliography()
+	
+	
+	#当子文档存在subbibfile时，那么做子文档的处理
+	if subbibfilelist:
+		
+		for i in range(len(subbibfilelist)):
+		
+			inputmapfile=submapfilelist[i]
+			inputstyfile=substyfilelist[i]
+			inputbibfile=subbibfilelist[i]
+			inputauxfile=subauxfilelist[i]
+			
+			print('aux:',inputauxfile)
+			print('bib:',inputbibfile)
+			print('sty:',inputstyfile)
+			print('map:',inputmapfile)
+			
+			
+			if inputbibfile[i]:
+		
+				#导入设置参数模块，导入设置数据
+				#
+				#bib数据修改模块导入
+				if '.py' in inputmapfile:
+					strmapmodule=inputmapfile.replace('.py','')
+				else:
+					strmapmodule=inputmapfile
+
+				try:
+					mapmodule=__import__(strmapmodule)
+					print(mapmodule)
+				except ImportError as e:
+					print('error：数据修改设置文件出错，请重新指定！')
+					raise BibFileinputError(e.message)
+				
+				if 'sourcemaps' in dir(mapmodule):#做sourcemaps参数设置检查
+					sourcemaps=mapmodule.sourcemaps
+				else:
+					sourcemaps=[]
+				
+				#print(dir(mapmodule))
+				if 'multiplepinyin' in dir(mapmodule):#做multiplepinyin参数设置检查
+					if mapmodule.multiplepinyin:#如果map样式文件中有对多音字的首音设置，那么做处理
+						for k,v in mapmodule.multiplepinyin.items():
+							hzpinyindata[k]=v
+				
+				#
+				#文献数据格式化模块导入
+				if '.py' in inputstyfile:
+					strsetmodule=inputstyfile.replace('.py','')
+				else:
+					strsetmodule=inputstyfile
+					
+				try:
+					setmodule=__import__(strsetmodule)
+					print(setmodule)
+				except ImportError as e:
+					print('error：著录格式设置文件出错，请重新指定！')
+					raise BibFileinputError(e.message)
+				
+				print(setmodule)
+				
+				formatoptions=setmodule.formatoptions
+				
+				localstrings=setmodule.localstrings
+				localpuncts=setmodule.localpuncts
+				replacestrings=setmodule.replacestrings
+				typestrings=setmodule.typestrings
+				
+				datatypeinfo=setmodule.datatypeinfo
+				
+				bibliographystyle=setmodule.bibliographystyle
+				
+				#检查输入的信息是否正确，并给出错误提示信息
+				#
+				#检查map样式文件设置是否正确
+				checkbibdatamapstyle()
+				
+				#检查bib样式全局选项信息
+				checkformatoptions()
+				
+				#检查bib样式格式设置信息
+				checkbibliographystyle()
+				
+				#读取bib和aux文件信息
+				readfilecontents(inputbibfile)
+				
+				#bib文件解析
+				bibentryparsing()
+				
+				#continue
+				
+				if inputfiles['nobdm']:
+					pass
+				else:
+					#根据map的信息执行bib文件map
+					execsourcemap()
+					#输出map后的bib文件
+					writefilenewbib(inputbibfile)
+
+				if inputfiles['nofmt']:
+					pass
+				else:
+					#根据输入的设置参数对文献进行格式化
+					formatallbibliography()
+					
+					#输出格式化后的文献数据
+					printbibliography()
+		
+		sys.exit(-1)
 
 #
 #自定义异常类
@@ -2863,8 +4210,8 @@ def checkformatoptions():#formatoptions等是全局的不用传递
 					pass
 				else:
 					try:
-						print('Error: global option value "'+v+'" for option "'+k+'" is not in formatoptions!\n')
-						raise MapStyleSetError('Error: global option value "'+v+'" for option "'+k+'" is not in formatoptions!')
+						print('Error: global option value "'+str(v)+'" for option "'+str(k)+'" is not in formatoptions!\n')
+						raise MapStyleSetError('Error: global option value "'+str(v)+'" for option "'+str(k)+'" is not in formatoptions!')
 					except MapStyleSetError as e:
 						raise MapStyleSetError(e.message)
 		else:
@@ -2929,6 +4276,15 @@ if __name__=="__main__":
 	#如果没有指定后缀名，那么默认是aux文件
 	#如果没有获取bib文件信息，那么会报错
 	bibmapinput()
+	
+	if False:
+		a=r'Food {Irradiation} Research \LaTeX{} and \textbf{Technology} paper II'
+		print(a)
+		print(mkstrsetencecase(a))
+		print(mkstrtitlecase(a))
+		print(mkstruppercase(a))
+		print(mkstrlowercase(a))
+		print(mkstrsmallcaps(a))
 
 	
 	

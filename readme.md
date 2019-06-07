@@ -1,3 +1,177 @@
+<b>Date of last change: 2019-04-19 to version v1.0b</b>
+
+
+# bibmap 宏包
+
+bibmap 是一个参考文献宏包，包含一个 sty 文件，用于设置参考文献处理时的选项;
+一个 bibmap 程序，用于在后端处理参考文献数据。
+
+bibmap 宏包加载了 natbib等宏包，用于 latex 参考文献标注和文献表的生成。
+可以通过几个选项指定需要的标注样式、文献表著录样式、以及bib数据修改的样式。
+
+bibmap 后端程序类似 bibtex/biber 程序用于处理参考文献数据，其输出类似于
+bibtex 为 bbl 文件，用于tex编译器读取后编译生成文献表。
+
+## bibmap 宏包两大核心功能
+
+### 参考文献表格式化
+
+bibmap 宏包的标注样式基于natbbib宏包实现，而著录样式采用极简单的python代码来设置。
+
+该功能主要特点包括:
+
+* bibmap使用的样式文件为python代码构成的文本文件，设置极为方便，避免用户使用复杂的bst语法
+
+* 根据样式文件输出格式化后的 bbl 文件，便于 latex 文档直接使用。
+
+* 转存格式化的参考文献表文本为文本文件和网⻚文件，便于在其它文档中直
+接使用。
+
+* 除了 bibmap 程序内部处理逻辑外，样式文件可以全面控制参考文献的格式
+化。
+
+* bibmap 实现的内部处理: 根据选项进行排序，根据选项对姓名列表域、文本
+列表域、日期域、文本域、范围域格式化，根据选项对条目输出项进行组织和格式化。
+
+### bib 数据修改
+
+bib 文件修改功能，借鉴 biblatex 的设计，逻辑基本一致，可以说是一套python 的重新实现，
+可以对 bib 文件的条目和域做非常细致的处理和修改。
+
+该功能主要特点包括:
+
+* bib 文件的读取和解析
+
+* bib 文件的转存，包括从大的 bib 文件抽取引用的文献保存为一个小的 bib 文
+件，将 bib 文件的内容存储为 json 格式的问题。
+
+* 参考文献条目的修改，包括条目类型的修改，条目内部的域的修改等，包括
+删除、变化、转换等等。
+
+
+
+## 用法：
+
+### bibmap宏包
+
+* 最小工作示例MWE
+
+```
+\documentclass{article}
+    \usepackage{ctex}
+    \usepackage{xcolor}
+    \usepackage{toolbox}
+    \usepackage{hyperref}
+    \usepackage{lipsum}
+    \usepackage[paperwidth=16cm,paperheight=10cm,top=10pt,bottom=10pt,left=1cm,right=1cm,showframe,showcrop]{geometry}
+\usepackage[citestyle=numeric,bibstyle=gb7714-2015]{bibmap}
+\usepackage{filecontents}
+\begin{filecontents}{\jobname.bib}
+@techreport{calkin,
+  author       = {Calkin, D and Ager, A and Thompson, M},
+  title        = {A Comparative Risk Assessment Framework for Wildland Fire
+                 Management: the 2010 Cohesive Strategy Science Report},
+  number       = {RMRS-GTR-262},
+  year         = {2011},
+  pages        = {8--9},
+}
+\end{filecontents}
+
+    \begin{document}
+
+    文献\cite{wfz,bjsrmzfbgt,zgtsgxh}\cite{calkin,buseck}
+
+    \bibliography{\jobname}
+
+    \end{document} 
+```
+
+* 编译方式
+
+四步编译:
+```
+xelatex jobname
+bibmap.py jobname}
+xelatex jobname
+xelatex jobname
+```
+
+### bibmap程序
+
+bibmap程序目前为打包成可执行文件，而以py脚本的形式存在，因此运行需要python环境的支持，
+而这仅需要下载安装官网的python安装包即可。
+
+bibmap程序的命令行参数如下:
+
+```
+bibmap.py
+
+filename 单个输入文件的文件名，可带后缀名如bib或aux，无后缀名时默认为辅助文件.aux
+
+[-h] 输出帮助
+
+[-a AUXFILE] 辅助文件的文件名，可带后缀名.aux，如果filename已经设置aux文件则无效
+
+[-b BIBFILE] 文献数据库文件名，可带后缀名.bib，如果filename已经设置bib文件则无效
+
+[-s STYFILE] 设置文献样式文件的文件名，可带后缀名.py，不给出则使用默认样式文件
+
+[-m MAPFILE] 数据库修改设置文件文件名，可带后缀名.py，不给出则使用默认设置文件
+
+\verb|[--nofmt]| 给出该选项则不做格式化输出
+
+\verb|[--nobdm]| 给出该选项则不做不做bib数据修改
+```
+
+其中涉及到三种文件：
+
+一是aux文件，如果是要得到格式化的文献表，那么这是最重要的文件，由tex编译生成，当使用bibmap宏包时，可以通过宏包选项设置样式文件，而bib文件通过bibliography命令也会在该文件中指出。
+
+二是bib文件，这是参考文献数据源文件，可以由通过bibliography命令在aux文件内给出，也可以直接利用选项给出。
+
+三是py文件，这是用于设置数据修改和文献格式化的文件，是python代码。宏包自带的样式，通常bibmap*.py是用于bib文件数据修改的，而bibstyle*.py是用于格式化文献表的。
+
+
+使用方式为:
+
+
+
+### bib文件修改
+
+直接在命令行输入脚本及其参数：
+
+`bibmap.py biblatex-map-test.bib`
+
+此时，bibmap读取biblatex-map-test.bib文件，并根据默认的数据修改设置bibmapdefault.py做修改，此时还会自动的做格式化后的文献表输出。
+
+`bibmap.py biblatex-map-test.bib --nofmt`
+
+此时不再输出格式化后的文献表。
+
+`bibmap.py biblatex-map-test.bib --nofmt -m bibmapaddkw.py`
+
+此时使用指定的数据修改设置bibmapaddkw.py代替默认的bibmapdefault.py对数据库bib文件做修改。
+
+
+
+### 参考文献格式化
+
+直接在命令行输入脚本及其参数：
+
+`bibmap.py egtest`
+
+此时输入一个辅助文件egtest.aux，其它所有的参数根据对egtest.aux的解析来获取，如果没有解析到，若存在默认的设置，则使用默认的设置文件。
+若没有默认设置，则可以通过可选参数来指定：
+
+`bibmap.py egtest -b biblatex-map-test.bib`
+
+当aux文件未给出格式化设置文件时，也可以用-s选项给出，格式化设置文件(即文献样式文件)，比如
+
+`bibmap.py egtest -s bibstyleauthoryear.py`
+
+
+
+
 
 
 # bibmap Package : A bibliography Package
@@ -193,173 +367,5 @@ v1.0b 2019/04/19
 
 
 --------------------------------------
-
-# bibmap 宏包
-
-bibmap 是一个参考文献宏包，包含一个 sty 文件，用于设置参考文献处理时的选项;
-一个 bibmap 程序，用于在后端处理参考文献数据。
-
-bibmap 宏包加载了 natbib等宏包，用于 latex 参考文献标注和文献表的生成。
-可以通过几个选项指定需要的标注样式、文献表著录样式、以及bib数据修改的样式。
-
-bibmap 后端程序类似 bibtex/biber 程序用于处理参考文献数据，其输出类似于
-bibtex 为 bbl 文件，用于tex编译器读取后编译生成文献表。
-
-## bibmap 宏包两大核心功能
-
-### 参考文献表格式化
-
-bibmap 宏包的标注样式基于natbbib宏包实现，而著录样式采用极简单的python代码来设置。
-
-该功能主要特点包括:
-
-* bibmap使用的样式文件为python代码构成的文本文件，设置极为方便，避免用户使用复杂的bst语法
-
-* 根据样式文件输出格式化后的 bbl 文件，便于 latex 文档直接使用。
-
-* 转存格式化的参考文献表文本为文本文件和网⻚文件，便于在其它文档中直
-接使用。
-
-* 除了 bibmap 程序内部处理逻辑外，样式文件可以全面控制参考文献的格式
-化。
-
-* bibmap 实现的内部处理: 根据选项进行排序，根据选项对姓名列表域、文本
-列表域、日期域、文本域、范围域格式化，根据选项对条目输出项进行组织和格式化。
-
-### bib 数据修改
-
-bib 文件修改功能，借鉴 biblatex 的设计，逻辑基本一致，可以说是一套python 的重新实现，
-可以对 bib 文件的条目和域做非常细致的处理和修改。
-
-该功能主要特点包括:
-
-* bib 文件的读取和解析
-
-* bib 文件的转存，包括从大的 bib 文件抽取引用的文献保存为一个小的 bib 文
-件，将 bib 文件的内容存储为 json 格式的问题。
-
-* 参考文献条目的修改，包括条目类型的修改，条目内部的域的修改等，包括
-删除、变化、转换等等。
-
-
-
-## 用法：
-
-### bibmap宏包
-
-* 最小工作示例MWE
-
-```
-\documentclass{article}
-    \usepackage{ctex}
-    \usepackage{xcolor}
-    \usepackage{toolbox}
-    \usepackage{hyperref}
-    \usepackage{lipsum}
-    \usepackage[paperwidth=16cm,paperheight=10cm,top=10pt,bottom=10pt,left=1cm,right=1cm,showframe,showcrop]{geometry}
-\usepackage[citestyle=numeric,bibstyle=gb7714-2015]{bibmap}
-\usepackage{filecontents}
-\begin{filecontents}{\jobname.bib}
-@techreport{calkin,
-  author       = {Calkin, D and Ager, A and Thompson, M},
-  title        = {A Comparative Risk Assessment Framework for Wildland Fire
-                 Management: the 2010 Cohesive Strategy Science Report},
-  number       = {RMRS-GTR-262},
-  year         = {2011},
-  pages        = {8--9},
-}
-\end{filecontents}
-
-    \begin{document}
-
-    文献\cite{wfz,bjsrmzfbgt,zgtsgxh}\cite{calkin,buseck}
-
-    \bibliography{\jobname}
-
-    \end{document} 
-```
-
-* 编译方式
-
-四步编译:
-```
-xelatex jobname
-bibmap.py jobname}
-xelatex jobname
-xelatex jobname
-```
-
-### bibmap程序
-
-bibmap程序目前为打包成可执行文件，而以py脚本的形式存在，因此运行需要python环境的支持，
-而这仅需要下载安装官网的python安装包即可。
-
-bibmap程序的命令行参数如下:
-
-```
-bibmap.py
-
-filename 单个输入文件的文件名，可带后缀名如bib或aux，无后缀名时默认为辅助文件.aux
-
-[-h] 输出帮助
-
-[-a AUXFILE] 辅助文件的文件名，可带后缀名.aux，如果filename已经设置aux文件则无效
-
-[-b BIBFILE] 文献数据库文件名，可带后缀名.bib，如果filename已经设置bib文件则无效
-
-[-s STYFILE] 设置文献样式文件的文件名，可带后缀名.py，不给出则使用默认样式文件
-
-[-m MAPFILE] 数据库修改设置文件文件名，可带后缀名.py，不给出则使用默认设置文件
-
-\verb|[--nofmt]| 给出该选项则不做格式化输出
-
-\verb|[--nobdm]| 给出该选项则不做不做bib数据修改
-```
-
-其中涉及到三种文件：
-
-一是aux文件，如果是要得到格式化的文献表，那么这是最重要的文件，由tex编译生成，当使用bibmap宏包时，可以通过宏包选项设置样式文件，而bib文件通过bibliography命令也会在该文件中指出。
-
-二是bib文件，这是参考文献数据源文件，可以由通过bibliography命令在aux文件内给出，也可以直接利用选项给出。
-
-三是py文件，这是用于设置数据修改和文献格式化的文件，是python代码。宏包自带的样式，通常bibmap*.py是用于bib文件数据修改的，而bibstyle*.py是用于格式化文献表的。
-
-
-使用方式为:
-
-
-
-### bib文件修改
-
-直接在命令行输入脚本及其参数：
-
-`bibmap.py biblatex-map-test.bib`
-
-此时，bibmap读取biblatex-map-test.bib文件，并根据默认的数据修改设置bibmapdefault.py做修改，此时还会自动的做格式化后的文献表输出。
-
-`bibmap.py biblatex-map-test.bib --nofmt`
-
-此时不再输出格式化后的文献表。
-
-`bibmap.py biblatex-map-test.bib --nofmt -m bibmapaddkw.py`
-
-此时使用指定的数据修改设置bibmapaddkw.py代替默认的bibmapdefault.py对数据库bib文件做修改。
-
-
-
-### 参考文献格式化
-
-直接在命令行输入脚本及其参数：
-
-`bibmap.py egtest`
-
-此时输入一个辅助文件egtest.aux，其它所有的参数根据对egtest.aux的解析来获取，如果没有解析到，若存在默认的设置，则使用默认的设置文件。
-若没有默认设置，则可以通过可选参数来指定：
-
-`bibmap.py egtest -b biblatex-map-test.bib`
-
-当aux文件未给出格式化设置文件时，也可以用-s选项给出，格式化设置文件(即文献样式文件)，比如
-
-`bibmap.py egtest -s bibstyleauthoryear.py`
 
 

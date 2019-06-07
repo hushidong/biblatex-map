@@ -6,8 +6,6 @@
 2. 著录表中的extrayear是否要处理？目前暂无需求
 
 
-4. pyinstaller打包成exe文件
-
 5. 一些biblatex的map选项需要实现，包括
 		entryclone=?clonekey?
 		entrynew=?entrynewkey?
@@ -18,6 +16,36 @@
 		match 大小写区分的matchi
 		
 		
+		
+#### 20190607
+
+1. pyinstaller打包成exe文件
+
+	方法：
+	
+		1. 安装pyinstaller
+
+		下载，解压，进入目录，然后使用命令：
+
+		python setup.py install
+
+		连网会自动处理依赖问题。
+		(不连网处理起来估计会比较麻烦，但可以查看一下怎么在anaconda下安装pyinstaller)
+
+
+		2. 打包程序：
+
+		1、使用下载安装的方式安装的Pyinstaller打包方式
+
+		将需要打包的文件放在解压得到的Pyinstaller文件夹中，打开cmd窗口，把路径切换到当前路径打开命令提示行，输入以下内容（最后的是文件名）：
+
+		python pyinstaller.py -F myfile.py
+
+		2、使用pip方式安装的Pyinstaller打包方式
+
+		打开cmd窗口，把路径切换到文件所在路径(文件随便放在哪里都行)打开命令提示行，输入以下内容（最后的是文件名）：
+
+		pyinstaller -F myfile.py
 		
 #### 20190419
 
