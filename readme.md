@@ -1,4 +1,4 @@
-<b>Date of last change: 2019-04-19 to version v1.0b</b>
+<b>Date of last change: 2021-05-24 to version v1.0c</b>
 
 
 # bibmap 宏包
@@ -118,6 +118,8 @@ filename 单个输入文件的文件名，可带后缀名如bib或aux，无后�
 [-s STYFILE] 设置文献样式文件的文件名，可带后缀名.py，不给出则使用默认样式文件
 
 [-m MAPFILE] 数据库修改设置文件文件名，可带后缀名.py，不给出则使用默认设置文件
+
+[--addpinyin] 给出该选项则将为每个文献条目增加带有拼音的key域。
 
 [--nofmt] 给出该选项则不做格式化输出
 
@@ -323,6 +325,8 @@ bibmap.py
 
 `[-m MAPFILE]` specify a mapstyle file(data modification style file), using the default style file if not given.
 
+`[--addpinyin]` add key of pinyin for every bib entry if given.
+
 `[--nofmt]` do not format the bibliography if given
 
 `[--nobdm]` do not modify the bibfile if given
@@ -374,6 +378,7 @@ if  want to  set a bibstyle file , you  can run:
 v1.0 2019/02/09
 v1.0a 2019/04/12
 v1.0b 2019/04/19
+v1.0c 2021/05/24
 
 
 

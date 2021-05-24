@@ -61,7 +61,8 @@ bibmapoptiondatabase={
 'origfield':[True,False], #对应的值为 true, false(bool值)
 'origentrytype':[True,False], #对应的值为 true, false(bool值)
 'origfieldval':[True,False], #对应的值为 true, false(bool值)
-'fieldfunction':'sethzpinyin', #对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。在 在域内容处理是，当给出'fieldfunction':'sethzpinyin'选项时，程序会调用sethzpinyin函数以域内容为参数，输出其对应的拼音。
+'fieldfunction':'sethzpinyin', #对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。
+#在域内容处理时，当给出'fieldfunction':'sethzpinyin'选项时，程序会调用sethzpinyin函数以域内容为参数，输出其对应的拼音。
 }
 
 #
@@ -1468,7 +1469,7 @@ def sethzpinyin(stra):
 			strb=strb+str(hzpinyindata[chari])
 			#print(strb)
 		else:
-			strb=strb+chari
+			strb=strb+str(chari)
 			#print(strb)
 	return strb
 	
@@ -3764,6 +3765,12 @@ def bibmapinput():
 	
 	parser.add_argument('--nofmt', action='store_true', help='不做格式化输出,no format')
 	parser.add_argument('--nobdm', action='store_true', help='不做bib数据修改,no bib data modify')
+	#
+	#2021-05-24,hzz,v1.0c
+	#增加：写拼音key域的功能
+	#注意action='store_true'表示这个命令行选项会存储到命名空间内，可以在程序后面查看
+	parser.add_argument('--addpinyin', action='store_true', help='为每个条目增加写拼音的key域, add pinyin for every bib entry')
+
 	
 	#解析命令行参数
 	args=parser.parse_args()
@@ -3984,6 +3991,22 @@ def bibmapinput():
 			sourcemaps=mapmodule.sourcemaps
 		else:
 			sourcemaps=[]
+
+		print("1",sourcemaps)
+		#2021-05-24,hzz,v1.0c
+		#增加：写拼音key域的功能
+		#对所有中文文献增加key域，该域包含拼音信息
+		if inputfiles['addpinyin']:
+			try:
+				mapmodule=__import__("bibmapaddpinyinkey")
+				print(mapmodule)
+				sourcemapsaddkeypinyin=mapmodule.sourcemaps
+				print('sourcemapsaddkeypinyin=',sourcemapsaddkeypinyin)
+				sourcemaps.extend(sourcemapsaddkeypinyin)
+			except ImportError as e:
+				print('error：数据修改设置文件出错，请重新指定！')
+				raise BibFileinputError(e.message)
+		print("2",sourcemaps)
 		
 		#print(dir(mapmodule))
 		if 'multiplepinyin' in dir(mapmodule):#做multiplepinyin参数设置检查
@@ -4091,6 +4114,19 @@ def bibmapinput():
 					sourcemaps=mapmodule.sourcemaps
 				else:
 					sourcemaps=[]
+
+				#2021-05-24,hzz,v1.0c
+				#增加：写拼音key域的功能
+				#对所有中文文献增加key域，该域包含拼音信息
+				if inputfiles['addpinyin']:
+					try:
+						mapmodule=__import__("bibmapaddpinyinkey")
+						print(mapmodule)
+						sourcemapsaddkeypinyin=mapmodule.sourcemaps
+						sourcemaps=sourcemaps.extend(sourcemapsaddkeypinyin)
+					except ImportError as e:
+						print('error：数据修改设置文件出错，请重新指定！')
+						raise BibFileinputError(e.message)
 				
 				#print(dir(mapmodule))
 				if 'multiplepinyin' in dir(mapmodule):#做multiplepinyin参数设置检查
@@ -4174,9 +4210,10 @@ class MapStyleSetError(Exception):
 #
 #检查bib数据修改的选项设置是否正确
 def checkbibdatamapstyle():
+	print("sourcemaps:",sourcemaps)
 	for map in sourcemaps:
 		for step in map:
-			for k,v in step:
+			for k,v in step.items():
 				if k in bibmapoptiondatabase:
 					if isinstance(bibmapoptiondatabase[k],list):
 						if v in bibmapoptiondatabase[k]:

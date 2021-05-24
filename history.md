@@ -17,6 +17,22 @@
 		
 		
 		
+#### 20210524
+
+1. 完善对bib文件中文条目增加带拼音信息的key域的功能
+
+使用方法为：
+
+bibmap.exe  biblatex-map-test.bib --nofmt --addpinyin
+或
+bibmap.exe biblatex-map-test.bib --nofmt -m bibmapaddpinyinkey.py
+或
+python bibmap.py biblatex-map-test.bib --nofmt --addpinyin
+或
+python bibmap.py biblatex-map-test.bib --nofmt -m bibmapaddpinyinkey.py
+
+		
+		
 #### 20190607
 
 1. pyinstaller打包成exe文件

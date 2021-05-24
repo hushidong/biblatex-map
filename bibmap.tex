@@ -766,6 +766,8 @@ filename 单个输入文件的文件名，可带后缀名如bib或aux，无后�
 
 [-m MAPFILE] 数据库修改设置文件文件名，可带后缀名.py，不给出则使用默认设置文件
 
+\verb|[--addpinyin]| 给出该选项则将为每个文献条目增加带有拼音的key域。
+
 \verb|[--nofmt]| 给出该选项则不做格式化输出
 
 \verb|[--nobdm]| 给出该选项则不做bib数据修改
@@ -813,6 +815,21 @@ bibmap.exe biblatex-map-test.bib --nofmt -m bibmapaddkw.py
 \end{example}
 
 此时使用指定的数据修改设置bibmapaddkw.py代替默认的bibmapdefault.py对数据库bib文件做修改。
+
+
+又比如给中文的参考文献条目增加带有拼音的key域，可以采用如下方式：
+\begin{example}{bib文件数据修改命令-增加拼音信息的key域}{code:bib:addpinyin}
+\begin{pycode}
+bibmap.exe  biblatex-map-test.bib --nofmt --addpinyin
+或
+bibmap.exe biblatex-map-test.bib --nofmt -m bibmapaddpinyinkey.py
+或
+python bibmap.py biblatex-map-test.bib --nofmt --addpinyin
+或
+python bibmap.py biblatex-map-test.bib --nofmt -m bibmapaddpinyinkey.py
+\end{pycode}
+\end{example}
+
 
 
 
