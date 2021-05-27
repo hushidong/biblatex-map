@@ -61,9 +61,13 @@ bibmapoptiondatabase={
 'origfield':[True,False], #对应的值为 true, false(bool值)
 'origentrytype':[True,False], #对应的值为 true, false(bool值)
 'origfieldval':[True,False], #对应的值为 true, false(bool值)
-'fieldfunction':'sethzpinyin', #对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。
+'overwrite':[True,False],#对应的值为 true, false(bool值)
+'fieldfunction':['sethzpinyin','setsentencecase','settitlecase','setuppercase','setlowercase','setsmallcaps','setalltitlecase'], #对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。
 #在域内容处理时，当给出'fieldfunction':'sethzpinyin'选项时，程序会调用sethzpinyin函数以域内容为参数，输出其对应的拼音。
 }
+
+
+
 
 #
 #格式化参考文献所用的全局选项数据库
@@ -123,8 +127,6 @@ keyoptiondatabase=[
 #
 #打印格式化后的全部文献条目文本
 def printbibliography():
-	
-	
 	#md文件输出,直接用write写
 	mdoutfile="newformatted"+inputbibfile.replace('.bib','.md')
 	fout = open(mdoutfile, 'w', encoding="utf8")
@@ -2627,14 +2629,35 @@ def literalfieldparser(bibentry,fieldsource,options):
 		elif caseformat=='titlecase':
 			fieldcontents=mkstrtitlecase(fieldcontents)
 		elif caseformat=='uppercase':
-			fieldcontents=mkstruppercas(fieldcontents)
+			fieldcontents=mkstruppercase(fieldcontents)
 		elif caseformat=='lowercase':
 			fieldcontents=mkstrlowercase(fieldcontents)
 		elif caseformat=='smallcaps':
 			fieldcontents=mkstrsmallcaps(fieldcontents)
 
 	return fieldcontents
-	
+
+
+#2021-05-27,v1.0c,hzz
+#为"fieldfunction"增加字符串的case变换的函数
+def setsentencecase(fieldstring):
+	return mkstrsetencecase(fieldstring)
+
+def setalltitlecase(fieldstring):
+	return mkstrtitlecase(fieldstring)
+
+def settitlecase(fieldstring):
+	return mkstrtitlecasestd(fieldstring)
+
+def setuppercase(fieldstring):
+	return mkstruppercase(fieldstring)
+
+def setlowercase(fieldstring):
+	return mkstrlowercase(fieldstring)
+
+def setsmallcaps(fieldstring):
+	return mkstrsmallcaps(fieldstring)	
+
 #
 #处理字符串的大小写的函数:
 #其中对{}做了保护
@@ -2679,7 +2702,72 @@ def mkstrsetencecase(fieldstring):
 
 	strtoreturn=a
 	return strtoreturn
-		
+
+
+#
+#增加对介词等进行保护
+def mkstrtitlecasestd(fieldstring):
+	#查找命令和{}保护的所有字符串
+	#思路是存储信息并利用替换进行保护
+
+	#保护:命令
+	s0=re.findall(r'\\.*?\{.*?\}',fieldstring)
+	
+	a=fieldstring
+	if s0:
+		strsn=0
+		for stra1 in s0:
+			strsn=strsn+1
+			a=a.replace(stra1,'$'+str(strsn)+'$')
+
+	#保护:{}内容
+	s1=re.findall('\{.*?\}',a)
+	
+	if s1:
+		#保护字符串用特殊字符串代替，特殊字符串与分割字符串没有任何关联
+		strsn=len(s0)
+		for stra1 in s1:
+			strsn=strsn+1
+			a=a.replace(stra1,'$'+str(strsn)+'$')
+	
+	#需要保护的字符串，如介词、连词等
+	#主要是：不在句首的冠词、介词、连词和作为不定式的to
+	protectstr=['a','an','the', 'for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'on','in','of','and','to', 'at','around','by','after','along','for','from','with','without']
+	ndtransstr=['A','An','The', 'For', 'And', 'Nor', 'But', 'Or', 'Yet', 'So', 'On','In','Of','And','To', 'At','Around','By','After','Along','For','From','With','Without']
+
+
+	#对字符串做大小写变换:
+	b=a.split(" ")
+	c=[]
+	for s2 in b:
+		if s2 in protectstr:
+			c.append(s2)
+		elif s2 in ndtransstr:
+			c.append(s2.lower())
+		else:
+			c.append(s2.title())
+	c[0]=c[0].title()
+	a=" ".join(c)
+	#a=a.title()
+      
+	#对字符串做还原	  
+	if s1:
+		strsn=len(s0)
+		for stra1 in s1:
+			strsn=strsn+1
+			a=a.replace('$'+str(strsn)+'$',stra1)
+	
+	if s0:
+		strsn=0
+		for stra1 in s0:
+			strsn=strsn+1
+			a=a.replace('$'+str(strsn)+'$',stra1)
+			
+	strtoreturn=a
+	return strtoreturn
+
+#
+#没有对介词等进行保护
 def mkstrtitlecase(fieldstring):
 	#首先查找{}保护的所有字符串
 	s0=re.findall(r'\\.*?\{.*?\}',fieldstring)
@@ -3364,7 +3452,7 @@ class BibParsingError(Exception):
 		
 #
 # 执行数据映射操作
-# 还有很多选项没有实现，20190209
+# 还有一些选项没有实现，20190209
 # 实现的选项中也需要和未实现的选项进行数据传递
 def execsourcemap():
 	for map in sourcemaps:#every map in maps，每个map逐步开始
@@ -3559,6 +3647,18 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
 		if fieldfunction:
 			if fieldfunction=='sethzpinyin':
 				fieldvalue=sethzpinyin(fieldvalue)
+			elif fieldfunction=='setsentencecase':
+				fieldvalue=setsentencecase(fieldvalue)
+			elif fieldfunction=='settitlecase':
+				fieldvalue=settitlecase(fieldvalue)
+			elif fieldfunction=='setalltitlecase':
+				fieldvalue=setalltitlecase(fieldvalue)
+			elif fieldfunction=='setuppercase':
+				fieldvalue=setuppercase(fieldvalue)
+			elif fieldfunction=='setlowercase':
+				fieldvalue=setlowercase(fieldvalue)
+			elif fieldfunction=='setsmallcaps':
+				fieldvalue=setsmallcaps(fieldvalue)
 			else:
 				print('WARNING: field function "'+fieldfunction+'" for mapping is not defined!')
 		

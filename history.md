@@ -15,7 +15,15 @@
 		entrynull=true, false default: false
 		match 大小写区分的matchi
 		
-		
+#### 20210526
+
+1. 增加titlecase的处理函数。包括：
+'setsentencecase','settitlecase','setuppercase','setlowercase','setsmallcaps','setalltitlecase'
+
+命令：
+python bibmap.py c.bib --nofmt -m bibmaptitlecase.py
+
+可以将各个bib条目的title转换为sentencecase 而booktitle转换为titlecase。当然修改bibmaptitlecase.py还可以得到其它形式的修改。
 		
 #### 20210524
 

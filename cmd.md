@@ -1,0 +1,1 @@
+python bibmap.py c.bib -m bibmaptitlecase.py --nofmt
