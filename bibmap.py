@@ -62,8 +62,8 @@ bibmapoptiondatabase={
 'origentrytype':[True,False], #对应的值为 true, false(bool值)
 'origfieldval':[True,False], #对应的值为 true, false(bool值)
 'overwrite':[True,False],#对应的值为 true, false(bool值)
-'fieldfunction':['sethzpinyin','setsentencecase','settitlecase','setuppercase','setlowercase','setsmallcaps','setalltitlecase'], #对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。
-#在域内容处理时，当给出'fieldfunction':'sethzpinyin'选项时，程序会调用sethzpinyin函数以域内容为参数，输出其对应的拼音。
+'fieldfunction':['sethzpinyin','sethzstroke','setsentencecase','settitlecase','setuppercase','setlowercase','setsmallcaps','setalltitlecase'], #对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。
+#在域内容处理时，当给出'fieldfunction':'sethzpinyin'选项时，程序会调用sethzpinyin函数以域内容为参数，输出其对应的拼音。'sethzstroke'设置用于排序的笔画顺序字符串。
 }
 
 
@@ -1456,7 +1456,7 @@ def comparestroke(stra):
 	strb=''
 	for chari in stra:
 		if chari in sqstrokedata:
-			strb=strb+'字'+str(hex(sqstrokedata.index(chari)+4096))
+			strb=strb+'字'+str(hex(sqstrokedata.index(chari)+4096)) #用一个统一的16进制数来表示一个子的顺序是巧妙的设计
 		else:
 			strb=strb+chari
 	return strb
@@ -1473,6 +1473,18 @@ def sethzpinyin(stra):
 		else:
 			strb=strb+str(chari)
 			#print(strb)
+	return strb
+
+#
+#
+#用于设置字符串的笔画顺序字符串		
+def sethzstroke(stra):
+	strb=''
+	for chari in stra:
+		if str(chari) in sqstrokedata:
+			strb=strb+str(hex(sqstrokedata.index(chari)+4096))
+		else:
+			strb=strb+str(chari)
 	return strb
 	
 #
@@ -3647,6 +3659,8 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
 		if fieldfunction:
 			if fieldfunction=='sethzpinyin':
 				fieldvalue=sethzpinyin(fieldvalue)
+			elif fieldfunction=='sethzstroke':
+				fieldvalue=sethzstroke(fieldvalue)
 			elif fieldfunction=='setsentencecase':
 				fieldvalue=setsentencecase(fieldvalue)
 			elif fieldfunction=='settitlecase':

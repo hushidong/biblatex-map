@@ -62,8 +62,8 @@ bibmapoptiondatabase={
 'origentrytype':[True,False], #对应的值为 true, false(bool值)
 'origfieldval':[True,False], #对应的值为 true, false(bool值)
 'overwrite':[True,False],#对应的值为 true, false(bool值)
-'fieldfunction':['sethzpinyin','setsentencecase','settitlecase','setuppercase','setlowercase','setsmallcaps','setalltitlecase'], #对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。
-#在域内容处理时，当给出'fieldfunction':'sethzpinyin'选项时，程序会调用sethzpinyin函数以域内容为参数，输出其对应的拼音。
+'fieldfunction':['sethzpinyin','sethzstroke','setsentencecase','settitlecase','setuppercase','setlowercase','setsmallcaps','setalltitlecase'], #对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。
+#在域内容处理时，当给出'fieldfunction':'sethzpinyin'选项时，程序会调用sethzpinyin函数以域内容为参数，输出其对应的拼音。'sethzstroke'设置用于排序的笔画顺序字符串。
 }
 
 
@@ -127,8 +127,6 @@ keyoptiondatabase=[
 #
 #打印格式化后的全部文献条目文本
 def printbibliography():
-	
-	
 	#md文件输出,直接用write写
 	mdoutfile="newformatted"+inputbibfile.replace('.bib','.md')
 	fout = open(mdoutfile, 'w', encoding="utf8")
@@ -1458,7 +1456,7 @@ def comparestroke(stra):
 	strb=''
 	for chari in stra:
 		if chari in sqstrokedata:
-			strb=strb+'字'+str(hex(sqstrokedata.index(chari)+4096))
+			strb=strb+'字'+str(hex(sqstrokedata.index(chari)+4096)) #用一个统一的16进制数来表示一个子的顺序是巧妙的设计
 		else:
 			strb=strb+chari
 	return strb
@@ -1475,6 +1473,18 @@ def sethzpinyin(stra):
 		else:
 			strb=strb+str(chari)
 			#print(strb)
+	return strb
+
+#
+#
+#用于设置字符串的笔画顺序字符串		
+def sethzstroke(stra):
+	strb=''
+	for chari in stra:
+		if str(chari) in sqstrokedata:
+			strb=strb+str(hex(sqstrokedata.index(chari)+4096))
+		else:
+			strb=strb+str(chari)
 	return strb
 	
 #
@@ -2640,8 +2650,8 @@ def literalfieldparser(bibentry,fieldsource,options):
 	return fieldcontents
 
 
-
-#为"fieldfunction"增加函数
+#2021-05-27,v1.0c,hzz
+#为"fieldfunction"增加字符串的case变换的函数
 def setsentencecase(fieldstring):
 	return mkstrsetencecase(fieldstring)
 
@@ -3454,7 +3464,7 @@ class BibParsingError(Exception):
 		
 #
 # 执行数据映射操作
-# 还有很多选项没有实现，20190209
+# 还有一些选项没有实现，20190209
 # 实现的选项中也需要和未实现的选项进行数据传递
 def execsourcemap():
 	for map in sourcemaps:#every map in maps，每个map逐步开始
@@ -3649,6 +3659,8 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
 		if fieldfunction:
 			if fieldfunction=='sethzpinyin':
 				fieldvalue=sethzpinyin(fieldvalue)
+			elif fieldfunction=='sethzstroke':
+				fieldvalue=sethzstroke(fieldvalue)
 			elif fieldfunction=='setsentencecase':
 				fieldvalue=setsentencecase(fieldvalue)
 			elif fieldfunction=='settitlecase':

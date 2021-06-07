@@ -168,6 +168,15 @@ filename 单个输入文件的文件名，可带后缀名如bib或aux，无后�
 此时使用指定的数据修改设置bibmapaddkw.py代替默认的bibmapdefault.py对数据库bib文件做修改。
 
 
+* 增加用于按拼音排序的key域
+
+`python bibmap.py biblatex-map-test.bib --nofmt -m bibmapaddpinyinkey.py`
+
+
+* 增加用于按笔画顺序排序的key域
+
+`python bibmap.py biblatex-map-test.bib --nofmt -m bibmapaddbihuakey.py`
+
 
 ### 参考文献格式化
 
@@ -375,10 +384,11 @@ if  want to  set a bibstyle file , you  can run:
 
 
 ## history：
-v1.0 2019/02/09
-v1.0a 2019/04/12
-v1.0b 2019/04/19
-v1.0c 2021/05/24
+
+* v1.0 2019/02/09
+* v1.0a 2019/04/12
+* v1.0b 2019/04/19
+* v1.0c 2021/05/24
 
 
 

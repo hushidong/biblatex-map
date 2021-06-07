@@ -14,6 +14,16 @@
 		entrynocite=true, false default: false
 		entrynull=true, false default: false
 		match 大小写区分的matchi
+
+#### 20210530	
+	
+1. 增加设置笔画的顺序的key的函数sethzstroke。包括：	
+
+使用方式为：	
+		python bibmap.py c.bib -m bibmapaddbihuakey.py --nofmt
+
+
+%注意biblatex的biber生成的bbl文件中是不现实sortkey的，因为它已经排序完成了，查看bcf文件可以看到sortkey的相关信息。		
 		
 #### 20210526
 
