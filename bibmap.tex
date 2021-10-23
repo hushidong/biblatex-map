@@ -726,7 +726,10 @@ bibmap数据修改所用的选项，即各step步中的key值，完全借鉴bibl
   \item origfield 对应的值为 true, false(bool值)
   \item origentrytype 对应的值为 true, false(bool值)
   \item origfieldval 对应的值为 true, false(bool值)
-  \item fieldfunction 对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。在 在域内容处理是，当给出'fieldfunction':'sethzpinyin'选项时，程序会调用sethzpinyin函数以域内容为参数，输出其对应的拼音。
+  \item fieldfunction 对应的值为用户指定的函数名，目前提供的函数包括:
+  'sethzpinyin','sethzstroke','setsentencecase','settitlecase','setuppercase','setlowercase',
+  'setsmallcaps','setalltitlecase'。 在域内容处理时，
+  当给出'fieldfunction':'sethzpinyin' 选项时，程序会调用sethzpinyin 函数以域内容为参数，输出其对应的拼音。'sethzstroke'设置用于排序的笔画顺序字符串。其它的函数用于设置字符串字母的大小写格式。
 \end{itemize}
 
 其中绝大部分在前一节以及讲过，未介绍的包括notmatch与match类型，只是搜索的是不匹配的情况。

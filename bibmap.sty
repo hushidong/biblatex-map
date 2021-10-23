@@ -99,7 +99,7 @@
 %\newcommand\bibstyle@authoryear{\bibpunct{(}{)}{;}{a}{,}{,}}
 
 %标注样式的处理
-%\str_case_x:nn {\l__bibmap_cite_style_str}
+%\str_case_e:nn {\l__bibmap_cite_style_str}
 %{
 %    {numeric} {\RequirePackage[super,square]{natbib}%\citestyle{super}
 %    }
@@ -108,7 +108,7 @@
 
 %
 %%标注样式的处理
-\str_case_x:nn {\l__bibmap_cite_style_str}
+\str_case_e:nn {\l__bibmap_cite_style_str}
 {
     {numeric} {\RequirePackage[super,square,sort&compress]{natbib}
     \setcitestyle{citesep={,}}
@@ -126,7 +126,7 @@
 }
 
 %著录样式的处理
-\str_case_x:nnTF {\l__bibmap_bib_style_str}
+\str_case_e:nnTF {\l__bibmap_bib_style_str}
 {
     {gb7714-2015}   {\str_gset:Nn \g__bibmap_bibstyle_file_str {bibstylenumeric.py}}
     {gb7714-2015ay} {\str_gset:Nn \g__bibmap_bibstyle_file_str {bibstyleauthoryear.py}}
@@ -134,7 +134,7 @@
 {\str_gset:Nx \g__bibmap_bibstyle_file_str \l__bibmap_bib_style_str}
 
 %数据修改样式的处理
-\str_case_x:nnTF {\l__bibmap_map_style_str}
+\str_case_e:nnTF {\l__bibmap_map_style_str}
 {
     {default}   {\str_gset:Nn \g__bibmap_mapstyle_file_str {bibmapdefault.py}}
 }{}%
@@ -200,6 +200,14 @@
 
 %\RequirePackage[super,square]{natbib}%number,authoryear
 \RequirePackage{url,xurl}
+%\def\UrlBreaks{%
+%  \do\/%
+%  \do\a\do\b\do\c\do\d\do\e\do\f\do\g\do\h\do\i\do\j\do\k\do\l%
+%     \do\m\do\n\do\o\do\p\do\q\do\r\do\s\do\t\do\u\do\v\do\w\do\x\do\y\do\z%
+%  \do\A\do\B\do\C\do\D\do\E\do\F\do\G\do\H\do\I\do\J\do\K\do\L%
+%     \do\M\do\N\do\O\do\P\do\Q\do\R\do\S\do\T\do\U\do\V\do\W\do\X\do\Y\do\Z%
+%  \do0\do1\do2\do3\do4\do5\do6\do7\do8\do9\do=\do/\do.\do:%
+%  \do\*\do\-\do\~\do\'\do\"\do\-}
 \def\UrlFont{\rmfamily}%设置url字体为roman字体%\ttfamily
 %\urlstyle{rm} %使用这句也一样
 \providecommand{\doi}[1]{\href{https://doi.org/#1}{\url{#1}}}

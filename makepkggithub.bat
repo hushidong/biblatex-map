@@ -6,21 +6,25 @@ mkdir bibmap
 
 cd bibmap
 
-mkdir test
+mkdir backendtest
 
-mkdir example
+mkdir mapbibtest
 
 mkdir binary
+
+mkdir bibfiles
 
 cd ..
 
 copy biblatex-map-master\*.* bibmap\*.* /Y
 
-copy biblatex-map-master\test\*.* bibmap\test\*.* /Y
+copy biblatex-map-master\backendtest\*.* bibmap\backendtest\*.* /Y
 
-copy biblatex-map-master\example\*.* bibmap\example\*.* /Y
+copy biblatex-map-master\mapbibtest\*.* bibmap\mapbibtest\*.* /Y
 
 copy biblatex-map-master\binary\*.* bibmap\binary\*.* /Y
+
+copy biblatex-map-master\bibfiles\*.* bibmap\bibfiles\*.* /Y
 
 cd bibmap
 

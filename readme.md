@@ -1,4 +1,4 @@
-<b>Date of last change: 2021-05-24 to version v1.0c</b>
+<b>Date of last change: 2021-10-23 to version v1.0d</b>
 
 
 # bibmap 宏包
@@ -11,6 +11,7 @@ bibmap 宏包加载了 natbib等宏包，用于 latex 参考文献标注和文�
 
 bibmap 后端程序类似 bibtex/biber 程序用于处理参考文献数据，其输出类似于
 bibtex， 为 bbl 文件，用于tex编译器读取后编译生成文献表。
+
 
 ## bibmap 宏包两大核心功能
 
@@ -96,6 +97,7 @@ xelatex jobname
 xelatex jobname
 ```
 
+
 ### bibmap程序
 
 bibmap程序，若直接使用py程序，那么需要python环境的支持。若在windows下可以直接使用打包成的bibmap.EXE。
@@ -178,6 +180,14 @@ filename 单个输入文件的文件名，可带后缀名如bib或aux，无后�
 `python bibmap.py biblatex-map-test.bib --nofmt -m bibmapaddbihuakey.py`
 
 
+* 将期刊和会议名改成英文字母的titlecase模式
+
+`python bibmap.py c.bib -m bibmaptitlecase.py --nofmt`
+
+
+
+
+
 ### 参考文献格式化
 
 直接在命令行输入脚本及其参数：
@@ -206,8 +216,15 @@ filename 单个输入文件的文件名，可带后缀名如bib或aux，无后�
 `bibmap.exe egtest -s bibstyleauthoryear.py`
 
 
+## 文件夹说明
 
+backendtest 是作为后端程序时的测试
 
+mapbibtest 是作为bib文件修改工具时的测试
+
+bibfiles 放了一些bib文件
+
+binary 用于生成一个可以带走的绿色工具（整个文件夹作为工具）
 
 
 # bibmap Package : A bibliography Package
@@ -389,6 +406,7 @@ if  want to  set a bibstyle file , you  can run:
 * v1.0a 2019/04/12
 * v1.0b 2019/04/19
 * v1.0c 2021/05/24
+* v1.0d 2021/10/23
 
 
 

@@ -11,6 +11,14 @@ sourcemaps=[
 	[#map2:将设置booktitle为titlecase
 		{"fieldsource":"booktitle","final":True},#
 		{"fieldset":"booktitle","origfieldval":True,"fieldfunction":'settitlecase',"overwrite":True}#step1
+	],
+	[#map3:将设置journal为titlecase
+		{"fieldsource":"journal","final":True},#
+		{"fieldset":"journal","origfieldval":True,"fieldfunction":'settitlecase',"overwrite":True}#step1
+	],
+	[#map3:将设置journaltitle为titlecase
+		{"fieldsource":"journaltitle","final":True},#
+		{"fieldset":"journaltitle","origfieldval":True,"fieldfunction":'settitlecase',"overwrite":True}#step1
 	]
 ]
 

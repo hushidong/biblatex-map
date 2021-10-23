@@ -128,7 +128,7 @@ keyoptiondatabase=[
 #打印格式化后的全部文献条目文本
 def printbibliography():
 	#md文件输出,直接用write写
-	mdoutfile="newformatted"+inputbibfile.replace('.bib','.md')
+	mdoutfile="newformatted"+inputbibfile.replace('.bib','.txt')
 	fout = open(mdoutfile, 'w', encoding="utf8")
 	print("INFO: writing cited references to '" + mdoutfile + "'")
 	

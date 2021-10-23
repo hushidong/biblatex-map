@@ -1,0 +1,17 @@
+
+%测试使用key域来进行按拼音或者笔画顺序排序
+%注意biber生成的bbl文件中是不现实sortkey的，因为它已经排序完成了，查看bcf文件可以看到sortkey的相关信息。
+
+\documentclass[twoside]{article}
+\usepackage{ctex}
+\usepackage[backend=biber,style=gb7714-2015,sorting=gb7714-2015]{biblatex}
+\usepackage{geometry}
+\addbibresource{newtestc.bib}
+
+\begin{document}
+
+\nocite{*}
+
+\printbibliography
+
+\end{document} 

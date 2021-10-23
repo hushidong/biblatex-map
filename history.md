@@ -15,6 +15,11 @@
 		entrynull=true, false default: false
 		match 大小写区分的matchi
 
+#### 20211023
+
+1. 修正部分说法
+
+
 #### 20210530	
 	
 1. 增加设置笔画的顺序的key的函数sethzstroke。包括：	
