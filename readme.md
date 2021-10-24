@@ -184,7 +184,18 @@ filename 单个输入文件的文件名，可带后缀名如bib或aux，无后�
 
 `python bibmap.py c.bib -m bibmaptitlecase.py --nofmt`
 
+需要注意的是bibmap中大小写的保护与bibtex的方法一致，就是要把需要保护大小写的字符串包围在花括号中，比如{UBRS}，那么在进行字符串转换的时候就不会发生变化。
 
+
+值得说明的是：我们只要知道bibmap.py或bibmap.exe位置，就可以使用它，而无需把bib文件放到相同目录下。
+比如：bib文件在`D:\work-latex\bibmap\biblatex-map-master\mapbibtest>`目录下。
+而bibmap.py和bibmap.exe在`D:\work-latex\bibmap\biblatex-map-master\binary`目录下。
+那么我们在bib文件所在目录打开终端使用bibmap时指定其路径即可，比如：
+`python D:\work-latex\bibmap\biblatex-map-master\binary\bibmap.py testc.bib --addpinyin`
+就可以添加拼音域。
+`python D:\work-latex\bibmap\biblatex-map-master\binary\bibmap.py testc.bib -m bibmaptitlecase.py`
+就可以调整booktitle等域的字母大小写为titlecase。
+因此我们只要把bibmap.py和bibmap.exe所在目录设置到系统path中，那么就可以直接使用它们而无需指定绝对路径了。
 
 
 

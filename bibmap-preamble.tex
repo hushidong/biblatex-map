@@ -1,11 +1,11 @@
 \usepackage{expl3,etoolbox,ifthen,xstring}
 \usepackage{xltxtra,mflogo,texnames}
-\usepackage[zihao=-4]{ctex}
+\usepackage[zihao=-4,fontset=adobe]{ctex}
 \ctexset{today=old}
 \let\kaiti=\kaishu
 \usepackage{xeCJKfntef}
 \setmainfont{CMU Serif}
-\setCJKmainfont{SourceHanSerifSC-Regular.otf}
+%\setCJKmainfont{SourceHanSerifSC-Regular.otf}
 
 \usepackage{xcolor}
 \colorlet{examplefill}{yellow!80!black}
@@ -97,6 +97,9 @@ pdfstartview=FitH,allcolors=gbemphcolor]{hyperref}
 \titlespacing*{\subsection}{0pt}{0.5\baselineskip}{0.5\baselineskip}
 \titlespacing*{\subsubsection}{0pt}{0.5\baselineskip}{0pt}
 \titlespacing{\paragraph}{2em}{0.5\baselineskip}{1em}
+\titleformat{\section}{\zihao{3}\heiti}{\thesection}{1em}{}
+\titleformat{\subsection}{\zihao{4}\kaishu}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\zihao{-4}\songti}{\thesubsubsection}{1em}{}
 
 
 %目录，图/表/例目录，图表题注
