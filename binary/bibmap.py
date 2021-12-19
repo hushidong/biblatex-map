@@ -53,6 +53,7 @@ bibmapoptiondatabase={
 'final':[True,False], #对应的值为 true和false(bool值)
 'origfieldval':[True,False], #对应的值为 true, false(bool值)
 'append':[True,False], #对应的值为 true, false(bool值)
+'appdelim':'string', #添加信息时使用的分隔符，用string(字符串)
 'pertype':'entrytype', #对应的值为 entrytype名即条目类型
 'pernottype':'entrytype', #对应的值为 entrytype名即条目类型
 'fieldset':'entryfield', #对应的值为 entryfield名
@@ -62,7 +63,8 @@ bibmapoptiondatabase={
 'origentrytype':[True,False], #对应的值为 true, false(bool值)
 'origfieldval':[True,False], #对应的值为 true, false(bool值)
 'overwrite':[True,False],#对应的值为 true, false(bool值)
-'fieldfunction':['sethzpinyin','sethzstroke','setsentencecase','settitlecase','setuppercase','setlowercase','setsmallcaps','setalltitlecase'], #对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。
+'fieldfunction':['sethzpinyin','sethzstroke','setsentencecase','settitlecase','setuppercase',
+'setlowercase','setsmallcaps','setalltitlecase','setauthoran'], #对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。
 #在域内容处理时，当给出'fieldfunction':'sethzpinyin'选项时，程序会调用sethzpinyin函数以域内容为参数，输出其对应的拼音。'sethzstroke'设置用于排序的笔画顺序字符串。
 }
 
@@ -103,6 +105,7 @@ formatoptiondatabase={
 'caseformat':['none','sentencecase','titlecase','uppercase','lowercase','smallcaps'],#设计'none','sentencecase','titlecase','uppercase','lowercase','smallcaps'
 'numberformat':['ordinal','arabic'],#设计'ordinal','arabic'
 }
+
 
 #
 #格式化参考文献所用的域格式设置时的关键词数据库
@@ -2670,6 +2673,26 @@ def setlowercase(fieldstring):
 def setsmallcaps(fieldstring):
 	return mkstrsmallcaps(fieldstring)	
 
+
+def setauthoran(fieldvtoset,fieldstring,matchstring):
+	return mkstrauthoran(fieldvtoset,fieldstring,matchstring)
+
+#
+#功能是根据matchstring判断其在fieldstring中作者的序号，然后设置annotation信息
+def mkstrauthoran(fieldvtoset,fieldstring,matchstring):
+	print("mkstrauthoran:",fieldvtoset,fieldstring,matchstring)
+	sall=fieldstring.lower().split(" and ")
+	print('sall:',sall)
+	sm=matchstring.lower()
+	idx=0
+	for s in sall:
+		idx+=1
+		if sm==s:
+			sout="{}=".format(idx)+fieldvtoset
+			break
+	return sout
+
+
 #
 #处理字符串的大小写的函数:
 #其中对{}做了保护
@@ -3491,9 +3514,9 @@ def execsourcemap():
 							mapcontinue=mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo)#
 							#print("fieldsource step:",fieldsrcinfo)
 							
-						elif k=="fieldset":#域设置
+						elif k=="fieldset":#域设置-添加的话使用append选项就可以了。
 							mapcontinue=mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo)#
-							
+
 						elif k=="pertype": #类型限制
 							mapcontinue=mappertype(keyvals,constraintinfo)
 							
@@ -3610,6 +3633,8 @@ def maptypesource(keyvals,bibentry,typesrcinfo):
 			typesrcinfo['typesource']=None
 		return retrunval
 
+
+
 #
 #
 # 域信息设置
@@ -3628,7 +3653,8 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
 	print(setcontinue)
 	
 	if setcontinue:
-	
+		
+		appdelim=',' #设置一个默认的添加信息前面的分隔符
 		for k,v in keyvals.items():
 			#print(k,v)
 			if k=='fieldset':
@@ -3651,6 +3677,8 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
 				print(fieldvalue)
 			elif k=='append':
 				append=v
+			elif k=='appdelim':
+				appdelim=v
 			elif k=='overwrite':
 				overwrite=v
 			else:
@@ -3673,14 +3701,22 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
 				fieldvalue=setlowercase(fieldvalue)
 			elif fieldfunction=='setsmallcaps':
 				fieldvalue=setsmallcaps(fieldvalue)
+			elif fieldfunction=='setauthoran':#给作者添加annotaion信息
+				#参数：要设置的说明信息，作者域的内容，需要设置说明的作者名
+				fieldvalue=setauthoran(fieldvalue,fieldsrcinfo['fieldsrcraw'],fieldsrcinfo['fieldmatch'])
 			else:
 				print('WARNING: field function "'+fieldfunction+'" for mapping is not defined!')
 		
 		print("fieldset=",fieldset)
 		if overwrite:
 			if append:
-				oldvalue=bibentry[fieldset]
-				newvalue=oldvalue+","+fieldvalue
+				oldvalue=""
+				if fieldset in bibentry:
+					oldvalue=bibentry[fieldset]
+				if oldvalue:
+					newvalue=oldvalue+appdelim+fieldvalue
+				else:
+					newvalue=fieldvalue
 				bibentry[fieldset]=newvalue
 			else:
 				bibentry[fieldset]=fieldvalue
@@ -3734,8 +3770,10 @@ def mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo):
 			overwrite=v
 		elif k=='match':#不区分大小写的match
 			fieldmatch=v
+			fieldsrcinfo['fieldmatch']=v
 		elif k=='matchi':#区分大小写的match
 			fieldmatchi=v
+			fieldsrcinfo['fieldmatchi']=v
 		elif k=='notmatch':#不区分大小写的notmatch，下面这两个选项的逻辑没有实现
 			fieldnotmatch=v
 		elif k=='notmatchi':#区分大小写的notmatch
@@ -3748,6 +3786,7 @@ def mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo):
 
 		#返回字典的第一项是fieldsource信息
 		fieldsrcinfo['fieldsource']=fieldsource
+		fieldsrcinfo['fieldsrcraw']=bibentry[fieldsource]
 		
 		if mapfieldtype==0:#第0中情况即，不做信息转换，也不终止map，仅返回一些信息
 		
@@ -3817,7 +3856,9 @@ def mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo):
 		elif mapfieldtype==3:#域map类型3，当没有匹配则终止map
 			if fieldsource in bibentry:
 				if fieldmatch:
-					m = re.match(fieldmatch, bibentry[fieldsource])
+					m = re.search(fieldmatch, bibentry[fieldsource])
+					#print('fieldmatch=',fieldmatch, 'bibentry[fieldsource]=', bibentry[fieldsource])
+					#print('\nmatch=',m,"\n")
 					if m:
 						fieldsrcinfo[fieldsource]=[bibentry[fieldsource],fieldmatch]
 						return 1
