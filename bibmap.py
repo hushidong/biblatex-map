@@ -8,7 +8,7 @@ two key features：
 
 两大核心功能
 1. bib文件抽取，bib文件内容的自定义修改
-2. 格式化文献表输出，包括json，bib，text，html，bbl文件，其中bbl文件可以在tex源代码中直接使用，利用natbib宏包可以实现不同的标注样式。
+2. 格式化文献表输出，包括json，bib，text，html，bbl文件，其中bbl文件可以在tex源代码中直接使用，利用natbib、bibmap宏包可以实现不同的标注样式。
 
 
 """
@@ -3184,7 +3184,7 @@ def writefilenewbib(bibFile):
 	try:
 		fout = open(biboutfile, 'w', encoding="utf8")
 		fout.write("%% \n")
-		fout.write("%% bib file modified by biblatex-map.py\n")
+		fout.write("%% bib file modified by bibmap.py\n")
 		
 		fout.write("%% "+datetime.datetime.now().isoformat(timespec='seconds')+"\n")
 		fout.write("%% \n\n\n")
@@ -3683,49 +3683,52 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
 				overwrite=v
 			else:
 				pass
-			
-		if fieldfunction:
-			if fieldfunction=='sethzpinyin':
-				fieldvalue=sethzpinyin(fieldvalue)
-			elif fieldfunction=='sethzstroke':
-				fieldvalue=sethzstroke(fieldvalue)
-			elif fieldfunction=='setsentencecase':
-				fieldvalue=setsentencecase(fieldvalue)
-			elif fieldfunction=='settitlecase':
-				fieldvalue=settitlecase(fieldvalue)
-			elif fieldfunction=='setalltitlecase':
-				fieldvalue=setalltitlecase(fieldvalue)
-			elif fieldfunction=='setuppercase':
-				fieldvalue=setuppercase(fieldvalue)
-			elif fieldfunction=='setlowercase':
-				fieldvalue=setlowercase(fieldvalue)
-			elif fieldfunction=='setsmallcaps':
-				fieldvalue=setsmallcaps(fieldvalue)
-			elif fieldfunction=='setauthoran':#给作者添加annotaion信息
-				#参数：要设置的说明信息，作者域的内容，需要设置说明的作者名
-				fieldvalue=setauthoran(fieldvalue,fieldsrcinfo['fieldsrcraw'],fieldsrcinfo['fieldmatch'])
-			else:
-				print('WARNING: field function "'+fieldfunction+'" for mapping is not defined!')
 		
-		print("fieldset=",fieldset)
-		if overwrite:
-			if append:
-				oldvalue=""
-				if fieldset in bibentry:
-					oldvalue=bibentry[fieldset]
-				if oldvalue:
-					newvalue=oldvalue+appdelim+fieldvalue
+		#print("\nfieldvalue=",fieldvalue,"\n")
+		#只有当fieldvalue存在时才需要设置:两种情况：一种要求不是[None]，另一种是直接的字符串
+		if (type(fieldvalue)==list and fieldvalue[0]) or (type(fieldvalue)!=list and fieldvalue):
+			if fieldfunction:
+				if fieldfunction=='sethzpinyin':
+					fieldvalue=sethzpinyin(fieldvalue)
+				elif fieldfunction=='sethzstroke':
+					fieldvalue=sethzstroke(fieldvalue)
+				elif fieldfunction=='setsentencecase':
+					fieldvalue=setsentencecase(fieldvalue)
+				elif fieldfunction=='settitlecase':
+					fieldvalue=settitlecase(fieldvalue)
+				elif fieldfunction=='setalltitlecase':
+					fieldvalue=setalltitlecase(fieldvalue)
+				elif fieldfunction=='setuppercase':
+					fieldvalue=setuppercase(fieldvalue)
+				elif fieldfunction=='setlowercase':
+					fieldvalue=setlowercase(fieldvalue)
+				elif fieldfunction=='setsmallcaps':
+					fieldvalue=setsmallcaps(fieldvalue)
+				elif fieldfunction=='setauthoran':#给作者添加annotaion信息
+					#参数：要设置的说明信息，作者域的内容，需要设置说明的作者名
+					fieldvalue=setauthoran(fieldvalue,fieldsrcinfo['fieldsrcraw'],fieldsrcinfo['fieldmatch'])
 				else:
-					newvalue=fieldvalue
-				bibentry[fieldset]=newvalue
+					print('WARNING: field function "'+fieldfunction+'" for mapping is not defined!')
+			
+			print("fieldset=",fieldset)
+			if overwrite:
+				if append:
+					oldvalue=""
+					if fieldset in bibentry:
+						oldvalue=bibentry[fieldset]
+					if oldvalue:
+						newvalue=oldvalue+appdelim+fieldvalue
+					else:
+						newvalue=fieldvalue
+					bibentry[fieldset]=newvalue
+				else:
+					bibentry[fieldset]=fieldvalue
 			else:
-				bibentry[fieldset]=fieldvalue
-		else:
-			if fieldset in bibentry:
-				pass
-			else:
-				bibentry[fieldset]=fieldvalue
-		return 1
+				if fieldset in bibentry:
+					pass
+				else:
+					bibentry[fieldset]=fieldvalue
+			return 1
 		
 	else:
 		return 1
@@ -3786,7 +3789,8 @@ def mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo):
 
 		#返回字典的第一项是fieldsource信息
 		fieldsrcinfo['fieldsource']=fieldsource
-		fieldsrcinfo['fieldsrcraw']=bibentry[fieldsource]
+		if fieldsource in bibentry:
+			fieldsrcinfo['fieldsrcraw']=bibentry[fieldsource]
 		
 		if mapfieldtype==0:#第0中情况即，不做信息转换，也不终止map，仅返回一些信息
 		
