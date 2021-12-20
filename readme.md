@@ -1,6 +1,15 @@
 <b>Date of last change: 2021-10-23 to version v1.0d</b>
 
 
+## Introduction
+
+Maintainer: huzhenzhen <hzzmail@163.com>
+
+Homepage: <https://github.com/hushidong/biblatex-map>
+
+License: LaTeX Project Public License 1.3 or later
+
+
 # bibmap 宏包
 
 bibmap 是一个参考文献宏包，包含一个 sty 文件，用于设置参考文献处理时的选项;
@@ -13,11 +22,20 @@ bibmap 后端程序类似 bibtex/biber 程序用于处理参考文献数据，�
 bibtex， 为 bbl 文件，用于tex编译器读取后编译生成文献表。
 
 
+## need to do
+
+1. 既然文献著录表可以用外部工具直接产生，那么引用的标注标签也是否可以外部工具生成，显然是可以的，因此我们可以做这样的尝试。
+如果做成那么将是第三种文献方式，而且与是biblatex完全相反的路子。biblatex外部工具处理bib文件为biblatex宏包提供需要的所有文献信息，所以的格式则是在latex中完成的。
+而这第三种方式，所有的格式都由外部工具完成，宏包只负责获取这些带格式内容，并输出。而bibtex的方式则可以看做是介于两者之间的第2种方式，其文献表内容利用外部工具生成，而标注则利用latex宏读取信息后生成。
+
+2. 除了单独运行外部工具的方式，也可以采用write18直接调用的方式。
+
+
 ## bibmap 宏包两大核心功能
 
 ### 参考文献表格式化
 
-bibmap 宏包的标注样式基于natbbib宏包实现，而著录样式采用极简单的python代码来设置。
+bibmap 宏包的标注样式基于natbib宏包实现，而著录样式采用极简单的python代码来设置。
 
 该功能主要特点包括:
 
