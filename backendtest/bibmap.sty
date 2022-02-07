@@ -1,0 +1,367 @@
+%%
+%% ---------------------------------------------------------------
+%% bibmap.sty--- A bibliograhpy processing package
+%%
+%% bibmap宏包用于参考文献数据文件的修改和latex中参考文献表的生成
+%%宏包负责为后端的bibmap程序提供一些设置信息，比如引用信息，bib文件，格式设置文件等
+%%后端的bibmap程序则生成thebibliography环境用于latex中生成文献表
+%%1. bib数据文件的修改类似于biblatex的sourcemap，只是需要在map设置文件中给出
+%%2. 参考文献数据输出类似于bibtex，将thebibliography环境输出到bbl文件中
+%%
+%% Maintained by huzhenzhen
+%% E-mail: hzzmail@163.com
+%% Released under the LaTeX Project Public License v1.3c or later
+%% ---------------------------------------------------------------
+%% Copyright 2019- huzhenzhen
+
+\RequirePackage { expl3 , xparse }
+\ExplSyntaxOn
+
+%
+%宏包基本信息
+%
+\tl_const:Nn \c_bibmap_date_tl    {2019/04/19}
+\tl_const:Nn \c_bibmap_version_tl {1.b}
+\tl_const:Nn \c_bibmap_info_tl
+  {A package to deal bibliography. To some extent, the backend of bibmap can be used to substitute bibtex}
+
+\ProvidesExplPackage
+  {bibmap}
+  {\c_bibmap_date_tl}
+  {\c_bibmap_version_tl}
+  {\c_bibmap_info_tl}
+
+
+%
+%定义一些变量
+%
+\str_new:N \l__bibmap_cite_style_str
+\str_set:Nn \l__bibmap_cite_style_str {numeric}
+
+\str_new:N \l__bibmap_bib_style_str
+\str_set:Nn \l__bibmap_bib_style_str {gb7714-2015}
+
+\str_new:N \l__bibmap_map_style_str
+\str_set:Nn \l__bibmap_map_style_str {default}
+
+\str_new:N \g__bibmap_bibstyle_file_str
+\str_new:N \g__bibmap_mapstyle_file_str
+
+%标记是否为表格形式的文献表进行设置
+\str_new:N \g__bibmap_bibliotable_flag_str
+\str_set:Nn \g__bibmap_bibliotable_flag_str {false}
+
+
+
+%
+%宏包选项定义
+%
+\keys_define:nn {bibmap}
+  {
+    %标注样式：
+    %numeric
+    %authoryear
+    citestyle .code:n = \str_set:Nn \l__bibmap_cite_style_str {#1},
+    %citestyle .value_required:n = true,
+    citestyle .default:n = numeric,
+    %著录样式：
+    %gb7714-2015
+    %gb7714-2015ay
+    %userdefined
+    %plain
+    %等等
+    bibstyle .code:n = \str_set:Nn \l__bibmap_bib_style_str {#1},
+    %bibstyle .value_required:n = true,
+    bibstyle .default:n = gb7714-2015,
+    %数据修改设置：
+    %default
+    %userdefined
+    mapstyle .code:n = \str_set:Nn \l__bibmap_map_style_str {#1},
+    %mapstyle .value_required:n = true,
+    mapstyle .default:n = default,
+    %参考文献表是否为table形式：false,true
+    bibtable .code:n = \str_set:Nn \g__bibmap_bibliotable_flag_str {#1},
+    bibtable .default:n = false,
+  }
+
+%
+% 宏包选项初始化处理，process package options:
+%
+\ProcessKeysOptions {bibmap}
+
+%
+%
+%可以利用\bibmapset命令设置
+\DeclareDocumentCommand \bibmapset { m }
+{ \keys_set:nn { bibmap } { #1 } }
+%若临时修改则需要在处理机制中考虑到处理的时机，即信息写入aux文件的时机应该是在设置之后
+%通常是在导言区结束时，注意citesytle和bibstyle，mapstyle样式需要在开始时指定，否则就是默认的。
+%\AtEndPreamble{}
+
+\RequirePackage{etoolbox}
+%\RequirePackage[sort&compress]{natbib}
+% 定义接口切换引用文献的标注法，可用 \cs{citestyle} 调用 \opt{numerical}
+% 或 \opt{authoryear}，参见 \pkg{natbib}。
+%\newcommand\bibstyle@super{\bibpunct{[}{]}{,}{s}{,}{\textsuperscript{,}}}
+%\newcommand\bibstyle@numbers{\bibpunct{[}{]}{,}{n}{,}{,}}
+%\newcommand\bibstyle@authoryear{\bibpunct{(}{)}{;}{a}{,}{,}}
+
+%标注样式的处理
+%\str_case_e:nn {\l__bibmap_cite_style_str}
+%{
+%    {numeric} {\RequirePackage[super,square]{natbib}%\citestyle{super}
+%    }
+%    {authoryear} {\citestyle{authoryear}}
+%}
+
+%
+%%标注样式的处理
+\str_case_e:nn {\l__bibmap_cite_style_str}
+{
+    {numeric} {\RequirePackage[super,square,sort&compress]{natbib}
+    \setcitestyle{citesep={,}}
+    \newcommand\bibstyle@super{\bibpunct{[}{]}{,}{s}{,}{\textsuperscript{,}}}
+    \newcommand\bibstyle@numeric{\bibpunct{[}{]}{,}{s}{,}{\textsuperscript{,}}}
+    \newcommand\bibstyle@numbers{\bibpunct{[}{]}{,}{n}{,}{,}}
+    \newcommand\bibstyle@authoryear{\bibpunct{(}{)}{;}{a}{,}{,}}
+        }%
+    {authoryear} {\RequirePackage[authoryear,sort&compress]{natbib}
+    \newcommand\bibstyle@super{\bibpunct{[}{]}{,}{s}{,}{\textsuperscript{,}}}
+    \newcommand\bibstyle@numeric{\bibpunct{[}{]}{,}{s}{,}{\textsuperscript{,}}}
+    \newcommand\bibstyle@numbers{\bibpunct{[}{]}{,}{n}{,}{,}}
+    \newcommand\bibstyle@authoryear{\bibpunct{(}{)}{;}{a}{,}{,}}
+    }
+}
+
+%著录样式的处理
+\str_case_e:nnTF {\l__bibmap_bib_style_str}
+{
+    {gb7714-2015}   {\str_gset:Nn \g__bibmap_bibstyle_file_str {bibstylenumeric.py}}
+    {gb7714-2015ay} {\str_gset:Nn \g__bibmap_bibstyle_file_str {bibstyleauthoryear.py}}
+}{}%
+{\str_gset:Nx \g__bibmap_bibstyle_file_str \l__bibmap_bib_style_str}
+
+%数据修改样式的处理
+\str_case_e:nnTF {\l__bibmap_map_style_str}
+{
+    {default}   {\str_gset:Nn \g__bibmap_mapstyle_file_str {bibmapdefault.py}}
+}{}%
+{\str_gset:Nx \g__bibmap_mapstyle_file_str {\l__bibmap_map_style_str}}
+
+%表格形式文献表的处理
+%要写入aux文件的命令
+\newcommand{\bibmapcite}[2]{\csgdef{Bmap@#1}{#2}}
+%要写入bbl文件的命令
+\newcommand{\bibmapciteb}[2]{\csgdef{Bibmap@#1}{#2}}
+%两个输出文本的命令：
+\newcommand{\bibmaptabcolnameA}{序号}
+\newcommand{\bibmaptabcolnameB}{文献信息}
+\str_case_e:nnTF {\g__bibmap_bibliotable_flag_str}
+{
+    {false}   {} %false不用处理
+    {true} {
+        %重定义natbib的命令用于调整thebibliography中使用的item项
+        \def\@lbibitem[#1]#2{%
+          \if\relax\@extra@b@citeb\relax\else
+            \@ifundefined{br@#2\@extra@b@citeb}{}{%
+             \@namedef{br@#2}{\@nameuse{br@#2\@extra@b@citeb}}%
+            }%
+          \fi
+          \@ifundefined{b@#2\@extra@b@citeb}{%
+           \def\NAT@num{}%
+          }{%
+           \NAT@parse{#2}%
+          }%
+          \def\NAT@tmp{#1}%
+          \expandafter\let\expandafter\bibitemOpen\csname NAT@b@open@#2\endcsname
+          \expandafter\let\expandafter\bibitemShut\csname NAT@b@shut@#2\endcsname
+          \@ifnum{\NAT@merge>\@ne}{%
+           \NAT@bibitem@first@sw{%
+            \@firstoftwo
+           }{%
+            \@ifundefined{NAT@b*@#2}{%
+             \@firstoftwo
+            }{%
+             \expandafter\def\expandafter\NAT@num\expandafter{\the\c@NAT@ctr}%
+             \@secondoftwo
+            }%
+           }%
+          }{%
+           \@firstoftwo
+          }%
+          {%
+           \global\advance\c@NAT@ctr\@ne
+           \@ifx{\NAT@tmp\@empty}{\@firstoftwo}{%
+            \@secondoftwo
+           }%
+           {%
+            \expandafter\def\expandafter\NAT@num\expandafter{\the\c@NAT@ctr}%
+            \global\NAT@stdbsttrue
+           }{}%
+           \bibitem@fin
+           %\item[\hfil\NAT@anchor{#2}{\NAT@num}]%
+           \makebox[1cm][c]{\NAT@anchor{#2}{\csuse{Bmap@#2}}\hfill}%简单的输出
+           \global\let\NAT@bibitem@first@sw\@secondoftwo
+           \NAT@bibitem@init
+          }%
+          {%
+           \NAT@anchor{#2}{}%
+           \NAT@bibitem@cont
+           \bibitem@fin
+          }%
+          \@ifx{\NAT@tmp\@empty}{%
+            \NAT@wrout{\the\c@NAT@ctr}{}{}{}{#2}%
+          }{%
+            \expandafter\NAT@ifcmd\NAT@tmp(@)(@)\@nil{#2}%
+          }%
+          \if@filesw{\edef\sntempbmap{\csuse{Bibmap@#2}}\let\protect\noexpand%
+        \immediate\write\@auxout{\string\bibmapcite{#2}{\sntempbmap}}}\fi
+        }%
+        %重定义thebibliography，以形成表格形式的环境
+        \renewenvironment{thebibliography}[1]
+        {\begin{tabular}{|c|p{0.8\linewidth}|}\hline \bibmaptabcolnameA & \multicolumn{1}{c|}{\bibmaptabcolnameB} \\ \hline}
+        {\end{tabular}}
+    }
+}{}%
+{}
+
+
+
+\NewDocumentCommand \printbibfileinfo {}{
+
+    \str_use:N \g__bibmap_bibstyle_file_str
+}
+
+\NewDocumentCommand \printmapfileinfo {}{
+    \str_use:N \g__bibmap_mapstyle_file_str
+}
+
+%
+%用于局部化的指定子文档的bibstyle
+\NewDocumentCommand \bmpbibstyle { m }{
+    \bibmap_write_to_aux_x:n
+    {
+      \noexpand\bibmap@bibstyle{#1} ^^J
+    }
+}
+
+%
+%用于局部化的指定子文档的mapstyle
+\NewDocumentCommand \bmpmapstyle { m }{
+    \bibmap_write_to_aux_x:n
+    {
+      \noexpand\bibmap@mapstyle{#1} ^^J
+    }
+}
+
+
+
+% write to aux file:
+\cs_new_protected:Npn \bibmap_write_to_aux_x:n #1
+  { \if@filesw \iow_now:Nx \@auxout {#1} \fi }
+
+\cs_new_protected:Npn \bibmap@bibstyle #1 {}
+\cs_new_protected:Npn \bibmap@mapstyle #1 {}
+\cs_new_protected:Npn \bibmap@tabflag #1 {}
+
+% 写入辅助文件
+\AtBeginDocument{
+  \bibmap_write_to_aux_x:n
+    {
+      \noexpand\bibmap@bibstyle{\g__bibmap_bibstyle_file_str} ^^J
+      \noexpand\bibmap@mapstyle{\g__bibmap_mapstyle_file_str} ^^J
+      \noexpand\bibmap@tabflag{\g__bibmap_bibliotable_flag_str} ^^J
+    }
+}
+
+
+
+
+\ExplSyntaxOff
+
+%====================================================
+%   加载标准样式
+%====================================================
+
+
+%\RequirePackage[super,square]{natbib}%number,authoryear
+\RequirePackage{url,xurl}
+%\def\UrlBreaks{%
+%  \do\/%
+%  \do\a\do\b\do\c\do\d\do\e\do\f\do\g\do\h\do\i\do\j\do\k\do\l%
+%     \do\m\do\n\do\o\do\p\do\q\do\r\do\s\do\t\do\u\do\v\do\w\do\x\do\y\do\z%
+%  \do\A\do\B\do\C\do\D\do\E\do\F\do\G\do\H\do\I\do\J\do\K\do\L%
+%     \do\M\do\N\do\O\do\P\do\Q\do\R\do\S\do\T\do\U\do\V\do\W\do\X\do\Y\do\Z%
+%  \do0\do1\do2\do3\do4\do5\do6\do7\do8\do9\do=\do/\do.\do:%
+%  \do\*\do\-\do\~\do\'\do\"\do\-}
+\def\UrlFont{\rmfamily}%设置url字体为roman字体%\ttfamily
+%\urlstyle{rm} %使用这句也一样
+\providecommand{\doi}[1]{\href{https://doi.org/#1}{\url{#1}}}
+\Urlmuskip=0mu plus 0.1mu
+
+
+%对natbib做patch，引自gbt7714宏包
+
+% 下面修改 \pkg{natbib} 的引用格式，主要是将页码写在上标位置。
+% Numerical 模式的 \cs{citet} 的页码：
+\patchcmd{\NAT@citexnum}{%
+  \@ifnum{\NAT@ctype=\z@}{%
+    \if*#2*\else\NAT@cmt#2\fi
+  }{}%
+  \NAT@mbox{\NAT@@close}%
+}{%
+  \NAT@mbox{\NAT@@close}%
+  \@ifnum{\NAT@ctype=\z@}{%
+    \if*#2*\else\textsuperscript{#2}\fi
+  }{}%
+}{}{}
+
+% Numerical 模式的 \cs{citep} 的页码：
+\renewcommand\NAT@citesuper[3]{\ifNAT@swa
+  \if*#2*\else#2\NAT@spacechar\fi
+\unskip\kern\p@\textsuperscript{\NAT@@open#1\NAT@@close\if*#3*\else#3\fi}%
+   \else #1\fi\endgroup}
+
+% Author-year 模式的 \cs{citet} 的页码：
+\patchcmd{\NAT@citex}{%
+  \if*#2*\else\NAT@cmt#2\fi
+  \if\relax\NAT@date\relax\else\NAT@@close\fi
+}{%
+  \if\relax\NAT@date\relax\else\NAT@@close\fi
+  \if*#2*\else\textsuperscript{#2}\fi
+}{}{}
+
+% Author-year 模式的 \cs{citep} 的页码：
+\renewcommand\NAT@cite%
+    [3]{\ifNAT@swa\NAT@@open\if*#2*\else#2\NAT@spacechar\fi
+        #1\NAT@@close\if*#3*\else\textsuperscript{#3}\fi\else#1\fi\endgroup}
+
+% 参考文献列表的标签左对齐
+\renewcommand\@biblabel[1]{[#1]\hfill}
+
+%\citetns命令
+\providecommand*{\citetns}[2][]{%
+\begingroup%
+\let\NAT@mbox=\mbox%
+\let\@cite\NAT@citenum%
+\let\NAT@space\NAT@spacechar%
+\let\NAT@super@kern\relax%
+\renewcommand\NAT@open{[}%]
+\renewcommand\NAT@close{%[
+]}%
+\citet[#1]{#2}%
+\endgroup%
+}
+
+\providecommand*{\citepns}[2][]{%
+\begingroup%
+\let\NAT@mbox=\mbox%
+\let\@cite\NAT@citenum%
+\let\NAT@space\NAT@spacechar%
+\let\NAT@super@kern\relax%
+\renewcommand\NAT@open{[}%]
+\renewcommand\NAT@close{%[
+]}%
+\citep[#1]{#2}%
+\endgroup%
+}

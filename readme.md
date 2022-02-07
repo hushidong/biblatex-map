@@ -1,4 +1,4 @@
-<b>Date of last change: 2021-10-23 to version v1.0d</b>
+<b>Date of last change: 2022-02-07 to version v1.0e</b>
 
 
 ## Introduction
@@ -114,6 +114,11 @@ bibmap.py jobname
 xelatex jobname
 xelatex jobname
 ```
+
+* 重要选项
+	+ citestyle 指定引用(标注)样式
+	+ bibstyle  指定著录样式
+	+ bibtable=true/false #true 表示生成表格形式的文献表
 
 
 ### bibmap程序
@@ -428,18 +433,6 @@ if  want to  set a bibstyle file , you  can run:
 `bibmap.py egtest -s bibstyleauthoryear.py`
 
 
-
-## history：
-
-* v1.0 2019/02/09
-* v1.0a 2019/04/12
-* v1.0b 2019/04/19
-* v1.0c 2021/05/24
-* v1.0d 2021/10/23
-
-
-
-
 --------------------------------------
 ## Related Links
 
@@ -452,7 +445,14 @@ if  want to  set a bibstyle file , you  can run:
 * [biblatex-check bib文件检查工具](https://github.com/Pezmc/BibLatex-Check)
 
 
-
 --------------------------------------
+## history：
+
+* v1.0 2019/02/09
+* v1.0a 2019/04/12
+* v1.0b 2019/04/19
+* v1.0c 2021/05/24
+* v1.0d 2021/10/23
+* v1.0e 2022/02/07
 
 

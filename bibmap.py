@@ -125,11 +125,21 @@ keyoptiondatabase=[
 'pospunct',
 ]
 
+#输入文件信息的全局变量
+inputbibfile=''
+inputauxfile=''
+inputstyfile=''
+inputmapfile=''
+bibliotableflag='false' #输出表格形式的参考文献表的内容的标识
+
 
 #
 #
 #打印格式化后的全部文献条目文本
 def printbibliography():
+	global inputbibfile,inputauxfile,inputstyfile,inputmapfile,bibliotableflag
+	global subauxfilelist,subbibfilelist,substyfilelist,submapfilelist #主文档包含的子文档的aux文件
+
 	#md文件输出,直接用write写
 	mdoutfile="newformatted"+inputbibfile.replace('.bib','.txt')
 	fout = open(mdoutfile, 'w', encoding="utf8")
@@ -209,16 +219,30 @@ def printbibliography():
 		bblfile=inputauxfile.replace('.aux','.bbl')
 	else:
 		bblfile=inputbibfile.replace('.bib','.bbl')
+		inputauxfile=inputbibfile.replace('.bib','.aux')
 	bbloutfile=bblfile
-	fout = open(bbloutfile, 'w', encoding="utf8")
+
+	#写入bbl文件中
+	fout = open(bbloutfile, 'w', encoding="utf8") #inputauxfile
+	print("INFO: writing citation info to '" + bbloutfile + "'")
+	
+	entrynum=0
+	for entrykey,prtbibentry in bibliographytext.items():
+		entrynum+=1
+		fout.write(r'\bibmapciteb{'+entrykey+'}{'+str(entrynum)+'}\n')
+		#fout.write(r'\bibcite{'+entrykey+'}{'+str(entrynum)+'}\n')
+	fout.close()
+
+	
+	fout = open(bbloutfile, 'a', encoding="utf8")
 	print("INFO: writing cited references to '" + bbloutfile + "'")
 	
-	fout.write(r'\begin{thebibliography}{'+str(len(bibliographytext))+'}\n')
+	fout.write('\n'+r'\begin{thebibliography}{'+str(len(bibliographytext))+'}\n')
 	
 	biblabelnumber=0
 	for entrykey,prtbibentry in bibliographytext.items():
 		if len(prtbibentry)>0:
-			biblabelnumber=biblabelnumber+1
+			biblabelnumber+=1
 			
 			entrykeystr=entrykey
 			
@@ -238,13 +262,27 @@ def printbibliography():
 						#Baker et~al.(1995) Baker and Jackson
 						break
 			
-			if 'labelname' in formatoptions:
-				fout.write(r'\bibitem['+entrycitelabel+']{'+entrykeystr+'}'+prtbibentry+'\n')
-			else:
-				fout.write(r'\bibitem['+str(biblabelnumber)+']{'+entrykeystr+'}'+prtbibentry+'\n')
-			
+			if bibliotableflag=="true":
+				#表格形式
+				if 'labelname' in formatoptions:
+					fout.write(r'\bibitem['+entrycitelabel+']{'+entrykeystr+r'} & '+prtbibentry+r'\\ \hline'+'\n')
+				else:
+					fout.write(r'\bibitem['+str(biblabelnumber)+']{'+entrykeystr+r'} & '+prtbibentry+r'\\ \hline'+'\n')
+			else:	
+				if 'labelname' in formatoptions:
+					fout.write(r'\bibitem['+entrycitelabel+']{'+entrykeystr+'}'+prtbibentry+'\n')
+				else:
+					fout.write(r'\bibitem['+str(biblabelnumber)+']{'+entrykeystr+'}'+prtbibentry+'\n')
+		
 	fout.write(r'\end{thebibliography}')
 	fout.close()
+
+
+
+	
+	
+
+
 
 
 
@@ -3896,19 +3934,14 @@ class BibFileinputError(Exception):
 		self.message=message 
 		
 		
+
 #输入命令行解析
-inputbibfile=''
-inputauxfile=''
-inputstyfile=''
-inputmapfile=''
-
-
 #
 #命令行参数，输入文件处理，所有操作流程组织
 #
 def bibmapinput():
 	#要使用全局变量先声明一下
-	global inputbibfile,inputauxfile,inputstyfile,inputmapfile
+	global inputbibfile,inputauxfile,inputstyfile,inputmapfile,bibliotableflag
 	global subauxfilelist,subbibfilelist,substyfilelist,submapfilelist #主文档包含的子文档的aux文件
 
 
@@ -3989,14 +4022,19 @@ def bibmapinput():
 		for line in fInAux:
 			if line.startswith("\\bibdata"):
 				m = re.search(r'\\bibdata{(.*)}',line)#注意贪婪算法的影响，所以要排除\}字符
-				print('m.group(1):',m.group(1))
+				print('inputbibfile:m.group(1):',m.group(1))
 				inputbibfile = m.group(1)
 				if '.bib' not in inputbibfile:
 					inputbibfile=inputbibfile+'.bib'
+
+			if line.startswith("\\bibmap@tabflag"):
+				m = re.search(r'\\bibmap@tabflag {(.*)}',line)
+				bibliotableflag=m.group(1)
+				print('bibliotableflag:m.group(1):',m.group(1))
 					
 			if line.startswith("\\bibmap@bibstyle"):
 				m = re.search(r'\\bibmap@bibstyle {(.*)}',line)#注意贪婪算法的影响，所以要排除\}字符
-				print('m.group(1):',m.group(1))
+				print('inputstyfile:m.group(1):',m.group(1))
 				
 				if not inputstyfile:#当命令行未指定styfile时
 					inputstyfile = m.group(1)
@@ -4005,7 +4043,7 @@ def bibmapinput():
 					
 			if line.startswith("\\bibmap@mapstyle"):
 				m = re.search(r'\\bibmap@mapstyle {(.*)}',line)#注意贪婪算法的影响，所以要排除\}字符
-				print('m.group(1):',m.group(1))
+				print('inputmapfile:m.group(1):',m.group(1))
 				if not inputmapfile:#当命令行未指定mapfile时
 					inputmapfile = m.group(1)
 				if '.py' not in inputmapfile:

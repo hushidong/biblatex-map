@@ -23,11 +23,6 @@ xelatex.exe --synctex=-1 !jobfile!
 )
 setlocal DISABLEDELAYEDEXPANSION
 
-call makecleareg
-
-del eg*.bib /Q
-
-del *.sty /q
 
 
 
