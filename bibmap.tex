@@ -167,7 +167,16 @@ bibmap宏包可用的选项包括:
 
   \item[bibstyle] 用于指定文献表的著录样式，主要包括gb7714-2015,gb7714-2015ay，或者其它用户自定义的样式。设置gb7714-2015时调用宏包自带的bibstylenumeric.py样式文件生成文献表，设置gb7714-2015ay时调用宏包自带的bibstyleauthoryear.py样式文件生成文献表。当指定用户自定义的样式时则给出样式文件的文件名，比如bibstyle=bibstyleexample，表示调用bibstyleexample.py样式文件来生成文献表。
       
-  \item[bibtable] 用于确定是否采用表格形式的文献表。值为true或false，当给出为true时生成表格形式的文献表。
+  \item[bibtable] 用于确定是否采用表格形式的文献表。值为true或false，当给出为true时生成表格形式的文献表。默认的表格形式是两栏的表格，第一列是文献的序号，第二列是文献的完成著录信息。如果要修改表格的形式，可在设置bibtable=true后对thebibliography环境进行重定义，该环境的默认定义为：
+      
+      \begin{texlist}
+         %重定义thebibliography，以形成表格形式的环境
+        \renewenvironment{thebibliography}[1]
+        {\begin{tabular}{|c|p{0.8\linewidth}|}\hline \bibmaptabcolnameA & \multicolumn{1}{c|}{\bibmaptabcolnameB} \\ \hline}
+        {\end{tabular}}
+      \end{texlist}
+      
+      如果要修改表格中输出的内容形式，比如3栏或者序号变成为姓名等，则需要修改bibmap.py 程序。在函数printbibliography 中，由bibtable=true得到bibliotableflag标签为true，因此需修改其判断为true后的代码。序号内容的修改则需要修改bibmapciteb相关的输出信息。
 
   \item[mapstyle] 用于指定参考文献数据修改样式，主要包括default，或者其它用户自定义的样式。设置default时调用宏包自带的bibmapdefault.py对bib文件进行修改。当指定用户自定义的样式时则给出样式文件的文件名，比如mapstyle=userdatamap，表示调用userdatamap.py 样式文件来修改bib文件。
 \end{description}
