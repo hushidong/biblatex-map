@@ -2,10 +2,10 @@
     \usepackage{ctex}
     \usepackage{xcolor}
     \usepackage{toolbox}
-    \usepackage{hyperref}
+    \usepackage[colorlinks]{hyperref}
     \usepackage{lipsum}
-    \usepackage[paperwidth=16cm,paperheight=10cm,top=10pt,bottom=10pt,left=1cm,right=1cm]{geometry}
-\usepackage[citestyle=numeric,bibstyle=gb7714-2015ay]{bibmap}
+    \usepackage[top=30pt,bottom=30pt,left=2cm,right=2cm]{geometry}
+\usepackage[citestyle=numeric,bibstyle=bibstyletabthreecols.py,bibtable=threecols]{bibmap}
 \usepackage{filecontents}
 \begin{filecontents}{\jobname.bib}
 @techreport{calkin,
@@ -57,10 +57,12 @@
 }
 \end{filecontents}
 
+
     \begin{document}
 
-    文献\cite{wfz,zgtsgxh}
+    文献\cite{calkin,buseck,zgtsgxh,wfz,bjsrmzfbgt}
 
+    \newpage
     \bibliography{\jobname}
 
     \end{document} 

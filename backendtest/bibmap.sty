@@ -159,7 +159,7 @@
 \str_case_e:nnTF {\g__bibmap_bibliotable_flag_str}
 {
     {false}   {} %false不用处理
-    {true} {
+    {true} {%
         %重定义natbib的命令用于调整thebibliography中使用的item项
         \def\@lbibitem[#1]#2{%
           \if\relax\@extra@b@citeb\relax\else
@@ -200,7 +200,8 @@
            }{}%
            \bibitem@fin
            %\item[\hfil\NAT@anchor{#2}{\NAT@num}]%
-           \makebox[1cm][c]{\NAT@anchor{#2}{\csuse{Bmap@#2}}\hfill}%简单的输出
+           %将list环境的item换成一个简单的输出以适应表格的输出
+           \makebox[1cm][c]{\NAT@anchor{#2}{\csuse{Bmap@#2}}}%简单的输出
            \global\let\NAT@bibitem@first@sw\@secondoftwo
            \NAT@bibitem@init
           }%

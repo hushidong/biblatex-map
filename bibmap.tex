@@ -166,17 +166,18 @@ bibmap宏包可用的选项包括:
   \item[citestyle] 用于指定文献引用的标注样式，主要包括numeric，authoryear。所有的标注样式基于natbib宏包实现，设置numeric等价于为natbib设置super,square,sort\&compress 选项，设置authoryear等价于为natbib设置authoryear选项。
 
   \item[bibstyle] 用于指定文献表的著录样式，主要包括gb7714-2015,gb7714-2015ay，或者其它用户自定义的样式。设置gb7714-2015时调用宏包自带的bibstylenumeric.py样式文件生成文献表，设置gb7714-2015ay时调用宏包自带的bibstyleauthoryear.py样式文件生成文献表。当指定用户自定义的样式时则给出样式文件的文件名，比如bibstyle=bibstyleexample，表示调用bibstyleexample.py样式文件来生成文献表。
-      
+
   \item[bibtable] 用于确定是否采用表格形式的文献表。值为true或false，当给出为true时生成表格形式的文献表。默认的表格形式是两栏的表格，第一列是文献的序号，第二列是文献的完成著录信息。如果要修改表格的形式，可在设置bibtable=true后对thebibliography环境进行重定义，该环境的默认定义为：
-      
+
       \begin{texlist}
          %重定义thebibliography，以形成表格形式的环境
         \renewenvironment{thebibliography}[1]
         {\begin{tabular}{|c|p{0.8\linewidth}|}\hline \bibmaptabcolnameA & \multicolumn{1}{c|}{\bibmaptabcolnameB} \\ \hline}
         {\end{tabular}}
       \end{texlist}
+
+      如果要修改表格中输出的内容形式，比如3栏或者序号变成为姓名等，则需要修改样式文件，在每个条目的输出文本中增加\verb| & |来增加栏数，比如文件 bibstyletabthreecols.py 就是一个针对三栏输出的样式，其著录格式文本是将作者作为单独一栏进行处理。
       
-      如果要修改表格中输出的内容形式，比如3栏或者序号变成为姓名等，则需要修改bibmap.py 程序。在函数printbibliography 中，由bibtable=true得到bibliotableflag标签为true，因此需修改其判断为true后的代码。序号内容的修改则需要修改bibmapciteb相关的输出信息。
 
   \item[mapstyle] 用于指定参考文献数据修改样式，主要包括default，或者其它用户自定义的样式。设置default时调用宏包自带的bibmapdefault.py对bib文件进行修改。当指定用户自定义的样式时则给出样式文件的文件名，比如mapstyle=userdatamap，表示调用userdatamap.py 样式文件来修改bib文件。
 \end{description}
@@ -199,7 +200,7 @@ bibmap宏包可用的选项包括:
   \item[\textbackslash bmpbibstyle]
   \verb|\bmpbibstyle|可以用来局部设置文献的著录样式，比如在某一章中需要使用authoryear样式，
   那么可以设置\verb|\bmpbibstyle{bibstyleauthoryear.py}|。或者其它用户自定义的样式，直接指定py文件即可。主要用于分章文献中。
-  
+
   \item[\textbackslash bmpmapstyle]
   \verb|\bmpmapstyle|可以用来局部设置bib文件修改的样式，比如在某一章中需要使用自定义的userdefinedmap.py 样式，
   那么可以设置\verb|\bmpbibstyle{userdefinedmap.py}|。bibmap程序处理时将局部调用userdefinedmap.py进行数据修改。主要用于分章文献中。

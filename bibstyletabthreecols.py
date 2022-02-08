@@ -6,7 +6,7 @@
 #全局选项
 formatoptions={
 "style":'authoryear',##这个选项目前暂无功能
-"nameformat":'uppercase',#姓名处理选项：uppercase,lowercase,given-family,family-given,pinyin
+"nameformat":'lowercase',#姓名处理选项：uppercase,lowercase,given-family,family-given,pinyin
 "citenameformat":'titlecase',#标注中的姓名处理选项：uppercase,titlecase
 "giveninits":'dotspace',#使用名的缩写，space表示名见用空格分隔，dotspace用点加空格，dot用点，terse无分隔，false不使用缩写
 "useprefix":False,#使用前缀名
@@ -119,13 +119,13 @@ datatypeinfo={
 bibliographystyle={
 "book":[
 #{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
-{"fieldsource":['author','editor','translator'],'options':{'nameformat':'uppercase'}},
-{"fieldsource":['series'],'prepunct':". ",'prepunctifnolastfield':''},
-{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':": ",'prepunctifnolastfield':'. '},
+{"fieldsource":['author','editor','translator']},
+{"fieldsource":['series'],'prepunct':" & ",'prepunctifnolastfield':''},
+{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':": ",'prepunctifnolastfield':' & '},
 {"fieldsource":['volume'],'prepunct':": ",'prestringifnumber':r'\bibstring{volsn}','posstringifnumber':r'\bibstring{volume}'},
 {"fieldsource":['number'],'prepunct':": ",'prestringifnumber':r'\bibstring{numsn}','posstringifnumber':r'\bibstring{number}'},
 {"fieldsource":['typeid'],'replstring':r"\allowbreak\typestring"},
-{"fieldsource":['translator'],'options':{'nameformat':'uppercase'},'prepunct':". ",'posstring':r', \bibstring{bytranslator}'},
+{"fieldsource":['translator'],'prepunct':". ",'posstring':r', \bibstring{bytranslator}'},
 {"fieldsource":['edition'],'options':{'numberformat':'ordinal'},'prepunct':". ","posstringifnumber":r'\bibstring{edition}'},
 {"fieldsource":['location','address'],'prepunct':". ",'replstring':r"\bibstring{nolocation}"},
 {"fieldsource":['publisher'],'prepunct':": ",'replstring':r"\bibstring{nopublisher}",'prepunctifnolastfield':'. '},
@@ -138,8 +138,8 @@ bibliographystyle={
 ],
 "article":[
 #{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
-{"fieldsource":['author','editor','translator'],'options':{'nameformat':'uppercase'}},
-{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':". ",'prepunctifnolastfield':'','posstring':r"\allowbreak\typestring"},
+{"fieldsource":['author','editor','translator']},
+{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':" & ",'prepunctifnolastfield':' & ','posstring':r"\allowbreak\typestring"},
 {"fieldsource":['journaltitle','journal'],'prepunct':". "},
 {"fieldsource":['year','date'],'prepunct':", "},
 {"fieldsource":['volume'],'prepunct':", "},
@@ -152,8 +152,8 @@ bibliographystyle={
 ],
 "newspaper":[
 #{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
-{"fieldsource":['author','editor','translator'],'options':{'nameformat':'uppercase'}},
-{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':". ",'prepunctifnolastfield':'','posstring':r"\allowbreak\typestring"},
+{"fieldsource":['author','editor','translator']},
+{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':" & ",'prepunctifnolastfield':' & ','posstring':r"\allowbreak\typestring"},
 {"fieldsource":['journaltitle','journal'],'prepunct':". "},
 {"fieldsource":['date','year'],'prepunct':", ",'options':{'date':'iso'}},
 {"fieldsource":['number'],'prestring':"(",'posstring':")"},
@@ -165,8 +165,8 @@ bibliographystyle={
 ],
 "inbook":[
 #{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
-{"fieldsource":['author','translator'],'options':{'nameformat':'uppercase'}},
-{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':". ",'prepunctifnolastfield':'','posstring':r"\allowbreak\typestring"},
+{"fieldsource":['author','translator']},
+{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':" & ",'prepunctifnolastfield':' & ','posstring':r"\allowbreak\typestring"},
 {"fieldsource":['in'],'replstring':"//",'omitifnofield':['bookauthor','editor','booktitle']},
 {"fieldsource":['bookauthor','editor'],'options':{'nameformat':'uppercase'}},
 {"fieldsource":['booktitle'],'options':{'caseformat':'none'},'prepunct':". ",'prepunctifnolastfield':''},
@@ -189,13 +189,13 @@ bibliographystyle={
 "collection":"book",
 "standard":[
 #{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
-{"fieldsource":['author','translator'],'options':{'nameformat':'uppercase'}},
-{"fieldsource":['series'],'prepunct':". ",'prepunctifnolastfield':''},
-{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':" ",'prepunctifnolastfield':'. '},
+{"fieldsource":['author','translator']},
+{"fieldsource":['series'],'prepunct':" & ",'prepunctifnolastfield':''},
+{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':": ",'prepunctifnolastfield':' & '},
 {"fieldsource":['number'],'prepunct':" "},
 {"fieldsource":['typeid'],'replstring':r"\allowbreak\typestring"},
 {"fieldsource":['in'],'replstring':"//",'omitifnofield':['bookauthor','editor','booktitle']},
-{"fieldsource":['bookauthor','editor'],'options':{'nameformat':'uppercase'}},
+{"fieldsource":['bookauthor','editor']},
 {"fieldsource":['booktitle'],'options':{'caseformat':'none'},'prepunct':". ",'prepunctifnolastfield':''},
 {"fieldsource":['edition'],'options':{'numberformat':'arabic'},'prepunct':". ","posstring":r'\bibstring{edition}'},
 {"fieldsource":['location','address'],'prepunct':". ",'replstring':r"\bibstring{nolocation}"},
@@ -209,8 +209,8 @@ bibliographystyle={
 ],
 "patent":[
 #{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
-{"fieldsource":['author'],'options':{'nameformat':'uppercase'}},
-{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':". ",'prepunctifnolastfield':''},
+{"fieldsource":['author']},
+{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':" & ",'prepunctifnolastfield':' & '},
 {"fieldsource":['number'],'prepunct':": "},
 {"fieldsource":['typeid'],'replstring':r"\allowbreak\typestring"},
 {"fieldsource":['date','year'],'prepunct':", ",'options':{"date":"iso"}},
@@ -221,8 +221,8 @@ bibliographystyle={
 ],
 "online":[
 #{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
-{"fieldsource":['author','editor','translator'],'options':{'nameformat':'uppercase'}},
-{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':". ",'prepunctifnolastfield':'','posstring':r"\allowbreak\typestring"},
+{"fieldsource":['author','editor','translator']},
+{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':" & ",'prepunctifnolastfield':' & ','posstring':r"\allowbreak\typestring"},
 {"fieldsource":['organization','instiution'],'prepunct':". "},
 {"fieldsource":['date','year'],'prepunct':", ",'prepunctifnolastfield':'. ','omitifnofield':['enddate','eventdate']},
 {"fieldsource":['pages'],'prepunct':": "},
@@ -236,9 +236,9 @@ bibliographystyle={
 "electronic":"online",
 "report":[
 #{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
-{"fieldsource":['author','editor','translator'],'options':{'nameformat':'uppercase'}},
-{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':". ",'prepunctifnolastfield':'','posstring':r"\allowbreak\typestring"},
-{"fieldsource":['translator'],'options':{'nameformat':'uppercase'},'prepunct':". "},
+{"fieldsource":['author','editor','translator']},
+{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':" & ",'prepunctifnolastfield':' & ','posstring':r"\allowbreak\typestring"},
+{"fieldsource":['translator'],'prepunct':". "},
 {"fieldsource":['type'],'prepunct':". "},
 {"fieldsource":['number'],'prepunct':"",'prepunctifnolastfield':'. '},
 {"fieldsource":['version'],'prepunct':". "},
@@ -255,8 +255,8 @@ bibliographystyle={
 "techreport":"report",
 "periodical":[
 #{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
-{"fieldsource":['editor','author'],'options':{'nameformat':'uppercase'}},
-{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':". ",'prepunctifnolastfield':'','posstring':r"\allowbreak\typestring"},
+{"fieldsource":['editor','author']},
+{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':" & ",'prepunctifnolastfield':' & ','posstring':r"\allowbreak\typestring"},
 {"fieldsource":['year','date'],'prepunct':", "},
 {"fieldsource":['volume'],'prepunct':", "},
 {"fieldsource":['number'],'prestring':"(",'posstring':")-"},
@@ -277,9 +277,9 @@ bibliographystyle={
 #omitiffield:只要存在一个域就为true
 "thesis":[
 #{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
-{"fieldsource":['author','editor','translator'],'options':{'nameformat':'uppercase'}},
-{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':". ",'prepunctifnolastfield':'','posstring':r"\allowbreak\typestring"},
-{"fieldsource":['translator'],'options':{'nameformat':'uppercase'},'prepunct':". "},
+{"fieldsource":['author','editor','translator']},
+{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':" & ",'prepunctifnolastfield':' & ','posstring':r"\allowbreak\typestring"},
+{"fieldsource":['translator'],'prepunct':". "},
 {"fieldsource":['location','address'],'prepunct':". "},
 {"fieldsource":['institution','publisher','school'],'prepunct':": ",'prepunctifnolastfield':'. '},
 {"fieldsource":['date','year'],'prepunct':", ",'omitifnofield':['location','address','institution','publisher'],'omitiffield':['url']},
@@ -299,8 +299,8 @@ bibliographystyle={
 "archive":"thesis",
 "misc":[
 #{"fieldsource":["labelnumber"],'prestring':"[","posstring":"]","pospunct":"  "},
-{"fieldsource":['author','editor','translator'],'options':{'nameformat':'uppercase'}},
-{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':". ",'prepunctifnolastfield':'','posstring':r"\allowbreak\typestring"},
+{"fieldsource":['author','editor','translator']},
+{"fieldsource":['title'],'options':{'caseformat':'none'},'prepunct':" & ",'prepunctifnolastfield':' & ','posstring':r"\allowbreak\typestring"},
 {"fieldsource":['howpublished'],'prepunct':". "},
 {"fieldsource":['location','address'],'prepunct':". "},
 {"fieldsource":['institution','publisher'],'prepunct':": ",'prepunctifnolastfield':'. '},

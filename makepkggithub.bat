@@ -8,6 +8,8 @@ cd bibmap
 
 mkdir backendtest
 
+mkdir backendtesttabbib
+
 mkdir mapbibtest
 
 mkdir binary
@@ -19,6 +21,8 @@ cd ..
 copy biblatex-map-master\*.* bibmap\*.* /Y
 
 copy biblatex-map-master\backendtest\*.* bibmap\backendtest\*.* /Y
+
+copy biblatex-map-master\backendtesttabbib\*.* bibmap\backendtesttabbib\*.* /Y
 
 copy biblatex-map-master\mapbibtest\*.* bibmap\mapbibtest\*.* /Y
 

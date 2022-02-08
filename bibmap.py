@@ -262,7 +262,7 @@ def printbibliography():
 						#Baker et~al.(1995) Baker and Jackson
 						break
 			
-			if bibliotableflag=="true":
+			if bibliotableflag!="false":
 				#表格形式
 				if 'labelname' in formatoptions:
 					fout.write(r'\bibitem['+entrycitelabel+']{'+entrykeystr+r'} & '+prtbibentry+r'\\ \hline'+'\n')

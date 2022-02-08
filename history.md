@@ -16,6 +16,11 @@
 		match 大小写区分的matchi
 		
 		
+#### 20220208
+
+1. 增加了一个三栏的表格文献表的示例，见backendtesttabbib文件夹。
+
+		
 #### 20220207
 
 1. bibmap.sty 增加了bibtable选项，用于生成表格形式的文献表。
