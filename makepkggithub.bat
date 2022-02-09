@@ -8,9 +8,13 @@ cd bibmap
 
 mkdir backendtest
 
-mkdir backendtesttabbib
+mkdir backendtest-tabbib
 
 mkdir mapbibtest
+
+mkdir mapbibtest-addpinyinkey
+
+mkdir mapbibtest-authoran
 
 mkdir binary
 
@@ -22,9 +26,13 @@ copy biblatex-map-master\*.* bibmap\*.* /Y
 
 copy biblatex-map-master\backendtest\*.* bibmap\backendtest\*.* /Y
 
-copy biblatex-map-master\backendtesttabbib\*.* bibmap\backendtesttabbib\*.* /Y
+copy biblatex-map-master\backendtest-tabbib\*.* bibmap\backendtest-tabbib\*.* /Y
 
 copy biblatex-map-master\mapbibtest\*.* bibmap\mapbibtest\*.* /Y
+
+copy biblatex-map-master\mapbibtest-addpinyinkey\*.* bibmap\mapbibtest-addpinyinkey\*.* /Y
+
+copy biblatex-map-master\mapbibtest-authoran\*.* bibmap\mapbibtest-authoran\*.* /Y
 
 copy biblatex-map-master\binary\*.* bibmap\binary\*.* /Y
 
