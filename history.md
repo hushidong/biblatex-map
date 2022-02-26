@@ -15,6 +15,9 @@
 		entrynull=true, false default: false
 		match 大小写区分的matchi
 		
+#### 20220226
+
+1. 增加利用条目集方法进行双语对照文献的输出的处理和示例。见backendtest-lanparal文件夹。
 		
 #### 20220208
 
@@ -25,8 +28,6 @@
 
 1. bibmap.sty 增加了bibtable选项，用于生成表格形式的文献表。
 2. 对应的bibmap.PY 增加表格形式的文献表的处理，主要是在输出bbl文件时对每一条文献信息增加表格相关的符号，比如&，\\，\hline等。同时增加输出bibmapciteb信息，用于提供每个参考文献的序号。
-
-
 
 
 #### 20211023

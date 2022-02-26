@@ -4,6 +4,6 @@ del /q *.aux *.bbl *.blg *.log *.out *.toc *.bcf *.xml *.synctex *.nlo *.nls *.b
 
 del /q *.nav *.snm *.vrb *.fls *.xdv *.fdb_latexmk new*.*
 
-del /q  new*.bib new*.json new*.md eg*.bib *.py
+del /q  new*.bib new*.json new*.md eg*.bib *.py *.sty
 
 RD /S /Q __pycache__ 

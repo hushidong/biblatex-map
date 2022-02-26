@@ -245,12 +245,17 @@ def printbibliography():
 			biblabelnumber+=1
 			
 			entrykeystr=entrykey
+
+			#增加对文献条目集的处理
+			entrykey1="NotAsetenty"
+			if entrykey in EntrySet:
+				entrykey1=EntrySet[entrykey][0]
 			
 			entrycitelabel=''
 			#仅当'labelname'选项存在时处理
 			if 'labelname' in formatoptions:
 				for bibentry in bibentries:
-					if bibentry['entrykey']==entrykey:
+					if bibentry['entrykey']==entrykey or bibentry['entrykey']==entrykey1:
 						entryciteauthor=formatlabelauthor(bibentry)
 						if 'labelyear' in bibentry:
 							entryciteyear=bibentry['labelyear']
@@ -276,6 +281,7 @@ def printbibliography():
 		
 	fout.write(r'\end{thebibliography}')
 	fout.close()
+	return None
 
 
 
@@ -714,8 +720,26 @@ def formatallbibliography():
 	for bibentry in newbibentries:
 		bibentrytext=''
 		bibentrytext=formatbibentry(bibentry)
-		bibliographytext[bibentry["entrykey"]]=bibentrytext
+		#为避免后面处理文献条目集的时候顺序出现问题
+		#直接在这里处理将第一个文献的条目entrykey换成条目集的key
+		ekidx,est=EntrykeyinDictV(bibentry["entrykey"],EntrySet)
+		if ekidx==0:
+			bibliographytext[est]=bibentrytext
+		else:
+			bibliographytext[bibentry["entrykey"]]=bibentrytext
+
+	#
+	#5. 条目集处理的，将条目集中除第一个文献外的所有文献文献信息附到第一条文献后面
+	#   然后将第一条文献的entry可以修改为条目集的entrykey，这个在上一步已经处理
+	#   条目集的排序按照第一条文献的排序即可
+	#   注意通常文献集，及其内部的文献是不会同时引用的，因为这是没有必要的。
+	for est,ekl in EntrySet.items():
+		for ek in ekl[1:]:
+			bibliographytext[est]=bibliographytext[est]+"\\entrysetpunct{}"+bibliographytext.pop(ek)
 		
+
+	#
+	# 最后输出	
 	print('\nReferecences:','\n'+'-'.center(50,'-'))
 	entryidtemp=0
 	for k,v in bibliographytext.items():
@@ -723,6 +747,16 @@ def formatallbibliography():
 		print('entry id=',entryidtemp,' bibtexkey="'+k+'"\n'+v,'\n'+'-'.center(50,'-'))
 		
 	return None
+
+# 用于查找entrykey在字典的各个项的value中的位置，value是一个list
+def EntrykeyinDictV(entrykey,infodict):
+	for est,ekl in infodict.items():
+		for i in range(len(ekl)):
+			if entrykey ==ekl[i]:
+				return i,est
+	return -1,None
+
+ 
 
 	
 #
@@ -3150,7 +3184,9 @@ def readfilecontents(bibFile):
 
 	global bibfilecontents
 	global usedIds
+	global EntrySet
 	
+	EntrySet={}
 	print("INFO: Reading references from '" + bibFile + "'")
 	try:
 		fIn = open(bibFile, 'r', encoding="utf8")
@@ -3174,10 +3210,21 @@ def readfilecontents(bibFile):
 							break
 					if setemptyflag:
 						break
+				#20220226-增加将对文献集的判断
+				if line.startswith("\\bibmap@entryset"):
+					stemp=re.search(".*{(.*?)}.*{(.*?)}",line)
+					est=stemp.group(1)
+					ekl=stemp.group(2).split(',')
+					EntrySet[est]=ekl
+					for ek in ekl:
+						usedIds.add(ek.strip())
+					if est in usedIds:
+						usedIds.remove(est)
 			if setemptyflag:#当存在*时，表示引用所有文献，因此直接设置usedIds为空即可
 				usedIds = set()
 			fInAux.close()
 		print('references:',usedIds)
+		print('refentryset',EntrySet)
 		
 	except IOError:
 		print("ERROR: Input bib file '" + bibFile +
@@ -3507,7 +3554,7 @@ def bibentryparsing():
 	#输出解析后的bib文件信息
 	#for bibentryi in bibentries:
 		#print(bibentryi)
-
+	return None
 
 #
 #打印bibentries列表中的所有条目
@@ -4249,6 +4296,8 @@ def bibmapinput():
 		#检查bib样式格式设置信息
 		checkbibliographystyle()
 		
+		#-------------------------------
+		#实际处理逻辑不复杂主要是如下几个函数
 		#读取bib和aux文件信息
 		readfilecontents(inputbibfile)
 		

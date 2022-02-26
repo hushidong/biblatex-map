@@ -10,6 +10,8 @@ mkdir backendtest
 
 mkdir backendtest-tabbib
 
+mkdir backendtest-lanparal
+
 mkdir mapbibtest
 
 mkdir mapbibtest-addpinyinkey
@@ -27,6 +29,8 @@ copy biblatex-map-master\*.* bibmap\*.* /Y
 copy biblatex-map-master\backendtest\*.* bibmap\backendtest\*.* /Y
 
 copy biblatex-map-master\backendtest-tabbib\*.* bibmap\backendtest-tabbib\*.* /Y
+
+copy biblatex-map-master\backendtest-lanparal\*.* bibmap\backendtest-lanparal\*.* /Y
 
 copy biblatex-map-master\mapbibtest\*.* bibmap\mapbibtest\*.* /Y
 

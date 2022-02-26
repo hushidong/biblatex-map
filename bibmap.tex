@@ -177,7 +177,7 @@ bibmap宏包可用的选项包括:
       \end{texlist}
 
       如果要修改表格中输出的内容形式，比如3栏或者序号变成为姓名等，则需要修改样式文件，在每个条目的输出文本中增加\verb| & |来增加栏数，比如文件 bibstyletabthreecols.py 就是一个针对三栏输出的样式，其著录格式文本是将作者作为单独一栏进行处理。
-      
+
 
   \item[mapstyle] 用于指定参考文献数据修改样式，主要包括default，或者其它用户自定义的样式。设置default时调用宏包自带的bibmapdefault.py对bib文件进行修改。当指定用户自定义的样式时则给出样式文件的文件名，比如mapstyle=userdatamap，表示调用userdatamap.py 样式文件来修改bib文件。
 \end{description}
@@ -204,6 +204,13 @@ bibmap宏包可用的选项包括:
   \item[\textbackslash bmpmapstyle]
   \verb|\bmpmapstyle|可以用来局部设置bib文件修改的样式，比如在某一章中需要使用自定义的userdefinedmap.py 样式，
   那么可以设置\verb|\bmpbibstyle{userdefinedmap.py}|。bibmap程序处理时将局部调用userdefinedmap.py进行数据修改。主要用于分章文献中。
+  
+  \item[\textbackslash defbibentryset]
+  \verb|\defbibentryset|可以用来设置文献条目集，可以用于多语言对照的文献表。
+   比如：命令\verb|\defbibentryset{bilangyi2013}{易仕和2013--,Yi2013--}|，就是将两篇文献：易仕和2013--,Yi2013-- 设置为一个文献集bilangyi2013，当引用bilangyi2013的时候就会将集内两条文献的信息合并输出。两个文献之间的间隔符可以用
+   \verb|\def\entrysetpunct{\newline}|重新定义。\verb|\defbibentryset|命令既可以在导言区使用也可以在正文使用。
+ 
+  
 \end{description}
 
 
