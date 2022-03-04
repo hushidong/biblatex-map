@@ -8,6 +8,7 @@ formatoptions={
 "style":'numeric',#这个选项目前暂无功能
 "nameformat":'uppercase',#姓名处理选项：uppercase,lowercase,given-family,family-given,pinyin
 "giveninits":'space',#使用名的缩写，space表示名见用空格分隔，dotspace用点加空格，dot用点，terse无分隔，false不使用缩写
+"useprefix":False,#使用前缀名
 "usesuffix":True,#使用后缀名
 "maxbibnames":3,#
 "minbibnames":3,#

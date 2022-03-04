@@ -6,7 +6,7 @@
 sourcemaps=[
 	[#map1:将设置title为sentencecase
 		{"fieldsource":"title","final":True},#
-		{"fieldset":"title","origfieldval":True,"fieldfunction":'setsentencecase',"overwrite":True}#step1
+		{"fieldset":"title","origfieldval":True,"fieldfunction":'settitlecase',"overwrite":True}#step1
 	],
 	[#map2:将设置booktitle为titlecase
 		{"fieldsource":"booktitle","final":True},#

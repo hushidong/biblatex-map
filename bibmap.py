@@ -3359,7 +3359,7 @@ def bibentryparsing():
 	
 	for line in bibfilecontents:#遍历所有行
 		#print(line)
-		
+		line=line.lstrip()
 		if line.startswith("@") and not "@comment" in line.lower() and not "@string" in line.lower():#判断条目开始行
 			entrysn=entrysn+1
 			entrystated=True #新条目开始
@@ -4300,9 +4300,12 @@ def bibmapinput():
 		#实际处理逻辑不复杂主要是如下几个函数
 		#读取bib和aux文件信息
 		readfilecontents(inputbibfile)
+		print('read bib file: {} ... successfully'.format(inputbibfile))
 		
 		#bib文件解析
 		bibentryparsing()
+		print('parse bib file: {} ... successfully'.format(inputbibfile))
+
 		
 		if inputfiles['nobdm']:
 			pass
