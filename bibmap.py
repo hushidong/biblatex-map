@@ -3190,8 +3190,35 @@ def readfilecontents(bibFile):
 	print("INFO: Reading references from '" + bibFile + "'")
 	try:
 		fIn = open(bibFile, 'r', encoding="utf8")
-		bibfilecontents=fIn.readlines()
+		bibfilecontents=fIn.readlines() #读进来后就构成了字符串列表
 		fIn.close()
+		#print(type(bibfilecontents))
+
+		#先将bib文件格式化，即将有的连接在一起的行分开。
+		#做两个步骤：
+		#1. 先根据},分行
+		#2. 再根据",分行
+		tmp_bibfilecontents=[]
+		for line in bibfilecontents:
+			if re.search('}\s*?,',line):
+				l_AllSubstr=re.split('}\s*?,',line)
+				for subline in l_AllSubstr:
+					if subline.strip():
+						tmp_bibfilecontents.append(subline+"},\n")
+			else:
+				tmp_bibfilecontents.append(line)
+		bibfilecontents=tmp_bibfilecontents
+		tmp_bibfilecontents=[]
+		for line in bibfilecontents:
+			if re.search('\"\s*?,',line):
+				l_AllSubstr=re.split('\"\s*?,',line)
+				for subline in l_AllSubstr:
+					if subline.strip():
+						tmp_bibfilecontents.append(subline+"\",\n")
+			else:
+				tmp_bibfilecontents.append(line)
+		bibfilecontents=tmp_bibfilecontents
+		#anykey=input()
 		
 		#当使用nocite{*}引用全部文献时做的标记，全部引用则设置setemptyflag=True
 		#便于后面处理，比如将usedIds直接置空，表示引用全部的文献。
