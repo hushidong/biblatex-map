@@ -15,6 +15,11 @@
 		entrynull=true, false default: false
 		match 大小写区分的matchi
 		
+
+#### 20220424		
+
+1. 增加将bib文件转换为标准的bibtex的map样式：bibmaptobibtex.py。测试见mapbibtest-tobibtex文件夹
+		
 #### 20220226
 
 1. 增加利用条目集方法进行双语对照文献的输出的处理和示例。见backendtest-lanparal文件夹。

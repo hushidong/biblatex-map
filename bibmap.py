@@ -63,8 +63,8 @@ bibmapoptiondatabase={
 'origentrytype':[True,False], #对应的值为 true, false(bool值)
 'origfieldval':[True,False], #对应的值为 true, false(bool值)
 'overwrite':[True,False],#对应的值为 true, false(bool值)
-'fieldfunction':['sethzpinyin','sethzstroke','setsentencecase','settitlecase','setuppercase',
-'setlowercase','setsmallcaps','setalltitlecase','setauthoran'], #对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。
+'fieldfunction':['sethzpinyin','sethzstroke','setsentencecase','settitlecase','settitlecasestd','setuppercase',
+'setlowercase','setsmallcaps','setalltitlecase','setauthoran','setdatetoymd'], #对应的值为用户指定的函数名，目前提供的函数主要是:sethzpinyin。
 #在域内容处理时，当给出'fieldfunction':'sethzpinyin'选项时，程序会调用sethzpinyin函数以域内容为参数，输出其对应的拼音。'sethzstroke'设置用于排序的笔画顺序字符串。
 }
 
@@ -2734,6 +2734,9 @@ def setalltitlecase(fieldstring):
 	return mkstrtitlecase(fieldstring)
 
 def settitlecase(fieldstring):
+	return mkstrtitlecase(fieldstring)
+
+def settitlecasestd(fieldstring):
 	return mkstrtitlecasestd(fieldstring)
 
 def setuppercase(fieldstring):
@@ -2839,7 +2842,7 @@ def mkstrtitlecasestd(fieldstring):
 	
 	#需要保护的字符串，如介词、连词等
 	#主要是：不在句首的冠词、介词、连词和作为不定式的to
-	protectstr=['a','an','the', 'for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'on','in','of','and','to', 'at','around','by','after','along','for','from','with','without']
+	protectstr=['a','an','the', 'for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'on','in','of','and','to', 'at','around','by','after','along','for','from','with','without']+caseprotectstrs
 	ndtransstr=['A','An','The', 'For', 'And', 'Nor', 'But', 'Or', 'Yet', 'So', 'On','In','Of','And','To', 'At','Around','By','After','Along','For','From','With','Without']
 
 
@@ -2876,7 +2879,10 @@ def mkstrtitlecasestd(fieldstring):
 #
 #没有对介词等进行保护
 def mkstrtitlecase(fieldstring):
-	#首先查找{}保护的所有字符串
+	#查找命令和{}保护的所有字符串
+	#思路是存储信息并利用替换进行保护
+
+	#保护:命令
 	s0=re.findall(r'\\.*?\{.*?\}',fieldstring)
 	
 	a=fieldstring
@@ -2886,6 +2892,7 @@ def mkstrtitlecase(fieldstring):
 			strsn=strsn+1
 			a=a.replace(stra1,'$'+str(strsn)+'$')
 
+	#保护:{}内容
 	s1=re.findall('\{.*?\}',a)
 	
 	if s1:
@@ -2895,8 +2902,39 @@ def mkstrtitlecase(fieldstring):
 			strsn=strsn+1
 			a=a.replace(stra1,'$'+str(strsn)+'$')
 	
+	#需要保护的字符串，如介词、连词等
+	#主要是：不在句首的冠词、介词、连词和作为不定式的to
+	protectstr=[]+caseprotectstrs
+	print('protectstr',protectstr)
+	ndtransstr=[]
+
+	flg_alluppercase=False
+	if a==a.upper():
+		flg_alluppercase=True
+	print('flg_alluppercase',flg_alluppercase)
+
 	#对字符串做大小写变换:
-	a=a.title()
+	b=a.split(" ")
+	print('b=',b)
+	c=[]
+	for s2 in b:
+		if s2 in protectstr:
+			c.append(s2)
+		elif s2 in ndtransstr:
+			c.append(s2.lower())
+		else:
+			print('s2=',s2,s2[0] == s2[0].upper(),flg_alluppercase)
+			if s2[0] == s2[0].upper() and (not flg_alluppercase):
+				print('not change')
+				c.append(s2)
+			else:
+				print('change')
+				c.append(s2.title())
+	if (c[0] not in protectstr) and (c[0][0] != c[0][0].upper() and (not flg_alluppercase) ):
+		c[0]=c[0].title()
+	a=" ".join(c)
+	#a=a.title()
+	print('a=',a)
       
 	#对字符串做还原	  
 	if s1:
@@ -2913,6 +2951,8 @@ def mkstrtitlecase(fieldstring):
 			
 	strtoreturn=a
 	return strtoreturn
+
+
 
 def mkstruppercase(fieldstring):
 
@@ -3113,6 +3153,8 @@ def datetoymd(bibentry,fieldsource):
 		datepartinfo=[datestring]
 	else:
 		datepartinfo=datestring.split('-')
+	print('-------')
+	print('datepartinfo=',datepartinfo)
 	
 	if len(datepartinfo)==3:
 		dateparts[datetype+'year']=datepartinfo[0].strip()
@@ -3764,6 +3806,7 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
 			setcontinue=False
 	print(setcontinue)
 	
+	dateparsdtoymd={}
 	if setcontinue:
 		
 		appdelim=',' #设置一个默认的添加信息前面的分隔符
@@ -3808,6 +3851,8 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
 					fieldvalue=setsentencecase(fieldvalue)
 				elif fieldfunction=='settitlecase':
 					fieldvalue=settitlecase(fieldvalue)
+				elif fieldfunction=='settitlecasestd':
+					fieldvalue=settitlecasestd(fieldvalue)
 				elif fieldfunction=='setalltitlecase':
 					fieldvalue=setalltitlecase(fieldvalue)
 				elif fieldfunction=='setuppercase':
@@ -3819,6 +3864,9 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
 				elif fieldfunction=='setauthoran':#给作者添加annotaion信息
 					#参数：要设置的说明信息，作者域的内容，需要设置说明的作者名
 					fieldvalue=setauthoran(fieldvalue,fieldsrcinfo['fieldsrcraw'],fieldsrcinfo['fieldmatch'])
+				elif fieldfunction=='setdatetoymd':#修改日期
+					#print('setdatetoymd',bibentry,fieldset)
+					dateparsdtoymd,_=datetoymd(bibentry,fieldset)
 				else:
 					print('WARNING: field function "'+fieldfunction+'" for mapping is not defined!')
 			
@@ -3840,6 +3888,13 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
 					pass
 				else:
 					bibentry[fieldset]=fieldvalue
+			
+			#转换为year，month，day日期
+			if dateparsdtoymd:
+				bibentry.pop(fieldset)
+				for k,v in dateparsdtoymd.items():
+					bibentry[k]=v
+
 			return 1
 		
 	else:
@@ -4238,6 +4293,8 @@ def bibmapinput():
 	global datatypeinfo
 	#条目的著录格式
 	global bibliographystyle
+
+	global caseprotectstrs
 	
 	
 	#当主文档存在inputbibfile时，那么做主文档的处理
@@ -4262,6 +4319,11 @@ def bibmapinput():
 			sourcemaps=mapmodule.sourcemaps
 		else:
 			sourcemaps=[]
+
+		if 'CaseProtect' in dir(mapmodule):
+			caseprotectstrs=mapmodule.CaseProtect
+		else:
+			caseprotectstrs=[]
 
 		print("1",sourcemaps)
 		#2021-05-24,hzz,v1.0c

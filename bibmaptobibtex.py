@@ -1,0 +1,75 @@
+
+#
+#数据修改的设置
+#
+#注意：域如果不存在且需要终止，应加上"final":True
+
+# 大小写字母保护的字符串
+CaseProtect=['IEEE','AAAI',"GECCO\'18","ACML"] 
+
+sourcemaps=[
+	[#map1:将设置title为sentencecase
+		{"fieldsource":"title","final":True},#
+		{"fieldset":"title","origfieldval":True,"fieldfunction":'setsentencecase',"overwrite":True}#step1
+	],
+	[#map1:将设置title为sentencecase
+		{"fieldsource":"author","final":True},#
+		{"fieldset":"author","origfieldval":True,"fieldfunction":'settitlecasestd',"overwrite":True}#step1
+	],
+	[#map2:将设置booktitle为titlecase
+		{"fieldsource":"booktitle","final":True},#
+		{"fieldset":"booktitle","origfieldval":True,"fieldfunction":'settitlecase',"overwrite":True}#step1
+	],
+	[#map2:将location域转换为address域
+		{"fieldsource":"journaltitle","fieldtarget":"journal"}#step1
+	],
+	[#map3:将设置journal为titlecase
+		{"fieldsource":"journal","final":True},#
+		{"fieldset":"journal","origfieldval":True,"fieldfunction":'settitlecase',"overwrite":True}#step1
+	],
+	[#map2:将location域转换为address域
+		{"fieldsource":"location","fieldtarget":"address"}#step1
+	],
+	[#map1:将设置title为sentencecase
+		{"pertype":"inproceedings"},#
+		{"pertype":"proceedings"},#
+		{"pertype":"proceedings"},#
+		{"fieldsource":"institution","fieldtarget":"organization"}#step1
+	],
+	[#map1:将设置title为sentencecase
+		{"pertype":"incollection"},#
+		{"fieldsource":"institution","fieldtarget":"publisher"}#step1
+	],
+	[#map1:将设置title为sentencecase
+		{"pertype":"thesis"},#
+		{"fieldsource":"type","match":'phdthesis',"final":True},#step1
+		{"typesource":"thesis","typetarget":"phdthesis"}
+	],
+	[#map1:将设置title为sentencecase
+		{"pertype":"thesis"},#
+		{"fieldsource":"type","match":'mastersthesis',"final":True},#step1
+		{"typesource":"thesis","typetarget":"mastersthesis"}
+	],
+	[
+		{"typesource":"report","typetarget":"techreport"}		
+	],
+	[
+		{"pertype":"techreport"},#
+		{"fieldsource":"publisher","fieldtarget":"institution"},
+		{"fieldsource":"organization","fieldtarget":"institution"}
+	],
+	[#map1:将设置title为sentencecase
+		{"pertype":"phdthesis"},#
+		{"pertype":"mastersthesis"},#
+		{"fieldsource":"publisher","fieldtarget":"school"},
+		{"fieldsource":"institution","fieldtarget":"school"},
+		{"fieldsource":"organization","fieldtarget":"school"},
+	],
+	[#map1:将设置title为sentencecase
+		{"fieldsource":"date","final":True},#
+		{"fieldset":"date","origfieldval":True,"fieldfunction":'setdatetoymd',"overwrite":True}#step1
+	]
+]
+
+#默认不做修改
+#sourcemaps=[]
