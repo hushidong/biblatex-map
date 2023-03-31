@@ -141,7 +141,7 @@ def printbibliography():
 	global subauxfilelist,subbibfilelist,substyfilelist,submapfilelist #主文档包含的子文档的aux文件
 
 	#md文件输出,直接用write写
-	mdoutfile="newformatted"+inputbibfile.replace('.bib','.txt')
+	mdoutfile=inputbibfile.replace('.bib','newformatted.txt')
 	fout = open(mdoutfile, 'w', encoding="utf8")
 	print("INFO: writing cited references to '" + mdoutfile + "'")
 	
@@ -174,7 +174,7 @@ def printbibliography():
 	fout.close()
 	
 	#html文件输出,直接用write写
-	mdoutfile="newformatted"+inputbibfile.replace('.bib','.html')
+	mdoutfile=inputbibfile.replace('.bib','newformatted.html')
 	fout = open(mdoutfile, 'w', encoding="utf8")
 	print("INFO: writing cited references to '" + mdoutfile + "'")
 	fout.write('<html><head><title>references</title></head>')
@@ -3315,14 +3315,14 @@ def writefilenewbib(bibFile):
 	print(datetime.datetime.now().isoformat(timespec='seconds'))
 	
 	#json文件输出,用dump方法
-	jsonoutfile="new"+bibFile.replace('.bib','.json')
+	jsonoutfile=bibFile.replace('.bib','new.json')
 	print("INFO: writing all references to '" + jsonoutfile + "'")
 	fout = open(jsonoutfile, 'w', encoding="utf8")
 	json.dump(bibentries, fout)
 	fout.close()
 	
 	#json文件输出，仅输出被引用的文献,直接用write写
-	jsonoutfile="new"+bibFile.replace('.bib','cited.json')
+	jsonoutfile=bibFile.replace('.bib','newcited.json')
 	fout = open(jsonoutfile, 'w', encoding="utf8")
 	print("INFO: writing cited references to '" + jsonoutfile + "'")
 	fout.write('[\n')
@@ -3333,7 +3333,7 @@ def writefilenewbib(bibFile):
 	fout.close()
 
 	#bib文件输出
-	biboutfile="new"+bibFile
+	biboutfile=bibFile.replace('.bib','new.bib')
 	
 	try:
 		fout = open(biboutfile, 'w', encoding="utf8")
@@ -3388,7 +3388,7 @@ def writefilenewbib(bibFile):
 		fout.close()
 		print("INFO: " + str(writebibentrycounter) + " references writed")
 	except IOError:
-		print("ERROR: Input bib file '" + bibFile +
+		print("ERROR: Output bib file '" + bibFile +
 				"' doesn't exist or is not readable")
 		sys.exit(-1)
 		
@@ -4095,7 +4095,9 @@ def bibmapinput():
 	
 	#解析命令行参数
 	args=parser.parse_args()
-	inputfiles=vars(args)
+	print('prog=',sys.argv[0])
+	inputfiles=vars(args) #内置函数 vars() 用字典形式返回对象的 __dict__ 属性。
+
 	print(inputfiles)
 	#s = input('press any key to continue:')
 	
@@ -4104,37 +4106,51 @@ def bibmapinput():
 	#1.首先判断必选参数
 	if '.bib' in inputfiles['filename']:
 		inputbibfile=inputfiles['filename']
+		bibfiledir,bibfilename=os.path.split(inputbibfile)
 	elif '.aux' in inputfiles['filename']:
 		inputauxfile=inputfiles['filename']
+		auxfiledir,auxfilename=os.path.split(inputauxfile)
 	else:
 		inputauxfile=inputfiles['filename']+'.aux'
+		auxfiledir,auxfilename=os.path.split(inputauxfile)
+	
+	
 		
 	#2.接着判断可选参数
 	#可选参数可以覆盖默认参数
 	if inputfiles['auxfile'] and not inputauxfile:
 		if '.aux' in inputfiles['auxfile']:
 			inputauxfile=inputfiles['auxfile']
+			auxfiledir,auxfilename=os.path.split(inputauxfile)
 		else:
 			inputauxfile=inputfiles['auxfile']+'.aux'
+			auxfiledir,auxfilename=os.path.split(inputauxfile)
 		
 	if inputfiles['bibfile'] and not inputbibfile:
 		if '.bib' in inputfiles['bibfile']:
 			inputbibfile=inputfiles['bibfile']
+			bibfiledir,bibfilename=os.path.split(inputbibfile)
 		else:
 			inputbibfile=inputfiles['bibfile']+'.bib'
+			bibfiledir,bibfilename=os.path.split(inputbibfile)
 			
 	if inputfiles['styfile']:
 		inputstyfile=inputfiles['styfile']
 			
 	if inputfiles['mapfile']:
 		inputmapfile=inputfiles['mapfile']
-		
+	
+
 	#把当前路径加入到sys.path中便于python加载当前目录下的模块
+	programfile=sys.argv[0]
+	progfiledir,progfilename=os.path.split(programfile)
+	sys.path.append(progfiledir) 
 	print('sys.path=',sys.path)
 	print('current path=',os.getcwd())
 	pathtoadd=os.getcwd()
 	sys.path.append(pathtoadd)
 	print('sys.path=',sys.path)
+
 
 	# print('aux:',inputauxfile)
 	# print('bib:',inputbibfile)

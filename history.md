@@ -15,6 +15,20 @@
 		entrynull=true, false default: false
 		match 大小写区分的matchi
 		
+#### 20230331		
+
+1. 增加对路径的新处理，使得工作目录不限。
+
+比如：可以在bib目录下指定bibmap.py或exe的路径来用。
+```
+ D:\work-latex\test\test-addkey>python "D:\work-latex\bibmap\biblatex-map-master\bibmap.py" egcitenum1.bib --nofmt --addpinyin
+```
+又或者可以：在py或exe目录下指定bib文件的路径来用：
+```
+D:\work-latex\bibmap\biblatex-map-master>python bibmap.py D:\work-latex\test\test-addkey\egcitenum2.bib --nofmt --addpinyin
+```
+无论何种方式都不会改变新生成的文件存储路径，即存在原文件所在的目录下。
+
 
 #### 20220424		
 
