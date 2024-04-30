@@ -14,6 +14,32 @@
 		entrynocite=true, false default: false
 		entrynull=true, false default: false
 		match 大小写区分的matchi
+        
+        
+#### 20240429		
+
+1. 修正了bib文件中条件结束的右花括号不再单独一行的问题。
+
+2. 修正了多行的域值中非首行内容的行首空格全被去除的问题。
+
+3. 增加了对于作者列表中以;加空格作为间隔符的处理。
+
+4. 修正bibmap.sty中弃用ProcessKeysOptions到新的ProcessKeyOptions命令
+
+5. 修正了mktitlecasestd函数中对于xa0字符的处理，对于中文字符串内的英文的保护，增加了一些保护词。注意：默认情况下字符串中以空格分割出来的词才会被保护词保护。
+
+6. 增加了一个保护'后面的字符避免其被大写的函数titlecaseudf
+
+7. 每个文件夹增加了readme说明
+
+8. 增加了Pinyin-modified-di.pm，Pinyin-modified-zhai.pm，Pinyin-origin.pm三个文件用于修改biber的排序，放这里便于下载。
+
+9. 将mod函数改为%，似乎mod函数用不了，应该是python版本问题
+
+
+
+        
+        
 		
 #### 20230331		
 

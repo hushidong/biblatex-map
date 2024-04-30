@@ -133,6 +133,7 @@ inputmapfile=''
 bibliotableflag='false' #输出表格形式的参考文献表的内容的标识
 
 
+
 #
 #
 #打印格式化后的全部文献条目文本
@@ -522,7 +523,11 @@ def formatallbibliography():
 		elif 'title' in bibentry:#若不存在则首先title域做判断
 			language=languagejudgement(bibentry,'title')
 			bibentry['language']=language
-		print('language of bibentry: ',bibentry['entrykey'],' is: ',bibentry['language'])
+		if 'language' in bibentry:
+			print('language of bibentry: ',bibentry['entrykey'],' is: ',bibentry['language'])
+		else:
+			print('language of bibentry: ',bibentry['entrykey'],' is: none')
+		
 		
 	#
 	#2.1 姓名列表的歧义的处理，先于排序
@@ -1080,6 +1085,7 @@ def dealambiguity(newbibentries):
 	#1.1 根据基本选项判断原始状态下是否需要存在有歧义的文献
 	labelnamerawstrs={}
 	for bibentry in newbibentries:
+		#print(f'{bibentry=}')
 		
 		#1. 计算姓名原始总数和截断后的总数
 		rawlabelnames=bibentry['labelnameraw']
@@ -1376,7 +1382,7 @@ def labelnamelistparser(bibentry,fieldsource):
 
 	#首先姓名列表进行分解，包括用' and '和' AND '做分解
 	#利用safetysplit函数实现安全的分解
-	seps=[' and ',' AND ']
+	seps=[' and ',' AND ', "; "]#增加一个对;的解析
 	fieldcontents=fieldcontents.strip()
 	fieldauthors=safetysplit(fieldcontents,seps)
 
@@ -1989,7 +1995,7 @@ def citenamelistparser(bibentry,fieldsource,options):
 
 	#首先姓名列表进行分解，包括用' and '和' AND '做分解
 	#利用safetysplit函数实现安全的分解
-	seps=[' and ',' AND ']
+	seps=[' and ',' AND ', "; "]#增加一个对;的解析
 	fieldcontents=fieldcontents.strip()
 	fieldauthors=safetysplit(fieldcontents,seps)
 
@@ -2135,7 +2141,7 @@ def namelistparser(bibentry,fieldsource,options):
 
 	#首先姓名列表进行分解，包括用' and '和' AND '做分解
 	#利用safetysplit函数实现安全的分解
-	seps=[' and ',' AND ']
+	seps=[' and ',' AND ', "; "]#增加一个对;的解析
 	fieldcontents=fieldcontents.strip()
 	fieldauthors=safetysplit(fieldcontents,seps)
 
@@ -2813,10 +2819,33 @@ def mkstrsetencecase(fieldstring):
 	strtoreturn=a
 	return strtoreturn
 
+#首字母大写其它不变的函数
+def capitalize_first_letter(s):
+	if len(s)>1:
+		return s[0].upper() + s[1:]
+	elif len(s)==1:
+		return s[0].upper()
+	else:
+		return s
+
+#判断单词中是否包含数字
+def contains_digit(s):
+    return any(char.isdigit() for char in s)
+
+
+#增加titlecase处理函数用于保证'后的字符不会被大写
+def titlecaseudf(s):
+	#return re.sub("[A-Za-z]+((\-|\')[A-Za-z]+)?",lambda mo: mo.group(0).capitalize(),s)
+	return re.sub("[A-Za-z]+(\'[A-Za-z]+)?",lambda mo: mo.group(0).capitalize(),s)
+
 
 #
 #增加对介词等进行保护
 def mkstrtitlecasestd(fieldstring):
+
+	if fieldlanguage(fieldstring) in ['chinese','japanese','korean']:
+		return fieldstring #当英文字符串是在中文中间时不变化其大小写
+	
 	#查找命令和{}保护的所有字符串
 	#思路是存储信息并利用替换进行保护
 
@@ -2828,7 +2857,7 @@ def mkstrtitlecasestd(fieldstring):
 		strsn=0
 		for stra1 in s0:
 			strsn=strsn+1
-			a=a.replace(stra1,'$'+str(strsn)+'$')
+			a=a.replace(stra1,'@'+str(strsn)+'@') #@符号不常用，所以用来做标记字符而$是数学公式符号，有些字符串中是存在的
 
 	#保护:{}内容
 	s1=re.findall('\{.*?\}',a)
@@ -2838,40 +2867,55 @@ def mkstrtitlecasestd(fieldstring):
 		strsn=len(s0)
 		for stra1 in s1:
 			strsn=strsn+1
-			a=a.replace(stra1,'$'+str(strsn)+'$')
+			a=a.replace(stra1,'@'+str(strsn)+'@')
 	
 	#需要保护的字符串，如介词、连词等
 	#主要是：不在句首的冠词、介词、连词和作为不定式的to
-	protectstr=['a','an','the', 'for', 'and', 'nor', 'but', 'or', 'yet', 'so', 'on','in','of','and','to', 'at','around','by','after','along','for','from','with','without']+caseprotectstrs
-	ndtransstr=['A','An','The', 'For', 'And', 'Nor', 'But', 'Or', 'Yet', 'So', 'On','In','Of','And','To', 'At','Around','By','After','Along','For','From','With','Without']
+	protectstr=['a','an','the', 'for', 'and', 'with','nor', 'but', 'or', 'via','yet', 'so', 'on','in','of','and','to', 'at','around','by','after','along','for','from','with','without']+caseprotectstrs
+	ndtransstr=['A','An','The', 'For', 'And', 'With','Nor', 'But', 'Or', 'Via','Yet', 'So', 'On','In','Of','And','To', 'At','Around','By','After','Along','For','From','With','Without']
 
+	#将字符串中的xa0字符切换成空格即x20
+	a=a.replace("\xa0"," ")
 
 	#对字符串做大小写变换:
-	b=a.split(" ")
-	c=[]
-	for s2 in b:
-		if s2 in protectstr:
-			c.append(s2)
-		elif s2 in ndtransstr:
-			c.append(s2.lower())
-		else:
-			c.append(s2.title())
-	c[0]=c[0].title()
-	a=" ".join(c)
-	#a=a.title()
+	#首先根据冒号将句子分为两个部分
+	twoparts=a.split(":")
+	twopartsnew=[]
+	for a1 in twoparts:
+		#然后对每个部分做处理
+		b=re.split('(\x20|\/|\-|\(|\))',a1.strip()) #保留间隔符 而不像a.split(" ")那样去掉间隔符
+		c=[]
+		for s2 in b:
+			if s2 in protectstr:
+				c.append(s2)
+			elif s2 in ndtransstr:
+				c.append(s2.lower())
+			elif contains_digit(s2):
+				c.append(s2)
+			else:
+				c.append(titlecaseudf(s2))
+			#print(f'{s2=}',c[-1])
+
+		#句首大写
+		c[0]=capitalize_first_letter(c[0])  #capitalize() 函数会让首字母外的字符变小写
+		a="".join(c)
+		twopartsnew.append(a)
+		#a=a.title()
+	a=': '.join(twopartsnew)
+	
       
 	#对字符串做还原	  
 	if s1:
 		strsn=len(s0)
 		for stra1 in s1:
 			strsn=strsn+1
-			a=a.replace('$'+str(strsn)+'$',stra1)
+			a=a.replace('@'+str(strsn)+'@',stra1)
 	
 	if s0:
 		strsn=0
 		for stra1 in s0:
 			strsn=strsn+1
-			a=a.replace('$'+str(strsn)+'$',stra1)
+			a=a.replace('@'+str(strsn)+'@',stra1)
 			
 	strtoreturn=a
 	return strtoreturn
@@ -2923,13 +2967,14 @@ def mkstrtitlecase(fieldstring):
 		elif s2 in ndtransstr:
 			c.append(s2.lower())
 		else:
-			print('s2=',s2,s2[0] == s2[0].upper(),flg_alluppercase)
-			if s2[0] == s2[0].upper() and (not flg_alluppercase):
-				print('not change')
-				c.append(s2)
-			else:
-				print('change')
-				c.append(s2.title())
+			if s2:
+				print('s2=',s2,s2[0] == s2[0].upper(),flg_alluppercase)
+				if s2[0] == s2[0].upper() and (not flg_alluppercase):
+					print('not change')
+					c.append(s2)
+				else:
+					print('change')
+					c.append(s2.title())
 	if (c[0] not in protectstr) and (c[0][0] != c[0][0].upper() and (not flg_alluppercase) ):
 		c[0]=c[0].title()
 	a=" ".join(c)
@@ -3428,18 +3473,34 @@ def bibentryparsing():
 	
 	for line in bibfilecontents:#遍历所有行
 		#print(line)
-		line=line.lstrip()
-		if line.startswith("@") and not "@comment" in line.lower() and not "@string" in line.lower():#判断条目开始行
+		if line.lstrip().startswith("@") and not "@comment" in line.lower() and not "@string" in line.lower():#判断条目开始行
+			
+			if entrystated:#前一个条目尚未结束，可能是没有检测到}
+				#但已经到新的条目了，所以要先把的条目结束
+				print('entry:',bibentry)
+				bibentries.append(bibentry)
+				bibentry={}
+				
+			#新条目开始
 			entrysn=entrysn+1
-			entrystated=True #新条目开始
-			#print('entry No.=',entrysn)
 			entrynow=line.lstrip('@').split(sep='{', maxsplit=1)
-			#print(entrynow)
 			entrytype=entrynow[0]
-			bibentry['entrytype']=entrytype.lower()#条目类型小写，方便比较
 			entrykey=entrynow[1].split(sep=',', maxsplit=1)[0]
+
+			entrystated=True #新条目开始
+			bibentry['entrytype']=entrytype.lower()#条目类型小写，方便比较
 			bibentry['entrykey']=entrykey
 			bibentry['entrysn']=entrysn
+			
+			'''
+			print(f'{entrystated=}')
+			print('entry No.=',entrysn)
+			print(entrynow)
+			print(f'{entrykey=}')
+			print(f'{entrysn=}')
+			print('print anykey to continue')
+			anykey=input()
+			'''
 		elif entrystated: #只有新条目开始了才有意义
 
 			if fieldvalended: #当前行不是前面的未结束域的值
@@ -3519,7 +3580,7 @@ def bibentryparsing():
 					
 			else: #当前行是前面的未结束域的值，因此直接往前面的域值添加即可
 				fieldvalcontinued=True
-
+				
 				entryfieldline=line
 				
 				if enclosenone:#当域没有包围符号时，接续的行可能是用逗号结束的域，也可能没有逗号，而用}直接结束条目信息
@@ -3550,10 +3611,20 @@ def bibentryparsing():
 					#接续的行可能存在大量的空格，所以先进行处理使得多个空格或tab转换成一个空格
 					#只要做strip后不存在在字符，那么该字符必然是空格
 					#2019.04.09，hzz
-					if not entryfieldline[0].strip():
-						entryfieldline=' '+entryfieldline.strip()
+					entryfieldlineaddspace=''
+					if not entryfieldline[0].strip(): #存在空格
+						#print('space exist')
+						entryfieldlineaddspace=' '+entryfieldline.strip()
+					else:
+						#print('space not exist')
+						if entryfield in ['author','editor','translator','bookauthor']:
+							entryfieldlineaddspace=' '+entryfieldline.strip()
+						else:# 默认还是加一个空格的好
+							entryfieldlineaddspace=' '+entryfieldline.strip()
+
+					#print(f'{entryfieldlineaddspace=}')
 					
-					for chari in entryfieldline:#这里strip可能会把接续行前面的空格去掉，所以考虑不做strip  .strip()
+					for chari in entryfieldlineaddspace:#这里strip可能会把接续行前面的空格去掉，所以考虑不做strip  .strip()
 						fieldvalue=fieldvalue+chari
 						#print('chari=',chari)
 						if chari =='{':
@@ -3572,7 +3643,7 @@ def bibentryparsing():
 						elif chari =='"':
 							counterquotes=counterquotes+1
 							if not enclosebracket:
-								if mod(counterquotes,2)==0:
+								if counterquotes%2==0:
 									bibentry[entryfield]=fieldvalue[1:-1]
 									fieldvalue=""
 									counterbracket=0
@@ -3611,6 +3682,7 @@ def bibentryparsing():
 	bibcommentcounter=len(bibcomments)
 	bibstringcounter=len(bibstrings)
 
+	
 	if not bibentrycounter==entrysn or not bibcommentcounter==commentsn or not bibstringcounter==stringsn:
 		try:
 			print('entrysn=',entrysn,' commentsn=',commentsn,' stringsn=',stringsn)
@@ -3618,6 +3690,7 @@ def bibentryparsing():
 			raise BibParsingError('bib file parsing went wrong!')
 		except BibParsingError as e:
 			raise BibParsingError(e.message)
+	
 	print('total entries=',bibentrycounter)
 	
 	#输出解析后的bib文件信息

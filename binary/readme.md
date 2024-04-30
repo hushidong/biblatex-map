@@ -1,4 +1,4 @@
-<b>Date of last change: 2023-03-31 to version v1.0f</b>
+<b>Date of last change: 2024-04-29 to version v1.0g</b>
 
 
 ## Introduction
@@ -454,6 +454,7 @@ if  want to  set a bibstyle file , you  can run:
 * v1.0c 2021/05/24
 * v1.0d 2021/10/23
 * v1.0e 2022/02/07
-* v1.0f 2022/03/31
+* v1.0f 2023/03/31
+* v1.0g 2024/04/29 
 
 

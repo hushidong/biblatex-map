@@ -5,7 +5,11 @@
 #注意：域如果不存在且需要终止，应加上"final":True
 
 # 大小写字母保护的字符串
-CaseProtect=['IEEE','AAAI',"GECCO\'18","ACML"] 
+CaseProtect=['AIAA','IEEE','AAAI',"GECCO\'18","ACML","SAR",'BVR','UAV','UCAV','UAVs','PSO','AI','IJCAI','WIC','ACM',
+             'CICAI','CDC','CoRR','IT','CAA','PSO','CAC','ICLR','II','III','IV','NIPS','arXiv','VI','VII',
+             'VIII','IJCNN','AAMAS','ICGNC','CIG','ICUS','ACC','ICMA','MATEC','ACTA'] 
+#其他情况请在bib文件中修改做保护，比如用{}包起来，NIPS-12这种用带数字的单词会自动保护
+#平时积累的时候就要做保护
 
 sourcemaps=[
 	[#map1:将设置title为sentencecase
