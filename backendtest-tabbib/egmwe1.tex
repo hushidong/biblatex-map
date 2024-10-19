@@ -5,9 +5,9 @@
     \usepackage{hyperref}
     \usepackage{lipsum}
     \usepackage[paperwidth=16cm,paperheight=10cm,top=10pt,bottom=10pt,left=1cm,right=1cm]{geometry}
-\usepackage[citestyle=numeric,bibstyle=gb7714-2015ay]{bibmap}
-\usepackage{filecontents}
-\begin{filecontents}{\jobname.bib}
+\usepackage[citestyle=numeric,bibstyle=gb7714-2015]{bibmap}
+
+\begin{filecontents}[force]{\jobname.bib}
 @techreport{calkin,
   author       = {Calkin, D and Ager, A and Thompson, M},
   title        = {A Comparative Risk Assessment Framework for Wildland Fire
@@ -15,16 +15,29 @@
   number       = {RMRS-GTR-262},
   year         = {2011},
   pages        = {8--9},
+  author+an={=important;1=thesisauthor}
 }
 
-@incollection{buseck,
-  author       = {Buseck, P R and Nord, Jr, G L and Veblen, D R},
+@incollection{buseck1,
+  author       = {Buseck, P R and Nord, Jr, G L and Veblen, D R and Calkin, D},
   title        = {Subsolidus Phenomena in Pyroxenes},
   booktitle    = {Pyroxense},
   address      = {Washington, D.C.},
   publisher    = {Mineralogical Society of America},
   year         = {c1980},
   pages        = {117--211},
+  author+an={4=thesisauthor}
+}
+
+@incollection{buseck2,
+  author       = {Buseck, P R and Calkin, D and Nord, Jr, G L and Veblen, D R },
+  title        = {Subsolidus Phenomena in Pyroxenes},
+  booktitle    = {Pyroxense},
+  address      = {Washington, D.C.},
+  publisher    = {Mineralogical Society of America},
+  year         = {c1980},
+  pages        = {117--211},
+  author+an={2=thesisauthor}
 }
 
 @book{wfz,
@@ -59,7 +72,7 @@
 
     \begin{document}
 
-    文献\cite{wfz,zgtsgxh}
+    文献\cite{wfz,zgtsgxh,calkin,buseck1,buseck2}
 
     \newpage
     \bibliography{\jobname}

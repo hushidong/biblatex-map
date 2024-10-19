@@ -8,7 +8,7 @@
     \usepackage{ctex}%[zihao=-4]
     \usepackage{fontspec}
 \setmainfont{CMU Serif}
-\setCJKmainfont {SourceHanSerifSC-Regular.otf}
+%\setCJKmainfont {SourceHanSerifSC-Regular.otf}
     \usepackage{xcolor}
     \usepackage{toolbox}
     \usepackage[colorlinks,citecolor=blue]{hyperref}
@@ -25,8 +25,7 @@
 \usepackage[bibstyle=gb7714-2015ay]{bibmap}%标注(引用)样式citestyle，著录样式bibstyle都采用gb7714-2015样式
 
 
-\usepackage{filecontents}
-\begin{filecontents}{\jobname.bib}
+\begin{filecontents}[force]{\jobname.bib}
 @article{knuth84,
   author    = {Donald E. Knuth},
   title     = {Literate Programming},
@@ -233,8 +232,6 @@
   \verb|\cite{knuth86a,knuth84}| & \cite{knuth86a,knuth84} \\
   \verb|\citep{knuth86a}|         & \citep{knuth86a}         \\
   \verb|\citet{knuth86a}|        & \citet{knuth86a}        \\
-  \verb|\citepns{knuth86a}|       & \citepns{knuth86a}         \\
-  \verb|\citetns{knuth86a}|       & \citetns{knuth86a}        \\
   \verb|\citep[42]{knuth86a}|     & \citep[42]{knuth86a}     \\
   \verb|\citep{knuth86a,tlc2}|    & \citep{knuth86a,tlc2}    \\
   \verb|\citep{knuth86a,knuth84}| & \citep{knuth86a,knuth84} \\
@@ -250,9 +247,6 @@
   \verb|\cite[42]{knuth86a}|     & \cite[42]{knuth86a}     \\
   \verb|\cite{knuth86a,tlc2}|    & \cite{knuth86a,tlc2}    \\
   \verb|\cite{knuth86a,knuth84}| & \cite{knuth86a,knuth84} \\
-  带*号的长引用如下: & \\
-  \verb|\citet*{knuth86a}|       & \citet*{knuth86a}  \\
-  \verb|\citet*{tlc2}|           & \citet*{tlc2}  \\
 \end{tabular}
 
 

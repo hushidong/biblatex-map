@@ -8,7 +8,7 @@
     \usepackage{ctex}%[zihao=-4]
     \usepackage{fontspec}
 \setmainfont{CMU Serif}
-\setCJKmainfont {SourceHanSerifSC-Regular.otf}
+%\setCJKmainfont {SourceHanSerifSC-Regular.otf}
     \usepackage{xcolor}
     \usepackage{toolbox}
     \usepackage[colorlinks,citecolor=blue]{hyperref}
@@ -22,12 +22,11 @@
   headsep    = 0.24cm,
   footskip   = 0.79cm,
 }
-\usepackage[bibstyle=gb7714-2015ay]{bibmap}%标注(引用)样式citestyle，著录样式bibstyle都采用gb7714-2015样式
+\usepackage[citestyle=numeric,bibstyle=gb7714-2015]{bibmap}
 
-\usepackage{chapterbib}
 
-\usepackage{filecontents}
-\begin{filecontents}{eg.bib}
+
+\begin{filecontents}[force]{eg.bib}
 @techreport{calkin,
   author       = {Calkin, D and Ager, A and Thompson, M},
   title        = {A Comparative Risk Assessment Framework for Wildland Fire

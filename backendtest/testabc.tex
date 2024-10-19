@@ -1,0 +1,35 @@
+\documentclass{article}
+    \usepackage{ctex}
+    \usepackage{xcolor}
+    \usepackage{toolbox}
+    \usepackage{hyperref}
+    \usepackage{lipsum}
+    \usepackage[paperwidth=16cm,paperheight=10cm,top=10pt,bottom=10pt,left=1cm,right=1cm]{geometry}
+
+\ExplSyntaxOn
+\clist_new:N \l_bmp_citenames_clist
+\clist_set:Nn \l_bmp_citenames_clist {xcite,xparencite}
+
+\clist_map_inline:Nn \l_bmp_citenames_clist {
+    \cs_gset:cpn {#1} ##1 {##1}
+}
+
+\RenewDocumentCommand{\cite}{o m}{
+    \IfValueTF {#1}{\leavevmode\xcite{#2}\textsuperscript{#1}}{\leavevmode\xcite{#2}}
+    }
+    
+\ProvideDocumentCommand{\parencite}{o m}{
+    \IfValueTF {#1}{\leavevmode\xparencite{#2}\textsuperscript{#1}}{\leavevmode\xparencite{#2}}
+    }
+\ExplSyntaxOff
+
+    \begin{document}
+
+\cite{abc}
+
+\cite[78]{abc}
+
+\parencite{abc}
+
+\parencite[78]{abc}
+    \end{document} 

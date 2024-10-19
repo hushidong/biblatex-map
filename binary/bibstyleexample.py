@@ -48,6 +48,7 @@ localstrings={
 'volume':{'english':'','chinese':'卷'},
 'numsn':{'english':'No.','chinese':'第'},
 'number':{'english':'','chinese':'册'},
+'backref':{'english':'Cited on ','chinese':'引用页: '}
 }
 
 #标点
@@ -99,6 +100,7 @@ typestrings={
 'misc':'[Z]',
 }
 
+
 #数据类型
 datatypeinfo={
 'namelist':['author','editor','translator','bookauthor'],
@@ -107,8 +109,56 @@ datatypeinfo={
                 'volume','number','endvolume','endnumber','type','note','labelnumber','series'],
 'datefield':['date','enddate','year','endyear','urldate','origdate','eventdate','endurldate','endorigdate','endeventdate'],
 'rangefield':['pages'],
-'otherfield':['in','typeid','endpunct']#虚设的用于替换的域
+'otherfield':['in','typeid','endpunct'],#虚设的用于替换的域
+'labelfield':['labelnumber','sortlabelnumber','labelname','biblabelname','labelyear','biblabelextrayear','citelabelname','citelabelextrayear'],#用于消除作者列表歧义的域，也用于作者年制中的citation和bibliography中
 }
+
+
+#文献表的环境，包括表格环境
+bibliographyenv={
+"default":r'''
+\renewcommand\bibitem[2][]{\item}
+    \setlength{\biblabelsep}{1em}
+    \setlength{\bibitemindent}{0pt}
+    \setlength{\biblabelextend}{0pt}
+    \renewenvironment{thebibliography}[1]
+    {\bibheading\list%
+     {\mkbibbracket{\arabic{biblabelnumber}}}
+     {\usecounter{biblabelnumber}%
+     \settowidth{\labelnumberwidth}{\mkbibbracket{#1}}%
+     \addtolength{\labelnumberwidth}{\biblabelextend}%
+      \setlength{\labelwidth}{\labelnumberwidth}%
+      \setlength{\labelsep}{\biblabelsep}%
+      \setlength{\bibhang}{\biblabelsep}%
+      \addtolength{\bibhang}{\labelnumberwidth}%
+      \setlength{\leftmargin}{\bibhang}%
+      \setlength{\itemindent}{\bibitemindent}%
+      \setlength{\itemsep}{\bibitemsep}%
+      \setlength{\parsep}{\bibparsep}}%
+      \renewcommand*{\makelabel}[1]{\hss##1}}
+  {\endlist}
+''',
+"longtable":{
+    "cmd":r"\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}",  # 需定义的命令
+    "env":"longtable",
+    "colspec":"{|C{1cm}|C{3cm}|p{11cm}|}",
+    "head":"序号 & 作者 & 信息"
+},
+"tabularray":{
+    "cmd":"",  # 需定义的命令
+    "env":"longtblr",
+    "colspec":"[label=none]{colspec={|Q[c,m,1cm]|Q[c,m,3cm]|Q[l,m,11cm]|},cell{1}{3}={c,m}, rowhead = 1,rows={ht=1cm}}",
+    "head":"序号 & 作者 & 信息"
+}
+}
+
+
+#数据注解的样式设置
+#"default"是默认的注解名
+annotestyle={"default":
+             {"thesisauthor":{'prestring':r"\textcolor{red}{\textbf{","posstring":"}}"},
+              "important":{'prestring':r"\textbf{","posstring":"}"}
+              }}
 
 
 
@@ -311,4 +361,35 @@ bibliographystyle={
 ],
 "phdthesis":"thesis",
 "mastersthesis":"thesis",
+}
+
+
+#标注样式
+#要指明每个命令需要的信息内容和格式要求
+citationstyle={
+    "numeric":{
+        "cite":[{"fieldsource":['labelnumber'],'prestring':"[","posstring":"]","position":"superscript"}],#即用在文献表中的序号
+        "parencite":[{"fieldsource":['labelnumber'],'prestring':"[","posstring":"]"}],
+        "textcite":[{"fieldsource":['labelname']}, #用全局选项
+                    {"fieldsource":['labelnumber'],'prestring':"[","posstring":"]","position":"superscript"}],
+        "fullcite":[{"fieldsource":['styletext']}],#即用完整的格式化后的条目文本
+        "footfullcite":[{"fieldsource":['styletext'],"position":"footnote"}],#即用完整的格式化后的条目文本
+        "citep":"cite", #表示citep命令与cite等同
+        "citet":"textcite"
+    },
+    "authoryear":{
+        "cite":[{"fieldsource":['labelname'],'prestring':"(","posstring":", "},
+                {"fieldsource":['labelyear']},
+                {"fieldsource":['labelextrayear']},
+                {"fieldsource":['endpunct'],'replstring':")"}],#即用在文献表中的序号
+        "textcite":[{"fieldsource":['labelname']}, #用全局选项
+                    {"fieldsource":['labelyear'],'prestring':"("},
+                    {"fieldsource":['labelextrayear']},
+                {"fieldsource":['endpunct'],'replstring':")"}],
+        "fullcite":[{"fieldsource":['styletext']}],#即用完整的格式化后的条目文本
+        "footfullcite":[{"fieldsource":['styletext'],"position":"footnote"}],#即用完整的格式化后的条目文本
+        "parencite":"cite",
+        "citep":"cite", #表示citep命令与cite等同
+        "citet":"textcite"
+    }
 }

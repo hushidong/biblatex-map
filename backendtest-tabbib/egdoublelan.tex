@@ -9,7 +9,8 @@
 \usepackage{lipsum}
 \usepackage{geometry}
 \usepackage{xltxtra,mflogo,texnames}
-\usepackage[citestyle=numeric,bibstyle=gb7714-2015]{bibmap}
+
+\usepackage[citestyle=numeric,bibstyle=gb7714-2015,sortcites=true,compcites=true,backref=true]{bibmap}
 
 \begin{filecontents}[force]{\jobname.bib}
 
@@ -19,6 +20,22 @@
   Author                   = {易仕和 and 赵玉新 and 何霖 and 张敏莉},
   Publisher                = {国防工业出版社},
   Year                     = {2013}
+}
+
+@Book{易仕和2013a,
+  Title                    = {超声速和高超声速喷管设计1},
+  Address                  = {北京},
+  Author                   = {易仕和 and 赵玉新 and 何霖 and 张敏莉},
+  Publisher                = {国防工业出版社},
+  Year                     = {2013}
+}
+
+@Book{易仕和2014,
+  Title                    = {超声速和高超声速喷管设计2},
+  Address                  = {北京},
+  Author                   = {易仕和 and 赵玉新 and 何霖 and 张敏莉},
+  Publisher                = {国防工业出版社},
+  Year                     = {2014}
 }
 
 @Book{Yi2013--,
@@ -94,16 +111,35 @@
 
 \begin{document}
 
-\defbibentryset{bilangzhang2013}{张敏莉2007-500-503,Zhang2007-500-503}
-
-\nocite{赵学功2001--}
-
-\cite{Miroslav2004--}
-
 \cite{bilangyi2013}
 
-\nocite{bilangzhang2013}
+\cite{赵学功2001--}
 
+\cite{张敏莉2007-500-503,易仕和2013a,易仕和2014}
+
+
+中文 中文
+
+\parencite{赵学功2001--}
+
+\textcite{赵学功2001--}
+
+
+\newpage
+
+\fullcite{赵学功2001--}
+
+
+\fullcite{易仕和2014}
+
+
+\footfullcite{赵学功2001--}
+
+
+\footfullcite{易仕和2014}
+
+
+\newpage
 \bibliography{\jobname}
 
 \end{document} 

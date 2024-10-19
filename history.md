@@ -5,7 +5,6 @@
 
 2. 著录表中的extrayear是否要处理？目前暂无需求
 
-
 5. 一些biblatex的map选项需要实现，包括
 		entryclone=?clonekey?
 		entrynew=?entrynewkey?
@@ -14,8 +13,109 @@
 		entrynocite=true, false default: false
 		entrynull=true, false default: false
 		match 大小写区分的matchi
-        
-        
+
+
+		
+###  20241016
+
+升级到v2.0，使得宏包只提供非常少的选项设置，参考文献的著录和应用格式完全由python的格式设置文件决定。
+
+v2.0 实现了参考文献宏包的核心完整功能，剩下的就是一些小的细节。
+
+具体来说包括：
+
+1. 所有的格式设定都由python来解决。
+
+2. sty文件只提供标签信息，包括 表格式文献表的标签。
+
+4. 实现在表格文献表基础上的多语言文献表
+
+5. 实现标注也是python 解决，包括标注标签的压缩及排序。实现时，每个命令都提供需要的信息，只要读取使用即可，信息传递过程是bibmap程序写到bbl文件，bbl文件读取时写到aux文件中，然后latex编译时读取aux文件信息。所以要4次编译。
+
+6. 多篇文献一起引用，采用与单篇文献类似的处理。
+
+7. 文献表和标注标签的超链接(使用hyperlink和hypertarget实现) ，反向超链接使用页码记录方式实现。超链接的颜色，这种非核心功能还没测试。
+
+8. 实现了文中多个文献表。
+
+采用include的方式，对每个include的文件中，会产生对应aux文件，但这个文件aux会在jobname.aux中直接input(因为include命令会直接在jaoname.aux中支持插入input命令)，所以不同章节的aux文件若定义相同的信息那么就会被覆盖。
+
+405 ⟨latexrelease⟩\def\@include#1 {%
+406 ⟨latexrelease⟩ \clearpage
+407 ⟨latexrelease⟩ \if@filesw
+408 ⟨latexrelease⟩ \immediate\write\@mainaux{\string\@input{#1.aux}}%
+409 ⟨latexrelease⟩ \fi
+410 ⟨latexrelease⟩ \@tempswatrue
+411 ⟨latexrelease⟩ \if@partsw
+412 ⟨latexrelease⟩ \@tempswafalse
+413 ⟨latexrelease⟩ \edef\reserved@b{#1}%
+414 ⟨latexrelease⟩ \@for\reserved@a:=\@partlist\do
+415 ⟨latexrelease⟩ {\ifx\reserved@a\reserved@b\@tempswatrue\fi}%
+416 ⟨latexrelease⟩ \fi
+417 ⟨latexrelease⟩ \if@tempswa
+418 ⟨latexrelease⟩ \let\@auxout\@partaux
+419 ⟨latexrelease⟩ \if@filesw
+420 ⟨latexrelease⟩ \immediate\openout\@partaux #1.aux
+421 ⟨latexrelease⟩ \immediate\write\@partaux{\relax}%
+422 ⟨latexrelease⟩ \fi
+423 ⟨latexrelease⟩ \@input@{#1.tex}%
+424 ⟨latexrelease⟩ \clearpage
+425 ⟨latexrelease⟩ \@writeckpt{#1}%
+426 ⟨latexrelease⟩ \if@filesw
+427 ⟨latexrelease⟩ \immediate\closeout\@partaux
+428 ⟨latexrelease⟩ \fi
+429 ⟨latexrelease⟩ \else
+430 ⟨latexrelease⟩ \deadcycles\z@
+431 ⟨latexrelease⟩ \@nameuse{cp@#1}%
+432 ⟨latexrelease⟩ \fi
+433 ⟨latexrelease⟩ \let\@auxout\@mainaux}
+434 ⟨latexrelease⟩
+435 ⟨latexrelease⟩\EndIncludeInRelease
+436 ⟨∗2ekernel⟩
+
+
+而jobname.aux即\@mainaux会在\document命令中读取。
+
+87 ⟨latexrelease⟩\def\document{\endgroup
+88 ⟨latexrelease⟩ \ifx\@unusedoptionlist\@empty\else
+89 ⟨latexrelease⟩ \@latex@warning@no@line{Unused global option(s):^^J%
+90 ⟨latexrelease⟩ \@spaces[\@unusedoptionlist]}%
+91 ⟨latexrelease⟩ \fi
+92 ⟨latexrelease⟩ \@colht\textheight
+93 ⟨latexrelease⟩ \@colroom\textheight \vsize\textheight
+94 ⟨latexrelease⟩ \columnwidth\textwidth
+95 ⟨latexrelease⟩ \@clubpenalty\clubpenalty
+96 ⟨latexrelease⟩ \if@twocolumn
+97 ⟨latexrelease⟩ \advance\columnwidth -\columnsep
+98 ⟨latexrelease⟩ \divide\columnwidth\tw@ \hsize\columnwidth \@firstcolumntrue
+99 ⟨latexrelease⟩ \fi
+100 ⟨latexrelease⟩ \hsize\columnwidth \linewidth\hsize
+101 ⟨latexrelease⟩ \begingroup\@floatplacement\@dblfloatplacement
+102 ⟨latexrelease⟩ \makeatletter\let\@writefile\@gobbletwo
+103 ⟨latexrelease⟩ \global \let \@multiplelabels \relax
+104 ⟨latexrelease⟩ \@input{\jobname.aux}%
+105 ⟨latexrelease⟩ \endgroup
+
+
+所以要实现不同章节使用不同的信息，必须带入新的章节信息。
+
+实现方式：
+
+不再利用include ，而是利用refsection来标记，每个refsection会对应的不同命令的信息以及bbl文件，信息有refsection序号信息标识。
+
+bbl文件若存在参考文献是必须读的。
+
+每个文献表使用一个bbl文件，都由bibmap程序来写。
+
+9. 实现了一个文档多种样式。
+
+文献表著录格式直接针对每个bbl输出需要的格式。
+引用标注则给出所有的引用标注标签，然后根据标识信息选择对应的标注。
+
+10. 支持数据注解到域中的项，项中的part不再支持。
+
+
+
 #### 20240429		
 
 1. 修正了bib文件中条件结束的右花括号不再单独一行的问题。
