@@ -12,10 +12,10 @@ License: LaTeX Project Public License 1.3 or later
 
 # bibmap 宏包
 
-bibmap 是一个参考文献宏包，包含一个 sty 文件，用于设置参考文献处理时的选项;
+bibmap 是 latex 一个参考文献工具项目，包含一个宏包即( sty 文件)，用于设置参考文献处理时的选项;
 一个 bibmap 程序，用于在后端处理参考文献数据。
 
-bibmap 宏包加载了 natbib等宏包，用于 latex 参考文献标注和文献表的生成。
+bibmap 宏包，用于 latex 参考文献标注和文献表的生成。
 可以通过几个选项指定需要的标注样式、文献表著录样式、以及bib数据修改的样式。
 
 bibmap 后端程序类似 bibtex/biber 程序用于处理参考文献数据，其输出类似于
@@ -24,18 +24,14 @@ bibtex， 为 bbl 文件，用于tex编译器读取后编译生成文献表。
 
 ## need to do
 
-1. 既然文献著录表可以用外部工具直接产生，那么引用的标注标签也是否可以外部工具生成，显然是可以的，因此我们可以做这样的尝试。
-如果做成那么将是第三种文献方式，而且与是biblatex完全相反的路子。biblatex外部工具处理bib文件为biblatex宏包提供需要的所有文献信息，所有的格式则是在latex中完成的。
-而这第三种方式，所有的格式都由外部工具完成，宏包只负责获取这些带格式内容，并输出。而bibtex的方式则可以看做是介于两者之间的第2种方式，其文献表内容利用外部工具生成，而标注则利用latex宏读取信息后生成。
-
-2. 除了单独运行外部工具的方式，也可以采用write18直接调用的方式。
+1. 除了单独运行外部工具的方式，也可以采用write18直接调用的方式。
 
 
 ## bibmap 宏包两大核心功能
 
 ### 参考文献表格式化
 
-bibmap 宏包的标注样式基于natbib宏包实现，而著录样式采用极简单的python代码来设置。
+bibmap 宏包的标注样式和著录样式，采用极简单的python代码来设置。
 
 该功能主要特点包括:
 
@@ -43,29 +39,24 @@ bibmap 宏包的标注样式基于natbib宏包实现，而著录样式采用极�
 
 * 根据样式文件输出格式化后的 bbl 文件，便于 latex 文档直接使用。
 
-* 转存格式化的参考文献表文本为文本文件和网页文件，便于在其它文档中直
-接使用。
+* 转存格式化的参考文献表文本为文本文件和网页文件，便于在其它文档中直接使用。
 
-* 除了 bibmap 程序内部处理逻辑外，样式文件可以全面控制参考文献的格式
-化。
+* 除了 bibmap 程序内部处理逻辑外，样式文件可以全面控制参考文献的格式化。
 
 * bibmap 实现的内部处理: 根据选项进行排序，根据选项对姓名列表域、文本
 列表域、日期域、文本域、范围域格式化，根据选项对条目输出项进行组织和格式化。
 
 ### bib 数据修改
 
-bib 文件修改功能，借鉴 biblatex 的设计，逻辑基本一致，可以说是一套python 的重新实现，
-可以对 bib 文件的条目和域做非常细致的处理和修改。
+bib 文件修改功能，借鉴 biblatex 的设计，逻辑基本一致，可以说是一套python 的重新实现，可以对 bib 文件的条目和域做非常细致的处理和修改。
 
 该功能主要特点包括:
 
 * bib 文件的读取和解析
 
-* bib 文件的转存，包括从大的 bib 文件抽取引用的文献保存为一个小的 bib 文
-件，将 bib 文件的内容存储为 json 格式的问题。
+* bib 文件的转存，包括从大的 bib 文件抽取引用的文献保存为一个小的 bib 文件，将 bib 文件的内容存储为 json 格式的问题。
 
-* 参考文献条目的修改，包括条目类型的修改，条目内部的域的修改等，包括
-删除、变化、转换等等。
+* 参考文献条目的修改，包括条目类型的修改，条目内部的域的修改等，包括删除、变化、转换等等。
 
 
 
@@ -110,7 +101,7 @@ bib 文件修改功能，借鉴 biblatex 的设计，逻辑基本一致，可以
 四步编译:
 ```
 xelatex jobname
-bibmap.py jobname
+python bibmap.py jobname 或 bibmap.exe jobname 
 xelatex jobname
 xelatex jobname
 ```
@@ -118,7 +109,7 @@ xelatex jobname
 * 重要选项
 	+ citestyle 指定引用(标注)样式
 	+ bibstyle  指定著录样式
-	+ bibtable=true/false #true 表示生成表格形式的文献表
+	+ bibtable=tabularray #表示使用tabularray生成表格形式的文献表
 
 
 ### bibmap程序
@@ -128,7 +119,7 @@ bibmap程序，若直接使用py程序，那么需要python环境的支持。若
 bibmap程序的命令行参数如下:
 
 ```
-bibmap.py
+python bibmap.py
 或
 bibmap.exe
 
@@ -268,8 +259,8 @@ binary 用于生成一个可以带走的绿色工具（整个文件夹作为工�
 bibmap is a bibliography Package, contains a `.sty` used to config bibliography generation and 
 a bibmap.py program used to deal bib file at backend.
 
-package bibmap loads natbib to generate the citation and bibliography list.
-citestyle, bibstyle, mapstyle(bib file modification style) can be set with package options.
+package bibmap generates the citation and bibliography list.
+citestyle, bibstyle, mapstyle(bib file modification style) can be set with package options and the style setting file.
 
 backend program bibmap is like bibtex/biber used to deal bibfile, the output is bbl file 
 which can be loaded directly by latex to generate a bibliography.
@@ -288,7 +279,7 @@ License：MIT license
 
 ### bibliography generation
 
-the citation generation is based on natbib loaded by bibmap, and the bibliography generation is based on 
+the generation of the citation and the bibliography is based on 
 bibmap.py with a bibstyle file which is a very simple python code file.
 
 features :

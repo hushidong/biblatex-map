@@ -1,6 +1,7 @@
 
 1. 打包工具是pyinstaller
 
+所以前提是要安装pyinstaller
 
 2. pathlib has been part of python stdlib since python 3.4, so there is no reason for Anaconda Navigator to depend on external (obsolete and unmaintained) pathlib package. Open a bug with them.
 
