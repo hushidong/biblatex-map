@@ -20,6 +20,8 @@ mkdir mapbibtest-authoran
 
 mkdir mapbibtest-tobibtex
 
+mkdir mapbibtest-casetransfer
+
 mkdir binary
 
 mkdir bibfiles
@@ -41,6 +43,8 @@ copy biblatex-map-master\mapbibtest-addpinyinkey\*.* bibmap\mapbibtest-addpinyin
 copy biblatex-map-master\mapbibtest-authoran\*.* bibmap\mapbibtest-authoran\*.* /Y
 
 copy biblatex-map-master\mapbibtest-tobibtex\*.* bibmap\mapbibtest-tobibtex\*.* /Y
+
+copy biblatex-map-master\mapbibtest-casetransfer\*.* bibmap\mapbibtest-casetransfer\*.* /Y
 
 
 copy biblatex-map-master\binary\*.* bibmap\binary\*.* /Y

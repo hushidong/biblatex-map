@@ -3464,6 +3464,7 @@ def mkstrtitlecasestd(fieldstring):
     #主要是：不在句首的冠词、介词、连词和作为不定式的to
     protectstr=['a','an','the', 'for', 'and', 'with','nor', 'but', 'or', 'via','yet', 'so', 'on','in','of','and','to', 'at','around','by','after','along','for','from','with','without']+caseprotectstrs
     ndtransstr=['A','An','The', 'For', 'And', 'With','Nor', 'But', 'Or', 'Via','Yet', 'So', 'On','In','Of','And','To', 'At','Around','By','After','Along','For','From','With','Without']
+    ndtransstrupper=[x.upper() for x in ndtransstr]
 
     #将字符串中的xa0字符切换成空格即x20
     a=a.replace("\xa0"," ")
@@ -3480,6 +3481,8 @@ def mkstrtitlecasestd(fieldstring):
             if s2 in protectstr:
                 c.append(s2)
             elif s2 in ndtransstr:
+                c.append(s2.lower())
+            elif s2 in ndtransstrupper:
                 c.append(s2.lower())
             elif contains_digit(s2):
                 c.append(s2)
@@ -5103,28 +5106,29 @@ def bibmapinput():
     #再次读取aux文件(包括子文档的文件)并合并其内容到auxlines字符串列表中，便于后续处理
     subauxfilelist=[]
     auxlines=[]
-    with open(inputauxfile, "r",encoding="utf-8") as file:
-        # 使用readlines()方法读取所有行
-        auxlines = file.readlines()
-        auxlines1=[]
-        linesn=0
-        for line in auxlines:
-            if line.startswith("\\@input"):
-                m = re.search(r'\\@input\s*{(.*).aux\s*}',line)#注意贪婪算法的影响，所以要排除\}字符
-                #print('m.group(1):',m.group(1))
-                subauxfile = m.group(1)
-                if '.aux' not in subauxfile:
-                    subauxfile+='.aux'
-                if subauxfile not in subauxfilelist:
-                    subauxfilelist.append(subauxfile)
-                subauxlines=[]
-                with open(subauxfile, "r",encoding="utf-8") as filesub:
-                    subauxlines=filesub.readlines()
-                    auxlines1.extend(subauxlines)
-            else:
-                auxlines1.append(line)
-            linesn+=1
-        auxlines=auxlines1
+    if inputauxfile:
+        with open(inputauxfile, "r",encoding="utf-8") as file:
+            # 使用readlines()方法读取所有行
+            auxlines = file.readlines()
+            auxlines1=[]
+            linesn=0
+            for line in auxlines:
+                if line.startswith("\\@input"):
+                    m = re.search(r'\\@input\s*{(.*).aux\s*}',line)#注意贪婪算法的影响，所以要排除\}字符
+                    #print('m.group(1):',m.group(1))
+                    subauxfile = m.group(1)
+                    if '.aux' not in subauxfile:
+                        subauxfile+='.aux'
+                    if subauxfile not in subauxfilelist:
+                        subauxfilelist.append(subauxfile)
+                    subauxlines=[]
+                    with open(subauxfile, "r",encoding="utf-8") as filesub:
+                        subauxlines=filesub.readlines()
+                        auxlines1.extend(subauxlines)
+                else:
+                    auxlines1.append(line)
+                linesn+=1
+            auxlines=auxlines1
 
     print('subaux:',subauxfilelist)
     #print('auxlines:',auxlines)
