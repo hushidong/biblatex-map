@@ -116,21 +116,22 @@ def compileall(task='all'): #'all','compare'
                 pf=[str(x) for x in pf1]
                 print('pf=',pf)
                 if pf:
-                    for file in pf and 'new' not in file:
-                        print('---------compile new file:---------')
-                        print('file=',file)
-                        print('file=',os.path.split(file))
-                        jobname=os.path.split(file)[1]
+                    for file in pf:
+                        if 'new' not in file:
+                            print('---------compile new file:---------')
+                            print('file=',file)
+                            print('file=',os.path.split(file))
+                            jobname=os.path.split(file)[1]
 
-                        if dirname == "mapbibtest":
-                            #python bibmap.py test.bib -m bibmapaddpinyinkey.py --nofmt
-                            subprocess.run(["python", "bibmap.py",jobname,'-m', 'bibmapaddpinyinkey.py', '--nofmt'],check=True) 
-                        elif dirname == "mapbibtest-authoran":
-                            subprocess.run(["python", "bibmap.py",jobname,'-m', 'bibmapaddauthoran.py', '--nofmt'],check=True) 
-                        elif dirname == "mapbibtest-casetransfer":
-                            subprocess.run(["python", "bibmap.py",jobname,'-m', 'bibmaptitlecases.py','--nofmt'],check=True) 
-                        elif dirname == "mapbibtest-tobibtex":
-                            subprocess.run(["python", "bibmap.py",jobname,'-m', 'bibmaptobibtex.py','--nofmt'],check=True) 
+                            if dirname == "mapbibtest":
+                                #python bibmap.py test.bib -m bibmapaddpinyinkey.py --nofmt
+                                subprocess.run(["python", "bibmap.py",jobname,'-m', 'bibmapaddpinyinkey.py', '--nofmt'],check=True) 
+                            elif dirname == "mapbibtest-authoran":
+                                subprocess.run(["python", "bibmap.py",jobname,'-m', 'bibmapaddauthoran.py', '--nofmt'],check=True) 
+                            elif dirname == "mapbibtest-casetransfer":
+                                subprocess.run(["python", "bibmap.py",jobname,'-m', 'bibmaptitlecases.py','--nofmt'],check=True) 
+                            elif dirname == "mapbibtest-tobibtex":
+                                subprocess.run(["python", "bibmap.py",jobname,'-m', 'bibmaptobibtex.py','--nofmt'],check=True) 
 
                         
 
