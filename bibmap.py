@@ -46,6 +46,11 @@ bibmapoptiondatabase={
 'typetarget':'entrytype', #对应的值为 entrytype名
 'fieldsource':'entryfield', #对应的值为 entryfield名
 'fieldtarget':'entryfield', #对应的值为 entryfield名
+'in':'list', #对应的值为 用户给出的列表
+'notin':'list', #对应的值为 用户给出的列表
+'inrange':'list', #对应的值为 用户给出的列表
+'notinrange':'list', #对应的值为 用户给出的列表
+'extract':'regexp', #对应的值为 regexp(正则表达式)
 'match':'regexp', #对应的值为 regexp(正则表达式)
 'notmatch':'regexp', #对应的值为 regexp(正则表达式)
 'replace':'regexp', #对应的值为 regexp(正则表达式)
@@ -3351,6 +3356,7 @@ def setauthoran(fieldvtoset,fieldstring,matchstring):
 
 #
 #功能是根据matchstring判断其在fieldstring中作者的序号，然后设置annotation信息
+#目的是从fieldstring代表的作者列表中，确定matchstring代表的作者，在作者列表的序号，然后生成用于annotation的字符串内容，为序号=fieldvtoset。
 def mkstrauthoran(fieldvtoset,fieldstring,matchstring):
     print("mkstrauthoran:",fieldvtoset,fieldstring,matchstring)
     sall=fieldstring.lower().split(" and ")
@@ -3765,6 +3771,8 @@ def datefieldparser(bibentry,fieldsource,datetype,options):
         fieldcontents=bibentry[dtyear]
             
     return fieldcontents
+
+
 
     
 #
@@ -4451,6 +4459,7 @@ def bibentryparsing():
     #输出解析后的bib文件信息
     #for bibentryi in bibentries:
         #print(bibentryi)
+
     return None
 
 
@@ -4603,7 +4612,7 @@ def mappernottype(keyvals,constraintinfo):
             pernottype=v.lower()#因为大小写区分，所以全部小写方便比较
         else:
             pass
-    print('pertype=',pertype)
+    print('pertype=',pernottype)
     
     constraintinfo['pernottype'].append(pernottype)
     return 1
@@ -4753,11 +4762,17 @@ def mapfieldset(keyvals,bibentry,typesrcinfo,fieldsrcinfo,constraintinfo):
         return 1
     
 #
-#域名转换或判断域是否存在或match
+#域名转换或判断域是否存在或match等
+#主要用于过滤
 def mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo):
     mapfieldtype=0 #域名map的类型设置
     fieldmatch=''#匹配模式默认为空
     fieldmatchi=''#匹配模式默认为空
+    fieldextract='' #利用正则获取的内容
+    fieldinlist=[]
+    fieldnotinlist=[]
+    fieldinrglist=[]
+    fieldnotinrglist=[]
     
     
     #首先根据pertype和notpertype设置约束
@@ -4800,6 +4815,17 @@ def mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo):
             fieldnotmatch=v
         elif k=='notmatchi':#区分大小写的notmatch
             fieldnotmatch=v
+        elif k=='extract': #利用正则提取组的内容
+            fieldextract=v
+            fieldsrcinfo['fieldextract']=v
+        elif k=='in': #内容在in后续的列表内，fieldinlist是列表
+            fieldinlist=v
+        elif k=='notin': #内容在notin后续的列表内，fieldnotinlist是列表
+            fieldnotinlist=v
+        elif k=='inrange': #内容在inrange后续的列表内，fieldinrglist是列表
+            fieldinrglist=v
+        elif k=='notinrange': #内容在notinrange后续的列表内，fieldnotinrglist是列表
+            fieldnotinrglist=v
         else:
             pass
     
@@ -4827,6 +4853,9 @@ def mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo):
                         fieldsrcinfo[fieldsource]=[bibentry[fieldsource],fieldmatchi]
                     else:
                         fieldsrcinfo[fieldsource]=[None] #正则不匹配，则返回为None
+
+                elif fieldextract: #当需要从域中提取信息时
+                    fieldsrcinfo[fieldsource]=[re.search(fieldextract,bibentry[fieldsource]).group(1),fieldextract]
                     
                 else:
                     fieldsrcinfo[fieldsource]=bibentry[fieldsource]#将域的值记录下来，用于下一step
@@ -4878,25 +4907,64 @@ def mapfieldsource(keyvals,bibentry,fieldsrcinfo,constraintinfo):
         
         elif mapfieldtype==3:#域map类型3，当没有匹配则终止map
             if fieldsource in bibentry:
+                
+                fieldsourcevalue=''
+                if fieldextract: #当需要从域中提取信息时
+                    print('fieldextract=',fieldextract)
+                    print('bibentry[fieldsource]=',bibentry[fieldsource])
+                    fieldsourcevalue=re.search(fieldextract,bibentry[fieldsource]).group(1)
+                    print('fieldsourcevalue=',fieldsourcevalue)
+                else:
+                    fieldsourcevalue=bibentry[fieldsource]
+
                 if fieldmatch:
-                    m = re.search(fieldmatch, bibentry[fieldsource])
+                    m = re.search(fieldmatch, fieldsourcevalue)
                     #print('fieldmatch=',fieldmatch, 'bibentry[fieldsource]=', bibentry[fieldsource])
                     #print('\nmatch=',m,"\n")
                     if m:
-                        fieldsrcinfo[fieldsource]=[bibentry[fieldsource],fieldmatch]
+                        fieldsrcinfo[fieldsource]=[fieldsourcevalue,fieldmatch]
                         return 1
                     else:
                         return 0
 
                 elif fieldmatchi:
                     if m:
-                        fieldsrcinfo[fieldsource]=[bibentry[fieldsource],fieldmatchi]
+                        fieldsrcinfo[fieldsource]=[fieldsourcevalue,fieldmatchi]
+                        return 1
+                    else:
+                        return 0
+
+                elif fieldinlist:
+                    if fieldsourcevalue in fieldinlist:
+                        fieldsrcinfo[fieldsource]=[fieldsourcevalue,fieldinlist]
                         return 1
                     else:
                         return 0
                     
+                elif fieldnotinlist:
+                    if fieldsourcevalue not in fieldnotinlist:
+                        fieldsrcinfo[fieldsource]=[fieldsourcevalue,fieldnotinlist]
+                        return 1
+                    else:
+                        return 0
+                    
+                elif fieldinrglist:
+                    if fieldsourcevalue >= fieldinrglist[0] and fieldsourcevalue <= fieldinrglist[1]:
+                        fieldsrcinfo[fieldsource]=[fieldsourcevalue,fieldinrglist]
+                        return 1
+                    else:
+                        return 0
+                    
+                elif fieldnotinrglist:
+                    if fieldsourcevalue >= fieldnotinrglist[0] and fieldsourcevalue <= fieldnotinrglist[1]:
+                        return 0
+                    else:
+                        fieldsrcinfo[fieldsource]=[fieldsourcevalue,fieldnotinrglist]
+                        return 1
+                        
+                    
                 else:
-                    fieldsrcinfo[fieldsource]=bibentry[fieldsource]#将域的值记录下来，用于下一step
+                    fieldsrcinfo[fieldsource]=fieldsourcevalue#将域的值记录下来，用于下一step
                     return 1
             
             else:
@@ -5494,7 +5562,7 @@ def checkbibdatamapstyle():
         for step in map:
             for k,v in step.items():
                 if k in bibmapoptiondatabase:
-                    if isinstance(bibmapoptiondatabase[k],list):
+                    if isinstance(bibmapoptiondatabase[k],list): #只对选项设定的项进行检查
                         if v in bibmapoptiondatabase[k]:
                             pass
                         else:

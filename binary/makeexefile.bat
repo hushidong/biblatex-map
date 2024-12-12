@@ -13,7 +13,7 @@ copy ..\readme.md . /y
 
 copy ..\*.sty . /y
 
-pause
+
 
 
 

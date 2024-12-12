@@ -179,7 +179,7 @@ bibmap宏包可用的选项包括:
 
   \item[bibtable] 用于指定表格文献表所采用的表格宏包。值为tabularray，longtable或false，当给出为tabularray等时用于生成表格形式的文献表，表格的格式由样式文件设定，注意使用bibtable指定的表格时，需使用对应的样式文件。
       其实质是bibmap根据样式文件中的表格文献表设置，对thebibliography 环境进行了重定义。
-      
+
       典型的表格文献表的设置为：
 
 \begin{example}{典型的文献表环境的设置}{code:biblio:env}
@@ -224,18 +224,18 @@ bibliographyenv={
 \end{pycode}
 \end{example}
 
-         
+
       如果要修改表格中输出的内容形式，比如3栏或者序号变成为姓名等，则需要修改上述bibliographyenv环境设置，同时修改著录格式中需要增加\verb| & |，如文件 bibstyletabthreecols.py 所示。
-      
+
       上述示例中文献表表格中的文献序号是单独的一列，是在bibmap.py中直接写的，若需要更复杂的设置，可以直接修改bibmap.py中的printbibliography函数。
 
 
   \item[mapstyle] 用于指定参考文献数据修改样式，主要包括default，或者其它用户自定义的样式。设置default时调用宏包自带的bibmapdefault.py对bib文件进行修改。当指定用户自定义的样式时则给出样式文件的文件名，比如mapstyle=userdatamap，表示调用userdatamap.py 样式文件来修改bib文件。
-      
+
   \item[compcites]  标注标签压缩选项。设置为true后，会压缩标注标签。
-  
+
   \item[sortcites]  标注标签排序选项。一处引用多篇文献的标注标签中对各个文献进行排序。设置为true 后，会根据样式文件中的 citesorting 排序设置进行排序。
-  
+
   \item[backref] 反向超链接选项。设置为true后，会在文献表各个条目后按指定的格式输出各个文献引用的所在页。
 \end{description}
 
@@ -252,8 +252,8 @@ bibliographyenv={
 \begin{description}
   \item[refsection] refsection 环境用于指定参考文献节。在该环境中的引用会作为单独的部分独自输出引用标注标签和文献表。使用refsection 环境可以实现分章文献表。
       默认的全局的环境被任务refsection=0，所有其他 refsection 环境按顺序从1开始计数。
-  
-    
+
+
   \item[\textbackslash citestyle]
   \verb|\citestyle{}|、\verb|\setcitestyle{}|、\verb|\bibpunct{}| 可以用来局部设置修改文献引用的标注样式，比如在某一章中需要使用numeric样式，
   那么可以设置\verb|\citestyle{numeric}|。这三个命令来源于natbib。
@@ -261,7 +261,7 @@ bibliographyenv={
   \item[\textbackslash bmpbibstyle]
   \verb|\bmpbibstyle|可以用来局部设置文献的著录样式，比如在某一章中需要使用authoryear样式，
   那么可以设置\verb|\bmpbibstyle{bibstyleauthoryear.py}|。或者其它用户自定义的样式，直接指定py文件即可。主要用于分章文献中。
-  
+
   \item[\textbackslash bmpbibtable]
   \verb|\bmpbibtable| 用来局部设置文献表的表格环境，比如在某个文献节中需要单独使用表格文献表，则可以在改文献节中使用该命令指定表格环境所使用的宏包。
 
@@ -519,7 +519,7 @@ backendtest-tabbib 目录下的示例展示了表格文献表的用法。
     }
    \end{pycode}
    \end{example}
-    
+
    \item[bibliographyenv]  用于设定文献表的环境。包括默认的文献表环境，以及表格式文献表的环境，如例\ref{code:biblio:env}所示。
 
    \item[bibliographystyle]  用于设定条目的著录格式，用户可以自由设定。
@@ -538,9 +538,9 @@ backendtest-tabbib 目录下的示例展示了表格文献表的用法。
     \item "omitiffield",用于忽略当前项，当该选项指定的域只要一个存在，则忽略当前项
     \item 'pospunct',用于设置当前输出项后的标点
     \end{itemize}
-    
+
   \item[citationstyle] 用于设置所有引用命令的标注标签格式化。典型的设置如：
-  
+
   \begin{example}{典型的标注标签格式设置}{code:usage:citestyle}
    \begin{pycode}
     #数据类型
@@ -893,8 +893,23 @@ notfield是做约束，当notfield指出的域不存在时，才执行操作，�
 pernottype类似于pertype，也是做约束，当不是pernottype指定的条目类型时，才执行操作。
 null表示域值不存在，即用于删除当前域。origfield用于标签前面step步中最后一次fieldsource搜索并记录下的域的域名，而origfieldval则是域值。origentrytype则是前面最近一次typesource搜索成功情况下记录下来的条目类型。
 
+
+同时为方便处理，增加了如下选项：
+\begin{itemize}
+  \item extract  利用正则表达式提取匹配的组的内容，类似于string.match(...).group(1)，仅取第一个组的内容。extract是新的命名，本来用group可能更接近python。但为了与match等更统一，所以用了一个新命名。extract后面同样跟着正则表达式，但必须有组符号()用于提取组内容。注意：extract提取的是字符串，所以后续用于比较的也是字符串，年份数字构成的字符串也是可以做比较的。
+  \item in 相比 match 更高层，也更直接。直接判断前面获取的值在in后面跟着的列表内。
+  \item notin 与 in 相反。直接判断前面获取的值不在in后面跟着的列表内。
+  \item inrange 利用大于等于、小于等于直接判断前面获取的值在inrange后面跟着的min和max值范围内。
+  \item notinrange 与inrange相反。利用大于等于、小于等于直接判断前面获取的值不在inrange后面跟着的min 和max 值范围内。
+  
+\end{itemize}
+
+
+
+
 未实现的选项包括:
 \begin{itemize}
+  \item foreach 选项意义不大，因为这只是在代码层的处理，且还需要在后续利用专门的正则取值，不如直接添加代码来得方便。
   \item entryclone=?clonekey?
   \item entrynew=?entrynewkey?
   \item entrynewtype=?string?

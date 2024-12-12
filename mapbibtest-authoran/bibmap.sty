@@ -1,0 +1,440 @@
+%%
+%% ---------------------------------------------------------------
+%% bibmap.sty--- A bibliograhpy processing package
+%%
+%% bibmap宏包用于参考文献数据文件的修改和latex中参考文献表的生成
+%%宏包负责为后端的bibmap程序提供一些设置信息，比如引用信息，bib文件，格式设置文件等
+%%后端的bibmap程序则生成thebibliography环境用于latex中生成文献表
+%%1. bib数据文件的修改类似于biblatex的sourcemap，只是需要在map设置文件中给出
+%%2. 参考文献数据输出类似于bibtex，将thebibliography环境输出到bbl文件中
+%%
+%% Maintained by huzhenzhen
+%% E-mail: hzzmail@163.com
+%% Released under the LaTeX Project Public License v1.3c or later
+%% ---------------------------------------------------------------
+%% Copyright 2019- huzhenzhen
+
+\RequirePackage { expl3 , xparse }
+\ExplSyntaxOn
+
+%
+%宏包基本信息
+%
+\tl_const:Nn \c_bibmap_date_tl    {2024/10/16}
+\tl_const:Nn \c_bibmap_version_tl {2.0}
+\tl_const:Nn \c_bibmap_info_tl
+  {A package to deal bibliography. To some extent, the backend of bibmap can be used to substitute bibtex}
+
+\ProvidesExplPackage
+  {bibmap}
+  {\c_bibmap_date_tl}
+  {\c_bibmap_version_tl}
+  {\c_bibmap_info_tl}
+
+
+%
+%定义一些变量
+%
+\str_new:N \l__bibmap_cite_style_str
+\str_set:Nn \l__bibmap_cite_style_str {numeric}
+
+\str_new:N \l__bibmap_bib_style_str
+\str_set:Nn \l__bibmap_bib_style_str {gb7714-2015}
+
+\str_new:N \l__bibmap_map_style_str
+\str_set:Nn \l__bibmap_map_style_str {default}
+
+\str_new:N \g__bibmap_bibstyle_file_str
+\str_new:N \g__bibmap_mapstyle_file_str
+\str_new:N \g__bmp_citeflag_str   %用于记录标注标签
+
+%标记是否为表格形式的文献表进行设置
+\str_new:N \g__bibmap_bibliotable_flag_str
+\str_set:Nn \g__bibmap_bibliotable_flag_str {false}
+
+\clist_new:N \l__bmp_cite_clist %用于引用文献时的entrykey列表
+\int_new:N \l_bmp_multictn_int  %用于存储引用文献时的entrykey列表统计值
+
+\str_new:N \g__bmp_compcites_flag_str %用于标记引用标注标签的压缩
+\str_set:Nn \g__bmp_compcites_flag_str {false}
+\str_new:N \g__bmp_sortcites_flag_str %用于标记引用标注标签的排序
+\str_set:Nn \g__bmp_sortcites_flag_str {false}
+\str_new:N \g__bmp_backref_flag_str %用于标记后向超链接
+\str_set:Nn \g__bmp_backref_flag_str {false}
+
+
+%
+%宏包选项定义
+%
+\keys_define:nn {bibmap}
+  {
+    %标注样式：
+    %numeric
+    %authoryear
+    citestyle .code:n = \str_set:Nn \l__bibmap_cite_style_str {#1},
+    %citestyle .value_required:n = true,
+    citestyle .default:n = numeric,
+    %著录样式：
+    %gb7714-2015
+    %gb7714-2015ay
+    %userdefined
+    %plain
+    %等等
+    bibstyle .code:n = \str_set:Nn \l__bibmap_bib_style_str {#1},
+    %bibstyle .value_required:n = true,
+    bibstyle .default:n = gb7714-2015,
+    %数据修改设置：
+    %default
+    %userdefined
+    mapstyle .code:n = \str_set:Nn \l__bibmap_map_style_str {#1},
+    %mapstyle .value_required:n = true,
+    mapstyle .default:n = default,
+    %参考文献表是否为table形式：false,true,threecols
+    bibtable .code:n = \str_set:Nn \g__bibmap_bibliotable_flag_str {#1},
+                        %\clist_const:Nn \g__bibmap_tabhead_clist {#1}
+    bibtable .default:n = false,
+    %bibtabspec.code:n= \str_set:Nn \g__bibmap_tabspec_str {#1}
+    %用于标记引用标注标签的压缩的选项
+    compcites.code:n = \str_set:Nn \g__bmp_compcites_flag_str {#1},
+    compcites.default:n = false,
+    %用于标记引用标注标签的排序的选项
+    sortcites.code:n = \str_set:Nn \g__bmp_sortcites_flag_str {#1},
+    sortcites.default:n = false,
+    %用于标记后向超链接的选项
+    backref.code:n = \str_set:Nn \g__bmp_backref_flag_str {#1},
+    backref.default:n = false,
+  }
+
+%
+% 宏包选项初始化处理，process package options:
+%
+\ProcessKeyOptions [ bibmap ]
+
+%
+%
+%可以利用\bibmapset命令设置
+\DeclareDocumentCommand \bibmapset { m }
+{ \keys_set:nn { bibmap } { #1 } }
+%若临时修改则需要在处理机制中考虑到处理的时机，即信息写入aux文件的时机应该是在设置之后
+%通常是在导言区结束时，注意citesytle和bibstyle，mapstyle样式需要在开始时指定，否则就是默认的。
+%\AtEndPreamble{}
+
+
+%
+%标注样式的处理
+\str_case_e:nn {\l__bibmap_cite_style_str}
+{
+    {numeric} {\str_gset:Nn \g__bmp_citeflag_str {numeric} }
+    {authoryear} {\str_gset:Nn \g__bmp_citeflag_str {authoryear} }
+}
+
+%写辅助文件的命令:
+\cs_new_protected:Npn \bibmap_write_to_aux_x:n #1
+  { \if@filesw \iow_now:Nx \@auxout {#1} \fi }
+
+\def\refname{参考文献}
+\newcommand\bibheading{\section*{\refname}}
+\newcommand\bibmapwriteExplon{\bibmap_write_to_aux_x:n{\noexpand\ExplSyntaxOn ^^J}}
+\newcommand\bibmapwriteExploff{\bibmap_write_to_aux_x:n{\noexpand\ExplSyntaxOff ^^J}}
+
+\def\entrysetpunct{\newline}
+\def\multilinkdelim{,\space}
+\def\multicitedelim{;}
+\def\multiciteyeardelim{,}
+\def\multicitedelimcite{,}
+\def\multicitedelimparencite{,}
+\def\multicitedelimtextcite{;}
+\def\multicitedelimcitet{;}
+\def\multicitedelimcitep{,}
+
+
+\newlength{\bibhang}
+\newlength{\bibitemsep}
+\newlength{\bibparsep}
+\newlength{\bibitemindent}
+\newlength{\biblabelsep}
+\newlength{\biblabelextend}
+\newlength{\labelnumberwidth}
+\newcounter{biblabelnumber}
+
+%著录样式的处理
+\str_case_e:nnTF {\l__bibmap_bib_style_str}
+{
+    {gb7714-2015}   {
+    \str_gset:Nn \g__bibmap_bibstyle_file_str {bibstylenumeric.py}
+    %\renewcommand\bibitem[2][]{\hypertarget{bib:label:#2}\item}
+    \renewcommand\bibitem[2][]{\item}
+    \setlength{\biblabelsep}{1em}
+    \setlength{\bibitemindent}{0pt}
+    \setlength{\biblabelextend}{0pt}
+    \renewenvironment{thebibliography}[1]
+    {\bibheading\list%
+     {\mkbibbracket{\arabic{biblabelnumber}}}
+     {\usecounter{biblabelnumber}%
+     \settowidth{\labelnumberwidth}{\mkbibbracket{#1}}%
+     \addtolength{\labelnumberwidth}{\biblabelextend}%
+      \setlength{\labelwidth}{\labelnumberwidth}%
+      \setlength{\labelsep}{\biblabelsep}%
+      \setlength{\bibhang}{\biblabelsep}%
+      \addtolength{\bibhang}{\labelnumberwidth}%
+      \setlength{\leftmargin}{\bibhang}%
+      \setlength{\itemindent}{\bibitemindent}%
+      \setlength{\itemsep}{\bibitemsep}%
+      \setlength{\parsep}{\bibparsep}}%
+      \renewcommand*{\makelabel}[1]{\hss##1}}
+  {\endlist}
+    }
+    {gb7714-2015ay} {
+    \str_gset:Nn \g__bibmap_bibstyle_file_str {bibstyleauthoryear.py}
+    %\renewcommand\bibitem[2][]{\hypertarget{bib:label:#2}\item}
+    \renewcommand\bibitem[2][]{\item}
+    \setlength{\bibhang}{1em}
+    \setlength{\bibitemindent}{-\bibhang}
+    \setlength{\bibitemsep}{4.5pt}
+    \setlength{\bibparsep}{0pt}
+    \renewenvironment{thebibliography}[1]
+      {\bibheading\list
+         {}
+         {\setlength{\leftmargin}{\bibhang}%
+          \setlength{\itemindent}{\bibitemindent}%
+          \setlength{\itemsep}{\bibitemsep}%
+          \setlength{\parsep}{\bibparsep}}}
+      {\endlist}
+    }
+}{}%
+{\str_gset:Nx \g__bibmap_bibstyle_file_str \l__bibmap_bib_style_str}
+
+%数据修改样式的处理
+\str_case_e:nnTF {\l__bibmap_map_style_str}
+{
+    {default}   {\str_gset:Nn \g__bibmap_mapstyle_file_str {bibmapdefault.py}}
+}{}%
+{\str_gset:Nx \g__bibmap_mapstyle_file_str {\l__bibmap_map_style_str}}
+
+
+%格式化命令
+\newcommand{\mkbibbracket}[1]{[#1]}
+
+%表格形式文献表的处理
+%要写入aux文件的命令
+\cs_new:Npn \bibmapcite:nn #1#2 {\cs_gset:cn{Bmap@#1:}{#2}}
+%要写入bbl文件的命令
+\cs_new:Npn \bibmapciteb:nn #1#2 {\cs_gset:cn{Bibmap@#1:}{#2}}
+\RequirePackage{array,booktabs,longtable,tabularray}
+
+
+%引用命令：参数为entrykey或者entrykeylist
+%做两件事情
+%1.给aux写bmp@citation用于bibmap程序识别
+%2.读取标签信息并输出
+\cs_new_protected:Npn\bmp@citation#1{}
+\cs_new_protected:Npn\bmp@citepage#1#2{}
+\msg_new:nnn{bibmap}{citation undefine}{#1 Citation #2 on page \thepage \space undefined}
+\clist_new:N \l_bmp_citenames_clist
+\clist_set:Nn \l_bmp_citenames_clist {xcite,xparencite,xfullcite,xfootfullcite,xtextcite,xcitet,xcitep}
+
+\clist_map_inline:Nn \l_bmp_citenames_clist {
+    \cs_gset:cpn {#1} ##1 {%
+        \bibmap_write_to_aux_x:n{\string\bmp@citation{##1}}%
+        \bibmap_write_to_aux_x:n{\string\bmp@citepage{##1}{\thepage}}%
+        %\str_show:N\g__bmp_citeflag_str%
+        \cs_if_exist:cTF {bmp@aux@#1@##1\str_use:N\g__bmp_citeflag_str\int_to_arabic:n\l_bmp_refsec_int :n}%
+            {%\cs_show:c {bmp@aux@cite@#1\str_use:N\g__bmp_citeflag_str :n}
+            %\hyperlink{bib:label:##1}{\use:c {bmp@aux@#1@##1\str_use:N\g__bmp_citeflag_str :n}}%
+            \use:c {bmp@aux@#1@##1\str_use:N\g__bmp_citeflag_str\int_to_arabic:n\l_bmp_refsec_int :n}\relax%
+            }
+            {\hbox{\reset@font\bfseries ?}%
+            \msg_warning:nnx{bibmap}{citation undefine}{#1}{##1}}%
+    }
+}
+
+\RenewDocumentCommand{\cite}{o m}{
+    \IfValueTF {#1}{\leavevmode\xcite{#2}\textsuperscript{#1}}{\leavevmode\xcite{#2}}
+    }
+\NewDocumentCommand{\parencite}{o m}{
+    \IfValueTF {#1}{\leavevmode\xparencite{#2}\textsuperscript{#1}}{\leavevmode\xparencite{#2}}
+    }
+\NewDocumentCommand{\fullcite}{o m}{
+    \IfValueTF {#1}{\leavevmode\xfullcite{#2}}{\leavevmode\xfullcite{#2}}
+    }
+\NewDocumentCommand{\footfullcite}{o m}{
+    \IfValueTF {#1}{\leavevmode\xfootfullcite{#2}}{\leavevmode\xfootfullcite{#2}}
+    }
+\RenewDocumentCommand{\fullcite}{o m}{
+    \IfValueTF {#1}{\leavevmode\xfullcite{#2}}{\leavevmode\xfullcite{#2}}
+    }
+\NewDocumentCommand{\textcite}{o m}{
+    \IfValueTF {#1}{\leavevmode\xtextcite{#2}\textsuperscript{#1}}{\leavevmode\xtextcite{#2}}
+    }
+\NewDocumentCommand{\citet}{o m}{
+    \IfValueTF {#1}{\leavevmode\xcitet{#2}\textsuperscript{#1}}{\leavevmode\xcitet{#2}}
+    }
+\NewDocumentCommand{\citep}{o m}{
+    \IfValueTF {#1}{\leavevmode\xcitep{#2}\textsuperscript{#1}}{\leavevmode\xcitep{#2}}
+    }
+
+
+%由bibmap程序写入bbl文件的命令
+%用于将信息转到aux中
+%将标签信息定义到命令中bmp@aux@cite@entrykeynumeric:n
+\clist_map_inline:Nn \l_bmp_citenames_clist {
+    %#1是\l_bmp_citenames_clist中的项
+    \cs_new:cpn {bmpaux@#1@numeric:nnn} ##1##2##3 {%
+    %##1 是entrykey，##2 是refsection节号，##3是对应的内容
+        \cs_gset:cn {bmp@aux@#1@##1numeric##2:n}{##3}}
+    \cs_new:cpn {bmpaux@#1@authoryear:nnn} ##1##2##3 {%
+        \cs_gset:cn {bmp@aux@#1@##1authoryear##2:n}{##3}}
+    \cs_new:cpn {bmpbbl@#1@numeric:nnn} ##1##2##3 {%
+        \bibmap_write_to_aux_x:n{\string\bmpaux@#1@numeric:nnn {##1}{##2}{##3}}}
+    \cs_new:cpn {bmpbbl@#1@authoryear:nnn} ##1##2##3 {%
+        \bibmap_write_to_aux_x:n{\string\bmpaux@#1@authoryear:nnn {##1}{##2}{##3}}}
+}
+
+%多文档处理
+%文献节处理
+\tl_const:Nn \l_bmp_refsec_tl {refsec}  %文件名中表示文献节的字符信息
+\int_new:N \l_bmp_refsec_int  %文件名中表示文献节的数字
+
+\int_const:Nn \l_bmp_glbrefsec_int { 0 }  %全局的文献节号为0
+\int_new:N \l_bmp_lclrefsec_int
+\int_gset:Nn \l_bmp_lclrefsec_int { 0 } %局部的文献节号，用于计算refsection环境下文献节序号
+
+\int_new:N \l_bmp_inrefsec_int        %局部标记在文献节内，
+\int_gset:Nn \l_bmp_inrefsec_int { 0 } %0表示不在，不是0表示在
+
+%refsection环境主要用于标记信息
+\NewDocumentEnvironment{refsection}{o}
+{%
+    \begingroup%
+    \int_gincr:N\l_bmp_lclrefsec_int%
+    \int_gset:Nn \l_bmp_inrefsec_int {1}%
+    \int_set_eq:NN\l_bmp_refsec_int\l_bmp_lclrefsec_int%用于引用命令选择
+    \bibmap_write_to_aux_x:n{\noexpand\bibmap@begrefsec{\int_to_arabic:n\l_bmp_lclrefsec_int} ^^J}%
+}
+{%
+    \bibmap_write_to_aux_x:n{\noexpand\bibmap@endrefsec{\int_to_arabic:n\l_bmp_lclrefsec_int} ^^J}%
+    \endgroup%
+    \int_gset:Nn \l_bmp_inrefsec_int {0}%
+}
+
+
+
+%重定义 \bibliography 命令，根据节的信息来设定bbl文件名
+\RenewDocumentCommand{\bibliography}{m}{%
+\if@filesw%
+    \bibmap_write_to_aux_x:n{\string\bibdata{#1 \@empty}}%
+\fi%
+\int_if_zero:nTF{\l_bmp_inrefsec_int}
+    {\int_set_eq:NN\l_bmp_refsec_int\l_bmp_glbrefsec_int}
+    {\int_set_eq:NN\l_bmp_refsec_int\l_bmp_lclrefsec_int}
+\@input@{\jobname\l_bmp_refsec_tl\int_to_arabic:n\l_bmp_refsec_int.bbl}%
+%\int_to_arabic:n\l_bmp_inrefsec_int
+%\int_to_arabic:n\l_bmp_refsec_int
+%\int_to_arabic:n\l_bmp_lclrefsec_int
+%\int_to_arabic:n\l_bmp_glbrefsec_int
+}
+
+
+
+%
+%双语对照文献的处理，利用文献集的思路实现
+%对于这样的命令：
+%\defbibentryset{bilangyi2013}{易仕和2013--,Yi2013--}
+%大致原样输出到aux中：
+%\bibmap@entryset {bilangyi2013}{易仕和2013--,Yi2013--}
+%便于后端程序读取并处理
+%因为放到文档末来写入，所以这个命令放在导言区或正文均可
+\cs_new_protected:Npn\bibmap@entryset#1#2{}
+\NewDocumentCommand\defbibentryset{m m}{
+    \AtEndDocument{%
+    \bibmap_write_to_aux_x:n
+    {
+      \noexpand\bibmap@entryset{#1}{#2} ^^J
+    }}
+}
+
+
+\NewDocumentCommand \printbibfileinfo {}{
+    \str_use:N \g__bibmap_bibstyle_file_str
+}
+
+\NewDocumentCommand \printmapfileinfo {}{
+    \str_use:N \g__bibmap_mapstyle_file_str
+}
+
+%
+%用于局部化的指定子文档的citestyle
+\NewDocumentCommand \citestyle { m }{
+    \str_set:Nn \g__bmp_citeflag_str {#1}
+}
+
+%
+%用于局部化的指定文献表样式的bibstyle
+\NewDocumentCommand \bmpbibstyle { m }{
+    \bibmap_write_to_aux_x:n
+    {
+      \noexpand\bibmap@bibstyle{#1} ^^J
+    }
+}
+
+%
+%用于局部化的指定处理bib文件的mapstyle
+\NewDocumentCommand \bmpmapstyle { m }{
+    \bibmap_write_to_aux_x:n
+    {
+      \noexpand\bibmap@mapstyle{#1} ^^J
+    }
+}
+
+%
+%用于局部化的指定文献表样式的bibstyle
+\NewDocumentCommand \bmpbibtable { m }{
+    \str_set:Nn \g__bibmap_bibliotable_flag_str {#1}
+    \bibmap_write_to_aux_x:n
+    {
+      \noexpand\bibmap@tabflag{\g__bibmap_bibliotable_flag_str} ^^J
+    }
+}
+
+\cs_new_protected:Npn \bibmap@bibstyle #1 {}
+\cs_new_protected:Npn \bibmap@mapstyle #1 {}
+\cs_new_protected:Npn \bibmap@tabflag #1 {}
+\cs_new_protected:Npn \bibmap@sortcites #1 {}
+\cs_new_protected:Npn \bibmap@compcites #1 {}
+\cs_new_protected:Npn \bibmap@backref #1 {}
+\cs_new_protected:Npn \bibmap@begrefsec #1 {}
+\cs_new_protected:Npn \bibmap@endrefsec #1 {}
+
+% 写入辅助文件
+\AtBeginDocument{
+  \bibmap_write_to_aux_x:n
+    {
+      \noexpand\bibmap@bibstyle{\g__bibmap_bibstyle_file_str} ^^J
+      \noexpand\bibmap@mapstyle{\g__bibmap_mapstyle_file_str} ^^J
+      \noexpand\bibmap@tabflag{\g__bibmap_bibliotable_flag_str} ^^J
+      \noexpand\bibmap@sortcites{\g__bmp_sortcites_flag_str} ^^J %用于标记引用标注标签的排序
+      \noexpand\bibmap@compcites{\g__bmp_compcites_flag_str} ^^J %用于标记引用标注标签的压缩
+      \noexpand\bibmap@backref{\g__bmp_backref_flag_str} ^^J %用于标记引用标注标签的压缩
+    }
+}
+
+
+
+
+\ExplSyntaxOff
+
+
+%处理超链接的断行
+\RequirePackage{url,xurl}
+%\def\UrlBreaks{%
+%  \do\/%
+%  \do\a\do\b\do\c\do\d\do\e\do\f\do\g\do\h\do\i\do\j\do\k\do\l%
+%     \do\m\do\n\do\o\do\p\do\q\do\r\do\s\do\t\do\u\do\v\do\w\do\x\do\y\do\z%
+%  \do\A\do\B\do\C\do\D\do\E\do\F\do\G\do\H\do\I\do\J\do\K\do\L%
+%     \do\M\do\N\do\O\do\P\do\Q\do\R\do\S\do\T\do\U\do\V\do\W\do\X\do\Y\do\Z%
+%  \do0\do1\do2\do3\do4\do5\do6\do7\do8\do9\do=\do/\do.\do:%
+%  \do\*\do\-\do\~\do\'\do\"\do\-}
+\def\UrlFont{\rmfamily}%设置url字体为roman字体%\ttfamily
+%\urlstyle{rm} %使用这句也一样
+\providecommand{\doi}[1]{\href{https://doi.org/#1}{\url{#1}}}
+\Urlmuskip=0mu plus 0.1mu

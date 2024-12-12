@@ -14,6 +14,15 @@
 		entrynull=true, false default: false
 		match 大小写区分的matchi
 
+		
+###  20241212
+
+1. 修正仅修改格式时读取不到aux文件导致的错误
+
+2. 为sourcemap增加了extract，in，notin，inrange，notinrange等几个设置选项。并对应修改了文档。
+
+3. 增加了一个测试脚本
+
 
 		
 ###  20241016
